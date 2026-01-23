@@ -623,8 +623,7 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Daily Review Widget */}
-                <DailyReviewWidget />
+
 
                 {/* Record Streak */}
                 <div className="bg-gradient-to-br from-yellow-500/10 to-amber-500/5 rounded-2xl p-5 border border-yellow-500/20 flex items-center gap-4">
@@ -678,6 +677,9 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Daily Review Widget */}
+            <DailyReviewWidget />
 
             {/* Row 0.5: Reviews Card (Moved to top) */}
             {pendingReviews.length > 0 && (
