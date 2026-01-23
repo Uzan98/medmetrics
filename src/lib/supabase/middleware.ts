@@ -6,40 +6,62 @@ export async function updateSession(request: NextRequest) {
         request,
     })
 
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                getAll() {
-                    return request.cookies.getAll()
+    try {
+        const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                cookies: {
+                    getAll() {
+                        return request.cookies.getAll()
+                    },
+                    setAll(cookiesToSet) {
+                        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+                        supabaseResponse = NextResponse.next({
+                            request,
+                        })
+                        cookiesToSet.forEach(({ name, value, options }) =>
+                            supabaseResponse.cookies.set(name, value, options)
+                        )
+                    },
                 },
-                setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-                    supabaseResponse = NextResponse.next({
-                        request,
-                    })
-                    cookiesToSet.forEach(({ name, value, options }) =>
-                        supabaseResponse.cookies.set(name, value, options)
-                    )
-                },
-            },
+            }
+        )
+
+        const {
+            data: { user },
+        } = await supabase.auth.getUser()
+
+        // Protected routes - redirect to login if not authenticated
+        if (
+            !user &&
+            !request.nextUrl.pathname.startsWith('/login') &&
+            !request.nextUrl.pathname.startsWith('/register') &&
+            !request.nextUrl.pathname.startsWith('/recuperar-senha') &&
+            !request.nextUrl.pathname.startsWith('/redefinir-senha')
+        ) {
+            const url = request.nextUrl.clone()
+            url.pathname = '/login'
+            return NextResponse.redirect(url)
         }
-    )
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+        // Redirect authenticated users away from auth pages
+        if (
+            user &&
+            (request.nextUrl.pathname.startsWith('/login') ||
+                request.nextUrl.pathname.startsWith('/register'))
+        ) {
+            const url = request.nextUrl.clone()
+            url.pathname = '/'
+            return NextResponse.redirect(url)
+        }
 
-    // Protected routes - redirect to login if not authenticated
-    if (
-        !user &&
-        !request.nextUrl.pathname.startsWith('/login') &&
-        !request.nextUrl.pathname.startsWith('/register')
-    ) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/login'
-        return NextResponse.redirect(url)
+        return supabaseResponse
+    } catch (e) {
+        // If supabase fails (e.g. missing env vars), allow request to proceed (or handle gracefully)
+        // This prevents 500 error on vercel if vars are missing
+        console.error('Middleware Supabase Error:', e)
+        return supabaseResponse
     }
 
     // Redirect authenticated users away from auth pages
