@@ -64,16 +64,4 @@ export async function updateSession(request: NextRequest) {
         return supabaseResponse
     }
 
-    // Redirect authenticated users away from auth pages
-    if (
-        user &&
-        (request.nextUrl.pathname.startsWith('/login') ||
-            request.nextUrl.pathname.startsWith('/register'))
-    ) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/'
-        return NextResponse.redirect(url)
-    }
-
-    return supabaseResponse
 }
