@@ -21,6 +21,9 @@ import type { ScheduledReview } from '@/types/database'
 interface ReviewWithRelations extends ScheduledReview {
     disciplines: { name: string } | null
     subdisciplines: { name: string } | null
+    question_logs: {
+        topics: { name: string } | null
+    } | null
 }
 
 export default function RevisoesPage() {
@@ -46,7 +49,12 @@ export default function RevisoesPage() {
                 .select(`
                     *,
                     disciplines(name),
-                    subdisciplines(name)
+                    subdisciplines(name),
+                    question_logs (
+                        topics (
+                            name
+                        )
+                    )
                 `)
                 .eq('user_id', user.id)
                 .order('scheduled_date', { ascending: true })
@@ -278,11 +286,11 @@ export default function RevisoesPage() {
                                                 )}
                                                 <div>
                                                     <p className="font-medium text-white">
-                                                        {review.disciplines?.name || 'Sem disciplina'}
+                                                        {review.question_logs?.topics?.name || review.disciplines?.name || 'Sem tópico'}
                                                     </p>
-                                                    {review.subdisciplines?.name && (
+                                                    {(review.subdisciplines?.name || review.disciplines?.name) && (
                                                         <p className="text-sm text-slate-400">
-                                                            {review.subdisciplines.name}
+                                                            {review.disciplines?.name} {review.subdisciplines?.name ? `• ${review.subdisciplines.name}` : ''}
                                                         </p>
                                                     )}
                                                 </div>
