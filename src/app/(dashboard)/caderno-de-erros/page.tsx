@@ -15,14 +15,18 @@ import {
     BookOpen,
     BrainCircuit,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    Image as ImageIcon,
+    Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import Image from 'next/image'
 
 type ErrorEntry = Database['public']['Tables']['error_notebook']['Row'] & {
     disciplines: { name: string } | null
     topics: { name: string } | null
+    image_urls: string[] | null
 }
 
 type Discipline = Database['public']['Tables']['disciplines']['Row']
@@ -47,9 +51,13 @@ export default function ErrorNotebookPage() {
         topic_id: '',
         question_text: '',
         answer_text: '',
-        notes: ''
+        notes: '',
+        image_urls: [] as string[]
     })
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+    const [previewUrls, setPreviewUrls] = useState<string[]>([])
     const [saving, setSaving] = useState(false)
+    const [uploading, setUploading] = useState(false)
 
     useEffect(() => {
         loadData()
@@ -108,6 +116,67 @@ export default function ErrorNotebookPage() {
         }
     }
 
+    function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+        if (e.target.files) {
+            const files = Array.from(e.target.files)
+            setSelectedFiles(prev => [...prev, ...files])
+
+            // Create previews
+            const newPreviews = files.map(file => URL.createObjectURL(file))
+            setPreviewUrls(prev => [...prev, ...newPreviews])
+        }
+    }
+
+    function removeFile(index: number) {
+        setSelectedFiles(prev => prev.filter((_, i) => i !== index))
+        setPreviewUrls(prev => {
+            // Revoke object URL to avoid memory leaks
+            URL.revokeObjectURL(prev[index])
+            return prev.filter((_, i) => i !== index)
+        })
+    }
+
+    function removeExistingImage(index: number) {
+        setFormData(prev => ({
+            ...prev,
+            image_urls: prev.image_urls.filter((_, i) => i !== index)
+        }))
+    }
+
+    async function uploadImages(userId: string): Promise<string[]> {
+        if (selectedFiles.length === 0) return []
+
+        const uploadedUrls: string[] = []
+        setUploading(true)
+
+        try {
+            for (const file of selectedFiles) {
+                const fileExt = file.name.split('.').pop()
+                const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+
+                const { error: uploadError } = await supabase.storage
+                    .from('error-notebook')
+                    .upload(fileName, file)
+
+                if (uploadError) throw uploadError
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('error-notebook')
+                    .getPublicUrl(fileName)
+
+                uploadedUrls.push(publicUrl)
+            }
+        } catch (error) {
+            console.error('Error uploading images:', error)
+            toast.error('Erro ao fazer upload das imagens')
+            throw error
+        } finally {
+            setUploading(false)
+        }
+
+        return uploadedUrls
+    }
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         setSaving(true)
@@ -116,13 +185,23 @@ export default function ErrorNotebookPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
+            // Upload new images
+            let newImageUrls: string[] = []
+            if (selectedFiles.length > 0) {
+                newImageUrls = await uploadImages(user.id)
+            }
+
+            // Combine existing and new images
+            const finalImageUrls = [...formData.image_urls, ...newImageUrls]
+
             const payload = {
                 user_id: user.id,
                 discipline_id: Number(formData.discipline_id) || null,
                 topic_id: Number(formData.topic_id) || null,
                 question_text: formData.question_text,
                 answer_text: formData.answer_text,
-                notes: formData.notes
+                notes: formData.notes,
+                image_urls: finalImageUrls
             }
 
             if (editingEntry) {
@@ -177,8 +256,11 @@ export default function ErrorNotebookPage() {
             topic_id: '',
             question_text: '',
             answer_text: '',
-            notes: ''
+            notes: '',
+            image_urls: []
         })
+        setSelectedFiles([])
+        setPreviewUrls([])
     }
 
     function openEdit(entry: ErrorEntry) {
@@ -188,8 +270,11 @@ export default function ErrorNotebookPage() {
             topic_id: entry.topic_id?.toString() || '',
             question_text: entry.question_text,
             answer_text: entry.answer_text,
-            notes: entry.notes || ''
+            notes: entry.notes || '',
+            image_urls: entry.image_urls || []
         })
+        setSelectedFiles([])
+        setPreviewUrls([])
         setIsModalOpen(true)
     }
 
@@ -358,6 +443,64 @@ export default function ErrorNotebookPage() {
                                 />
                             </div>
 
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-400">Imagens</label>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
+                                    {/* Existing Images */}
+                                    {formData.image_urls.map((url, index) => (
+                                        <div key={`existing-${index}`} className="relative aspect-square rounded-xl overflow-hidden border border-slate-700 group">
+                                            <Image
+                                                src={url}
+                                                alt={`Imagem ${index + 1}`}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeExistingImage(index)}
+                                                className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] p-1 text-center">
+                                                Salva
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* New File Previews */}
+                                    {previewUrls.map((url, index) => (
+                                        <div key={`new-${index}`} className="relative aspect-square rounded-xl overflow-hidden border border-slate-700 group">
+                                            <Image
+                                                src={url}
+                                                alt={`Preview ${index + 1}`}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeFile(index)}
+                                                className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    <label className="aspect-square rounded-xl border-2 border-dashed border-slate-700 hover:border-blue-500 hover:bg-slate-800/50 cursor-pointer flex flex-col items-center justify-center transition-all group">
+                                        <ImageIcon className="w-6 h-6 text-slate-500 group-hover:text-blue-500 mb-2" />
+                                        <span className="text-xs text-slate-500 group-hover:text-blue-400 font-medium">Adicionar</span>
+                                        <input
+                                            type="file"
+                                            multiple
+                                            accept="image/*"
+                                            onChange={handleFileSelect}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+
                             <div className="pt-4 flex justify-end gap-3">
                                 <button
                                     type="button"
@@ -371,8 +514,8 @@ export default function ErrorNotebookPage() {
                                     disabled={saving}
                                     className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors flex items-center gap-2 shadow-lg shadow-blue-500/20 disabled:opacity-50"
                                 >
-                                    {saving && <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
-                                    Salvar Registro
+                                    {saving && <Loader2 className="animate-spin w-4 h-4 mr-2" />}
+                                    {uploading ? 'Enviando Imagens...' : 'Salvar Registro'}
                                 </button>
                             </div>
                         </form>
@@ -385,77 +528,123 @@ export default function ErrorNotebookPage() {
 
 function ErrorCard({ entry, onEdit, onDelete }: { entry: ErrorEntry, onEdit: () => void, onDelete: () => void }) {
     const [showAnswer, setShowAnswer] = useState(false)
+    const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
     return (
-        <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden hover:border-slate-700 transition-all group">
-            <div className="p-5">
-                <div className="flex justify-between items-start mb-4">
-                    <div className="flex flex-wrap gap-2">
-                        {entry.disciplines && (
-                            <span className="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-semibold border border-blue-500/20">
-                                {entry.disciplines.name}
-                            </span>
-                        )}
-                        {entry.topics && (
-                            <span className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-xs font-medium border border-slate-700">
-                                {entry.topics.name}
-                            </span>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={onEdit} className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
-                            <Edit className="w-4 h-4" />
-                        </button>
-                        <button onClick={onDelete} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                    </div>
-                </div>
-
-                <div className="mb-4">
-                    <h3 className="text-white font-medium text-lg leading-snug">{entry.question_text}</h3>
-                </div>
-
-                {showAnswer ? (
-                    <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
-                        <div className="bg-green-500/5 border border-green-500/10 rounded-xl p-4">
-                            <h4 className="text-green-400 text-sm font-bold mb-1 flex items-center gap-2">
-                                <Check className="w-4 h-4" /> Resposta
-                            </h4>
-                            <p className="text-slate-300 whitespace-pre-line">{entry.answer_text}</p>
+        <>
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden hover:border-slate-700 transition-all group">
+                <div className="p-5">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="flex flex-wrap gap-2">
+                            {entry.disciplines && (
+                                <span className="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-semibold border border-blue-500/20">
+                                    {entry.disciplines.name}
+                                </span>
+                            )}
+                            {entry.topics && (
+                                <span className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-xs font-medium border border-slate-700">
+                                    {entry.topics.name}
+                                </span>
+                            )}
                         </div>
-                        {entry.notes && (
-                            <div className="bg-yellow-500/5 border border-yellow-500/10 rounded-xl p-4">
-                                <h4 className="text-yellow-400 text-sm font-bold mb-1 flex items-center gap-2">
-                                    <BrainCircuit className="w-4 h-4" /> Notas
-                                </h4>
-                                <p className="text-slate-300 text-sm whitespace-pre-line">{entry.notes}</p>
-                            </div>
-                        )}
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={onEdit} className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
+                                <Edit className="w-4 h-4" />
+                            </button>
+                            <button onClick={onDelete} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
-                ) : (
-                    <button
-                        onClick={() => setShowAnswer(true)}
-                        className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-medium text-sm transition-all border border-slate-700 border-dashed flex items-center justify-center gap-2"
-                    >
-                        <Eye className="w-4 h-4" />
-                        Ver Resposta
-                    </button>
-                )}
 
-                {showAnswer && (
-                    <button
-                        onClick={() => setShowAnswer(false)}
-                        className="w-full mt-4 py-2 text-xs text-slate-500 hover:text-slate-400 flex items-center justify-center gap-1"
-                    >
-                        <ChevronUp className="w-3 h-3" /> Ocultar Resposta
-                    </button>
-                )}
+                    <div className="mb-4">
+                        <h3 className="text-white font-medium text-lg leading-snug">{entry.question_text}</h3>
+                    </div>
+
+                    {/* Image Gallery */}
+                    {entry.image_urls && entry.image_urls.length > 0 && (
+                        <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
+                            {entry.image_urls.map((url, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => setSelectedImage(url)}
+                                    className="relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-slate-700 hover:border-blue-500 transition-colors"
+                                >
+                                    <Image
+                                        src={url}
+                                        alt={`Imagem ${i + 1}`}
+                                        fill
+                                        className="object-cover"
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {showAnswer ? (
+                        <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
+                            <div className="bg-green-500/5 border border-green-500/10 rounded-xl p-4">
+                                <h4 className="text-green-400 text-sm font-bold mb-1 flex items-center gap-2">
+                                    <Check className="w-4 h-4" /> Resposta
+                                </h4>
+                                <p className="text-slate-300 whitespace-pre-line">{entry.answer_text}</p>
+                            </div>
+                            {entry.notes && (
+                                <div className="bg-yellow-500/5 border border-yellow-500/10 rounded-xl p-4">
+                                    <h4 className="text-yellow-400 text-sm font-bold mb-1 flex items-center gap-2">
+                                        <BrainCircuit className="w-4 h-4" /> Notas
+                                    </h4>
+                                    <p className="text-slate-300 text-sm whitespace-pre-line">{entry.notes}</p>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setShowAnswer(true)}
+                            className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-medium text-sm transition-all border border-slate-700 border-dashed flex items-center justify-center gap-2"
+                        >
+                            <Eye className="w-4 h-4" />
+                            Ver Resposta
+                        </button>
+                    )}
+
+                    {showAnswer && (
+                        <button
+                            onClick={() => setShowAnswer(false)}
+                            className="w-full mt-4 py-2 text-xs text-slate-500 hover:text-slate-400 flex items-center justify-center gap-1"
+                        >
+                            <ChevronUp className="w-3 h-3" /> Ocultar Resposta
+                        </button>
+                    )}
+                </div>
+                <div className="bg-slate-950/30 px-5 py-2 border-t border-slate-800 flex justify-between items-center text-xs text-slate-500">
+                    <span>Adicionado em {new Date(entry.created_at).toLocaleDateString('pt-BR')}</span>
+                    <span>Revisado {entry.review_count} vezes</span>
+                </div>
             </div>
-            <div className="bg-slate-950/30 px-5 py-2 border-t border-slate-800 flex justify-between items-center text-xs text-slate-500">
-                <span>Adicionado em {new Date(entry.created_at).toLocaleDateString('pt-BR')}</span>
-                <span>Revisado {entry.review_count} vezes</span>
-            </div>
-        </div>
+
+            {/* Lightbox */}
+            {selectedImage && (
+                <div
+                    className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200"
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <div className="relative w-full max-w-4xl max-h-full h-full flex items-center justify-center">
+                        <Image
+                            src={selectedImage}
+                            alt="Visualização"
+                            width={1200}
+                            height={800}
+                            className="object-contain max-h-[90vh] w-auto h-auto rounded-lg"
+                        />
+                        <button
+                            className="absolute top-4 right-4 text-white/50 hover:text-white"
+                        >
+                            <X className="w-8 h-8" />
+                        </button>
+                    </div>
+                </div>
+            )}
+        </>
     )
 }
