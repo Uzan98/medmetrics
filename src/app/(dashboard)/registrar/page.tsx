@@ -37,7 +37,7 @@ function RegistrarContent() {
     const searchParams = useSearchParams()
 
     const [form, setForm] = useState({
-        date: new Date().toISOString().split('T')[0],
+        date: format(new Date(), 'yyyy-MM-dd'),
         disciplineId: '',
         subdisciplineId: '',
         topicId: '',
@@ -221,7 +221,7 @@ function RegistrarContent() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) throw new Error('Usuário não autenticado')
 
-            const baseDate = new Date(form.date)
+            const baseDate = new Date(form.date + 'T12:00:00')
             const reviews = []
 
             if (selectedReviews.day1) {
@@ -281,7 +281,7 @@ function RegistrarContent() {
 
     function resetForm() {
         setForm({
-            date: new Date().toISOString().split('T')[0],
+            date: format(new Date(), 'yyyy-MM-dd'),
             disciplineId: '',
             subdisciplineId: '',
             topicId: '',
