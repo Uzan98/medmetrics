@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    BarChart, Bar, Legend
+    BarChart, Bar, Legend, Cell, LabelList
 } from 'recharts'
 import { Loader2, AlertCircle, FileText, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
@@ -202,6 +202,77 @@ export default function ProvasTab() {
                                 activeDot={{ r: 6, fill: '#fff' }}
                             />
                         </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* Board Performance Chart -- NEW */}
+            <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                <h3 className="text-lg font-semibold text-white mb-6">Desempenho por Banca</h3>
+                <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                            data={Object.values(exams.reduce((acc, curr) => {
+                                if (!acc[curr.boardName]) acc[curr.boardName] = { name: curr.boardName, total: 0, correct: 0, accuracy: 0 }
+                                acc[curr.boardName].total += curr.totalQuestions
+                                acc[curr.boardName].correct += curr.totalCorrect
+                                return acc
+                            }, {} as Record<string, { name: string, total: number, correct: number, accuracy: number }>)).map(b => ({
+                                ...b,
+                                accuracy: b.total > 0 ? Number(((b.correct / b.total) * 100).toFixed(1)) : 0
+                            })).sort((a, b) => b.accuracy - a.accuracy)}
+                            layout="vertical"
+                            margin={{ top: 5, right: 50, left: 40, bottom: 5 }}
+                        >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
+                            <XAxis type="number" domain={[0, 100]} hide />
+                            <YAxis
+                                dataKey="name"
+                                type="category"
+                                stroke="#94a3b8"
+                                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                                width={100}
+                                tickLine={false}
+                                axisLine={false}
+                            />
+                            <Tooltip
+                                cursor={{ fill: '#334155', opacity: 0.4 }}
+                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
+                                itemStyle={{ color: '#fff' }}
+                                formatter={(value: any, name: any, props: any) => {
+                                    const { total, correct } = props.payload
+                                    return [`${value}% (${correct}/${total})`, 'Acurácia']
+                                }}
+                            />
+                            <Bar
+                                dataKey="accuracy"
+                                radius={[0, 4, 4, 0]}
+                                barSize={32}
+                            >
+                                {
+                                    Object.values(exams.reduce((acc, curr) => {
+                                        if (!acc[curr.boardName]) acc[curr.boardName] = { name: curr.boardName, total: 0, correct: 0, accuracy: 0 }
+                                        acc[curr.boardName].total += curr.totalQuestions
+                                        acc[curr.boardName].correct += curr.totalCorrect
+                                        return acc
+                                    }, {} as Record<string, { name: string, total: number, correct: number, accuracy: number }>)).map(b => ({
+                                        ...b,
+                                        accuracy: b.total > 0 ? Number(((b.correct / b.total) * 100).toFixed(1)) : 0
+                                    })).sort((a, b) => b.accuracy - a.accuracy).map((entry, index) => (
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={entry.accuracy >= 80 ? '#22c55e' : entry.accuracy >= 60 ? '#eab308' : '#ef4444'}
+                                        />
+                                    ))
+                                }
+                                <LabelList
+                                    dataKey="accuracy"
+                                    position="right"
+                                    fill="#94a3b8"
+                                    formatter={(val: number) => `${val}%`}
+                                />
+                            </Bar>
+                        </BarChart>
                     </ResponsiveContainer>
                 </div>
             </div>

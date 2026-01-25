@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Skeleton, EmptyState } from '@/components/ui'
+import { Skeleton, EmptyState, Speedometer } from '@/components/ui'
 import {
     ClipboardList,
     Target,
@@ -875,44 +875,39 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Questions per Month Card */}
-                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 flex flex-col relative overflow-hidden">
-                    <h3 className="font-semibold text-white text-center mb-2">Questões feitas este mês</h3>
+                <div className={`
+                    backdrop-blur-sm rounded-2xl p-6 border flex flex-col relative overflow-hidden items-center transition-all duration-500
+                    ${(stats.monthGoal && stats.monthQuestions >= stats.monthGoal)
+                        ? 'bg-emerald-900/10 border-emerald-500/20 shadow-[0_0_30px_-10px_rgba(16,185,129,0.3)]'
+                        : (stats.monthGoal && stats.monthQuestions >= (stats.monthGoal / 2))
+                            ? 'bg-amber-900/10 border-amber-500/20'
+                            : 'bg-white/5 border-slate-700/50'}
+                `}>
+                    <h3 className="font-semibold text-white text-center mb-4">Questões feitas este mês</h3>
 
-                    <div className="flex-1 flex flex-col items-center justify-center">
-                        <span className="text-6xl font-bold text-white mb-2">
-                            {stats.monthQuestions.toLocaleString('pt-BR')}
-                        </span>
-                        <span className="text-sm text-slate-400">
-                            de <span className="text-white font-medium">{stats.monthGoal?.toLocaleString('pt-BR')}</span> meta
-                        </span>
-                    </div>
+                    <Speedometer
+                        value={stats.monthQuestions}
+                        max={stats.monthGoal || 800}
+                        size={220}
+                    />
 
                     {stats.monthGoal && (
-                        <div className="mt-6">
-                            <div className="flex justify-between text-xs mb-2">
+                        <div className="mt-4 w-full text-center">
+                            <div className="flex justify-center text-xs mb-2 gap-2">
                                 <span className={stats.monthQuestions < stats.monthGoal ? "text-amber-400" : "text-emerald-400"}>
                                     {stats.monthQuestions < stats.monthGoal
-                                        ? `Precisa de ${stats.dailyGoalNeeded}/dia`
+                                        ? `Meta: +${stats.dailyGoalNeeded}/dia`
                                         : "Meta batida! 🎉"}
                                 </span>
+                                <span className="text-slate-500">•</span>
                                 <span className="text-slate-500">{stats.daysRemaining} dias restantes</span>
                             </div>
 
-                            <div className="h-3 bg-slate-700/50 rounded-full overflow-hidden mb-2">
-                                <div
-                                    className={`h-full rounded-full transition-all duration-1000 ${(stats.monthQuestions / stats.monthGoal) >= 1 ? 'bg-emerald-500' :
-                                        stats.dailyGoalNeeded > (stats.monthGoal / 30) * 1.5 ? 'bg-amber-500' :
-                                            'bg-blue-500'
-                                        }`}
-                                    style={{ width: `${Math.min((stats.monthQuestions / stats.monthGoal) * 100, 100)}%` }}
-                                />
-                            </div>
-
-                            {stats.dailyGoalNeeded > (stats.monthGoal / 30) * 1.5 && (stats.monthQuestions < stats.monthGoal) && (
-                                <div className="flex items-center gap-2 mt-3 p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                            {stats.dailyGoalNeeded > ((stats.monthGoal || 800) / 30) * 1.5 && (stats.monthQuestions < (stats.monthGoal || 800)) && (
+                                <div className="flex items-center justify-center gap-2 mt-2 p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                                     <TrendingUp className="w-4 h-4 text-amber-400 shrink-0" />
                                     <p className="text-xs text-amber-200">
-                                        Aumente o ritmo para bater a meta!
+                                        Aumente o ritmo!
                                     </p>
                                 </div>
                             )}

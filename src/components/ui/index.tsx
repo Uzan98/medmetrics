@@ -174,4 +174,5 @@ export function EmptyState({
 
 export { AddSubdisciplineModal } from './AddSubdisciplineModal'
 export { AddTopicModal } from './AddTopicModal'
+export { Speedometer } from './Speedometer'
 

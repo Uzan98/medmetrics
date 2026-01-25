@@ -37,24 +37,44 @@ export default function EvolucaoTab() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            const { data: logs } = await supabase
+            // 1. Fetch Question Logs
+            const logsPromise = supabase
                 .from('question_logs')
                 .select('date, questions_done, correct_answers, subdisciplines(name)')
                 .eq('user_id', user.id)
                 .gte('date', `${currentYear}-01-01`)
                 .lte('date', `${currentYear}-12-31`)
 
-            if (!logs) return
+            // 2. Fetch Exam Scores
+            const examsPromise = supabase
+                .from('exam_scores')
+                .select(`
+                    questions_total,
+                    questions_correct,
+                    disciplines(name),
+                    exams!inner(date, user_id)
+                `)
+                .eq('exams.user_id', user.id)
+                .gte('exams.date', `${currentYear}-01-01`)
+                .lte('exams.date', `${currentYear}-12-31`)
 
-            // Aggregate by month for Evolution Chart
+            const [logsRes, examsRes] = await Promise.all([logsPromise, examsPromise])
+
+            const logs = logsRes.data || []
+            const examScores = examsRes.data || []
+
+            // Aggregate data
             const statsMap: { [key: number]: MonthlyStats } = {}
-
-            // Aggregate by subdiscipline (Specialties)
             const specialtyMap: { [key: string]: { questions: number, correct: number } } = {}
 
+            // Helper to process logs
             logs.forEach((log) => {
                 // Monthly Stats
-                const month = new Date(log.date).getMonth() + 1
+                // Standardize date parsing to avoid timezone issues (YYYY-MM-DD)
+                // Assuming date is ISO string YYYY-MM-DD
+                const [y, m, d] = log.date.split('-').map(Number)
+                const month = m // already 1-12
+
                 if (!statsMap[month]) {
                     statsMap[month] = {
                         month,
@@ -76,7 +96,34 @@ export default function EvolucaoTab() {
                 specialtyMap[specialtyName].correct += log.correct_answers
             })
 
-            // Calculate accuracy and sort by month
+            // Helper to process exams
+            examScores.forEach((score) => {
+                const examData = score.exams as any
+                const [y, m, d] = examData.date.split('-').map(Number)
+                const month = m
+
+                if (!statsMap[month]) {
+                    statsMap[month] = {
+                        month,
+                        year: currentYear,
+                        totalQuestions: 0,
+                        totalCorrect: 0,
+                        accuracy: 0,
+                    }
+                }
+                statsMap[month].totalQuestions += score.questions_total
+                statsMap[month].totalCorrect += score.questions_correct
+
+                // Specialty Stats (Using Discipline Name as Specialty)
+                const specialtyName = (score.disciplines as any)?.name || 'Prova Geral'
+                if (!specialtyMap[specialtyName]) {
+                    specialtyMap[specialtyName] = { questions: 0, correct: 0 }
+                }
+                specialtyMap[specialtyName].questions += score.questions_total
+                specialtyMap[specialtyName].correct += score.questions_correct
+            })
+
+            // Calculate monthly accuracy and sort
             const result = Object.values(statsMap)
                 .map((stat) => ({
                     ...stat,

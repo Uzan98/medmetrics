@@ -17,6 +17,7 @@ import {
     CalendarCheck,
     User,
     Calendar,
+    FileText
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -25,6 +26,7 @@ const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/registrar', label: 'Registrar Questões', icon: ClipboardPlus },
     { href: '/metricas', label: 'Métricas', icon: TrendingUp },
+    { href: '/provas', label: 'Provas', icon: FileText },
     { href: '/revisoes', label: 'Revisões', icon: CalendarCheck },
     { href: '/historico', label: 'Histórico', icon: History },
     { href: '/caderno-de-erros', label: 'Caderno de Erros', icon: BookOpen },

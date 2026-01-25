@@ -7,7 +7,8 @@ import {
     TrendingUp,
     Target,
     Tags,
-    FileText
+    FileText,
+    Calendar
 } from 'lucide-react'
 import DisciplinasTab from './components/DisciplinasTab'
 import SubdisciplinasTab from './components/SubdisciplinasTab'
@@ -15,8 +16,9 @@ import EvolucaoTab from './components/EvolucaoTab'
 import MetasTab from './components/MetasTab'
 import AssuntosTab from './components/AssuntosTab'
 import ProvasTab from './components/ProvasTab'
+import EvolucaoDiariaTab from './components/EvolucaoDiariaTab'
 
-type Tab = 'disciplinas' | 'subdisciplinas' | 'assuntos' | 'evolucao' | 'metas' | 'provas'
+type Tab = 'disciplinas' | 'subdisciplinas' | 'assuntos' | 'evolucao' | 'evolucao-diaria' | 'metas' | 'provas'
 
 export default function MetricasPage() {
     const [activeTab, setActiveTab] = useState<Tab>('disciplinas')
@@ -26,7 +28,8 @@ export default function MetricasPage() {
         { id: 'subdisciplinas', label: 'Subdisciplinas', icon: Layers },
         { id: 'assuntos', label: 'Assuntos', icon: Tags },
         { id: 'provas', label: 'Provas na Íntegra', icon: FileText },
-        { id: 'evolucao', label: 'Evolução', icon: TrendingUp },
+        { id: 'evolucao', label: 'Evolução Mensal', icon: TrendingUp },
+        { id: 'evolucao-diaria', label: 'Evolução Diária', icon: Calendar },
         { id: 'metas', label: 'Metas', icon: Target },
     ]
 
@@ -68,6 +71,7 @@ export default function MetricasPage() {
                 {activeTab === 'assuntos' && <AssuntosTab />}
                 {activeTab === 'provas' && <ProvasTab />}
                 {activeTab === 'evolucao' && <EvolucaoTab />}
+                {activeTab === 'evolucao-diaria' && <EvolucaoDiariaTab />}
                 {activeTab === 'metas' && <MetasTab />}
             </div>
         </div>
