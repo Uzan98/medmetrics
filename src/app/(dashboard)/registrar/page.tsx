@@ -473,6 +473,15 @@ function RegistrarContent() {
         )
     }
 
+    const errors = form.questionsDone && form.correctAnswers
+        ? Number(form.questionsDone) - Number(form.correctAnswers)
+        : null
+
+    const accuracy =
+        form.questionsDone && form.correctAnswers && Number(form.questionsDone) > 0
+            ? ((Number(form.correctAnswers) / Number(form.questionsDone)) * 100).toFixed(1)
+            : null
+
     // Tela de opções de revisão após salvar
     if (showReviewOptions) {
         return (
@@ -624,14 +633,7 @@ function RegistrarContent() {
     const selectedDiscipline = disciplines.find(d => d.id === Number(form.disciplineId))
     const selectedSubdiscipline = subdisciplines.find(s => s.id === Number(form.subdisciplineId))
 
-    const errors = form.questionsDone && form.correctAnswers
-        ? Number(form.questionsDone) - Number(form.correctAnswers)
-        : null
 
-    const accuracy =
-        form.questionsDone && form.correctAnswers && Number(form.questionsDone) > 0
-            ? ((Number(form.correctAnswers) / Number(form.questionsDone)) * 100).toFixed(1)
-            : null
 
     return (
         <div className="max-w-2xl mx-auto animate-fade-in">

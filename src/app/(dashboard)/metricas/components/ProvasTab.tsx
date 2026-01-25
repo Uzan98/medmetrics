@@ -190,7 +190,7 @@ export default function ProvasTab() {
                             <Tooltip
                                 contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
                                 itemStyle={{ color: '#fff' }}
-                                formatter={(value: number) => [`${value}%`, 'Acertos']}
+                                formatter={(value: any) => [`${Number(value)}%`, 'Acertos']}
                                 labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem' }}
                             />
                             <Line
