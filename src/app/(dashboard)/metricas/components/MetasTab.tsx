@@ -37,7 +37,7 @@ export default function MetasTab() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            const [goalsRes, logsRes, allLogsRes] = await Promise.all([
+            const [goalsRes, logsRes, allLogsRes, examsRes] = await Promise.all([
                 supabase
                     .from('user_goals')
                     .select('*')
@@ -52,7 +52,13 @@ export default function MetasTab() {
                 supabase
                     .from('question_logs')
                     .select('questions_done')
-                    .eq('user_id', user.id)
+                    .eq('user_id', user.id),
+                supabase
+                    .from('exam_scores')
+                    .select('questions_total, exams!inner(date, user_id)')
+                    .eq('exams.user_id', user.id)
+                    .gte('exams.date', `${currentYear}-01-01`)
+                    .lte('exams.date', `${currentYear}-12-31`)
             ])
 
             if (goalsRes.data) {
@@ -64,25 +70,71 @@ export default function MetasTab() {
                 setTargets(initialTargets)
             }
 
+            const stats: { [key: number]: number } = {}
+            let yearTotal = 0
+
+            // Process Individual Logs
             if (logsRes.data) {
-                const stats: { [key: number]: number } = {}
-                let yearTotal = 0
                 logsRes.data.forEach((log) => {
                     const month = new Date(log.date).getMonth() + 1
                     stats[month] = (stats[month] || 0) + log.questions_done
                     yearTotal += log.questions_done
                 })
-                setMonthlyStats(stats)
-
-                // Calculate rough daily pace for year (simplified)
-                const dayOfYear = Math.floor((new Date().getTime() - new Date(currentYear, 0, 0).getTime()) / 1000 / 60 / 60 / 24)
-                setGlobalPace(dayOfYear > 0 ? Math.round(yearTotal / dayOfYear) : 0)
             }
 
+            // Process Exam Scores
+            if (examsRes.data) {
+                examsRes.data.forEach((score) => {
+                    // Type assertion since we know the structure due to the query
+                    const examData = score.exams as unknown as { date: string }
+                    // Safer parsing: split YYYY-MM-DD. formatted dates are usually ISO strings or YYYY-MM-DD
+                    const dateStr = examData.date
+                    let month = 0
+
+                    if (dateStr.includes('T')) {
+                        // timestamp string?
+                        month = new Date(dateStr).getMonth() + 1
+                    } else if (dateStr.includes('-')) {
+                        // YYYY-MM-DD
+                        month = parseInt(dateStr.split('-')[1], 10)
+                    } else {
+                        // Fallback
+                        month = new Date(dateStr).getMonth() + 1
+                    }
+
+                    if (month >= 1 && month <= 12) {
+                        stats[month] = (stats[month] || 0) + score.questions_total
+                        yearTotal += score.questions_total
+                    }
+                })
+            }
+
+            setMonthlyStats(stats)
+
+            // Calculate rough daily pace for year (simplified)
+            const dayOfYear = Math.floor((new Date().getTime() - new Date(currentYear, 0, 0).getTime()) / 1000 / 60 / 60 / 24)
+            setGlobalPace(dayOfYear > 0 ? Math.round(yearTotal / dayOfYear) : 0)
+
+            // Calculate total valid questions (including exams)
+            let totalAll = 0
             if (allLogsRes.data) {
-                const total = allLogsRes.data.reduce((acc, curr) => acc + curr.questions_done, 0)
-                setTotalValidQuestions(total)
+                totalAll += allLogsRes.data.reduce((acc, curr) => acc + curr.questions_done, 0)
             }
+
+            // For total valid questions, we should fetch ALL exams, not just this year if we want "Total Geral" to be accurate
+            // Or we can just use the yearTotal if "Total Geral" refers to the year
+            // Looking at the UI, it says "Total Geral", implying lifetime.
+            // Let's make a quick separate fetch for All Exams total to be accurate
+            const { data: allExamsRes } = await supabase
+                .from('exam_scores')
+                .select('questions_total, exams!inner(user_id)')
+                .eq('exams.user_id', user.id)
+
+            if (allExamsRes) {
+                totalAll += allExamsRes.reduce((acc, curr) => acc + curr.questions_total, 0)
+            }
+
+            setTotalValidQuestions(totalAll)
         } catch (error) {
             console.error('Error loading data:', error)
         } finally {

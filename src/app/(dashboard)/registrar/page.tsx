@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Loader2, CheckCircle2, AlertCircle, Save, Plus, Calendar, Zap } from 'lucide-react'
 import { AddSubdisciplineModal, AddTopicModal } from '@/components/ui'
 import { addDays, format } from 'date-fns'
-import type { Discipline, Subdiscipline, Topic } from '@/types/database'
+import type { Discipline, Subdiscipline, Topic, ExamBoard } from '@/types/database'
 
 import { Suspense } from 'react'
 
@@ -48,10 +48,31 @@ function RegistrarContent() {
         notes: '',
     })
 
+    // Estado para "Prova na Íntegra"
+    const [registrationMode, setRegistrationMode] = useState<'single' | 'exam'>('single')
+    const [boards, setBoards] = useState<ExamBoard[]>([])
+    const [examForm, setExamForm] = useState({
+        year: new Date().getFullYear().toString(),
+        boardId: '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        title: '',
+        scores: {
+            'Clínica Médica': { total: '', correct: '' },
+            'Cirurgia': { total: '', correct: '' },
+            'Ginecologia e Obstetrícia': { total: '', correct: '' },
+            'Pediatria': { total: '', correct: '' },
+            'Medicina Preventiva': { total: '', correct: '' },
+        }
+    })
+    const [newBoardName, setNewBoardName] = useState('')
+    const [showAddBoard, setShowAddBoard] = useState(false)
+    const [creatingBoard, setCreatingBoard] = useState(false)
+
     const supabase = createClient()
 
     useEffect(() => {
         loadData()
+        loadBoards()
     }, [])
 
     useEffect(() => {
@@ -128,6 +149,19 @@ function RegistrarContent() {
         }
     }
 
+    async function loadBoards() {
+        try {
+            const { data } = await supabase
+                .from('exam_boards')
+                .select('*')
+                .order('name')
+
+            if (data) setBoards(data)
+        } catch (err) {
+            console.error('Error loading boards:', err)
+        }
+    }
+
     async function checkDuplicate() {
         if (!form.date || !form.disciplineId) {
             setDuplicateWarning(false)
@@ -180,8 +214,6 @@ function RegistrarContent() {
                 throw new Error('O número de acertos não pode ser maior que o número de questões')
             }
 
-
-
             const { data: insertedLog, error: insertError } = await supabase
                 .from('question_logs')
                 .insert({
@@ -208,6 +240,119 @@ function RegistrarContent() {
 
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Erro ao salvar')
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    async function handleCreateBoard() {
+        if (!newBoardName.trim()) return
+        setCreatingBoard(true)
+        try {
+            const { data, error } = await supabase
+                .from('exam_boards')
+                .insert({ name: newBoardName.trim() })
+                .select()
+                .single()
+
+            if (error) throw error
+
+            if (data) {
+                setBoards(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+                setExamForm(prev => ({ ...prev, boardId: String(data.id) }))
+                setShowAddBoard(false)
+                setNewBoardName('')
+            }
+        } catch (err) {
+            console.error('Error creating board:', err)
+            setError('Erro ao criar banca. Verifique se já existe.')
+        } finally {
+            setCreatingBoard(false)
+        }
+    }
+
+    async function handleExamSubmit(e: React.FormEvent) {
+        e.preventDefault()
+        setError(null)
+        setSuccess(false)
+        setSubmitting(true)
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) throw new Error('Usuário não autenticado')
+            if (!examForm.boardId) throw new Error('Selecione uma banca')
+
+            // 1. Create Exam
+            const { data: exam, error: examError } = await supabase
+                .from('exams')
+                .insert({
+                    user_id: user.id,
+                    board_id: Number(examForm.boardId),
+                    year: Number(examForm.year),
+                    date: examForm.date,
+                    title: examForm.title || null
+                })
+                .select()
+                .single()
+
+            if (examError) throw examError
+
+            // 2. Prepare Scores
+            // 2. Prepare Scores
+            const scoresToInsert = []
+
+            // Map form names to DB names or partial matches
+            const disciplineMapping: { [key: string]: string } = {
+                'Clínica Médica': 'Clínica Médica',
+                'Cirurgia': 'Cirurgia Geral e Trauma',
+                'Ginecologia e Obstetrícia': 'Ginecologia e Obstetrícia',
+                'Pediatria': 'Pediatria',
+                'Medicina Preventiva': 'Saúde Coletiva / Preventiva'
+            }
+
+            for (const [discName, scores] of Object.entries(examForm.scores)) {
+                if (scores.total && scores.correct) {
+                    const targetName = disciplineMapping[discName]
+                    const disc = disciplines.find(d => d.name === targetName || d.name.includes(targetName) || targetName.includes(d.name))
+
+                    if (disc) {
+                        scoresToInsert.push({
+                            exam_id: exam.id,
+                            discipline_id: disc.id,
+                            questions_total: Number(scores.total),
+                            questions_correct: Number(scores.correct)
+                        })
+                    } else {
+                        console.warn(`Disciplina não encontrada para: ${discName} (Target: ${targetName})`)
+                    }
+                }
+            }
+
+            if (scoresToInsert.length > 0) {
+                const { error: scoresError } = await supabase
+                    .from('exam_scores')
+                    .insert(scoresToInsert)
+
+                if (scoresError) throw scoresError
+            }
+
+            setSuccess(true)
+            setExamForm({
+                year: new Date().getFullYear().toString(),
+                boardId: '',
+                date: format(new Date(), 'yyyy-MM-dd'),
+                title: '',
+                scores: {
+                    'Clínica Médica': { total: '', correct: '' },
+                    'Cirurgia': { total: '', correct: '' },
+                    'Ginecologia e Obstetrícia': { total: '', correct: '' },
+                    'Pediatria': { total: '', correct: '' },
+                    'Medicina Preventiva': { total: '', correct: '' },
+                }
+            })
+
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Erro ao salvar prova')
         } finally {
             setSubmitting(false)
         }
@@ -295,6 +440,7 @@ function RegistrarContent() {
         setSavedLogId(null)
         setSuccess(false)
         setSelectedReviews({ day1: true, day7: true, day30: true })
+        setDuplicateWarning(false)
     }
 
     function handleSubdisciplineCreated(newSub: { id: number; name: string }) {
@@ -318,18 +464,6 @@ function RegistrarContent() {
         setTopics(prev => [...prev, newTopicEntry])
         setForm(prev => ({ ...prev, topicId: String(newTopic.id) }))
     }
-
-    const selectedDiscipline = disciplines.find(d => d.id === Number(form.disciplineId))
-    const selectedSubdiscipline = subdisciplines.find(s => s.id === Number(form.subdisciplineId))
-
-    const errors = form.questionsDone && form.correctAnswers
-        ? Number(form.questionsDone) - Number(form.correctAnswers)
-        : null
-
-    const accuracy =
-        form.questionsDone && form.correctAnswers && Number(form.questionsDone) > 0
-            ? ((Number(form.correctAnswers) / Number(form.questionsDone)) * 100).toFixed(1)
-            : null
 
     if (loading) {
         return (
@@ -487,277 +621,458 @@ function RegistrarContent() {
         )
     }
 
+    const selectedDiscipline = disciplines.find(d => d.id === Number(form.disciplineId))
+    const selectedSubdiscipline = subdisciplines.find(s => s.id === Number(form.subdisciplineId))
+
+    const errors = form.questionsDone && form.correctAnswers
+        ? Number(form.questionsDone) - Number(form.correctAnswers)
+        : null
+
+    const accuracy =
+        form.questionsDone && form.correctAnswers && Number(form.questionsDone) > 0
+            ? ((Number(form.correctAnswers) / Number(form.questionsDone)) * 100).toFixed(1)
+            : null
+
     return (
         <div className="max-w-2xl mx-auto animate-fade-in">
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-white">Registrar Questões</h1>
-                <p className="text-slate-400">Adicione um novo registro de estudo</p>
-            </div>
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-white">Registrar</h1>
+                    <p className="text-slate-400">Adicione suas questões ou provas completas</p>
+                </div >
+
+                <div className="bg-slate-800/50 p-1 rounded-xl flex gap-1 border border-slate-700/50">
+                    <button
+                        onClick={() => setRegistrationMode('single')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${registrationMode === 'single'
+                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                            }`}
+                    >
+                        Questões Avulsas
+                    </button>
+                    <button
+                        onClick={() => setRegistrationMode('exam')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${registrationMode === 'exam'
+                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                            }`}
+                    >
+                        Prova na Íntegra
+                    </button>
+                </div>
+            </div >
 
             {success && (
-                <div className="mb-6 p-4 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center gap-3">
+                <div className="mb-6 p-4 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center gap-3 animate-fade-in">
                     <CheckCircle2 className="w-5 h-5 text-green-500" />
                     <span className="text-green-400">Registro salvo com sucesso!</span>
                 </div>
-            )}
+            )
+            }
 
-            {error && (
-                <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-500" />
-                    <span className="text-red-400">{error}</span>
-                </div>
-            )}
-
-            {duplicateWarning && (
-                <div className="mb-6 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center gap-3">
-                    <AlertCircle className="w-5 h-5 text-yellow-500" />
-                    <span className="text-yellow-400">
-                        Já existe um registro para esta data e disciplina. Você pode continuar se quiser.
-                    </span>
-                </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
-                <div className="space-y-5">
-                    {/* Date */}
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Data</label>
-                        <input
-                            type="date"
-                            value={form.date}
-
-                            onChange={(e) => setForm({ ...form, date: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
-                            required
-                        />
+            {
+                error && (
+                    <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3 animate-fade-in">
+                        <AlertCircle className="w-5 h-5 text-red-500" />
+                        <span className="text-red-400">{error}</span>
                     </div>
+                )
+            }
 
-                    {/* Discipline */}
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Disciplina</label>
-                        <select
-                            value={form.disciplineId}
-                            onChange={(e) => setForm({
-                                ...form,
-                                disciplineId: e.target.value,
-                                subdisciplineId: '',
-                                topicId: ''
-                            })}
-                            className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
-                            required
-                        >
-                            <option value="">Selecione...</option>
-                            {disciplines.map((d) => (
-                                <option key={d.id} value={d.id}>
-                                    {d.name}
-                                </option>
+            {
+                registrationMode === 'exam' ? (
+                    <form onSubmit={handleExamSubmit} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 space-y-6 animate-fade-in">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Banca</label>
+                                <div className="flex gap-2">
+                                    <select
+                                        value={examForm.boardId}
+                                        onChange={(e) => setExamForm({ ...examForm, boardId: e.target.value })}
+                                        className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white outline-none focus:border-blue-500 transition-all"
+                                        required
+                                    >
+                                        <option value="">Selecione...</option>
+                                        {boards.map(b => (
+                                            <option key={b.id} value={b.id}>{b.name}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddBoard(!showAddBoard)}
+                                        className={`px-3 py-3 rounded-xl border transition-all ${showAddBoard
+                                            ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
+                                            : 'bg-slate-900/50 border-slate-700 text-slate-400 hover:text-white'
+                                            }`}
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                {showAddBoard && (
+                                    <div className="mt-2 flex gap-2 animate-fade-in">
+                                        <input
+                                            type="text"
+                                            value={newBoardName}
+                                            onChange={(e) => setNewBoardName(e.target.value)}
+                                            placeholder="Nome da banca..."
+                                            className="flex-1 px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-white"
+                                            autoFocus
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleCreateBoard}
+                                            disabled={creatingBoard || !newBoardName.trim()}
+                                            className="px-3 py-2 bg-blue-500 rounded-lg text-white text-sm font-medium disabled:opacity-50"
+                                        >
+                                            {creatingBoard ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Criar'}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Ano</label>
+                                <input
+                                    type="number"
+                                    min="2000"
+                                    max={new Date().getFullYear() + 1}
+                                    value={examForm.year}
+                                    onChange={(e) => setExamForm({ ...examForm, year: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white outline-none focus:border-blue-500 transition-all"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Data Realizada</label>
+                                <input
+                                    type="date"
+                                    value={examForm.date}
+                                    onChange={(e) => setExamForm({ ...examForm, date: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white outline-none focus:border-blue-500 transition-all"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Título (Opcional)</label>
+                                <input
+                                    type="text"
+                                    value={examForm.title}
+                                    onChange={(e) => setExamForm({ ...examForm, title: e.target.value })}
+                                    placeholder="Ex: Simulado Nacional 1"
+                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white outline-none focus:border-blue-500 transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 pt-4 border-t border-slate-700/50">
+                            <h3 className="text-lg font-semibold text-white mb-4">Notas por Grande Área</h3>
+                            {Object.keys(examForm.scores).map((discName) => (
+                                <div key={discName} className="flex items-center gap-4">
+                                    <div className="w-48">
+                                        <span className="text-sm font-medium text-slate-300">{discName}</span>
+                                    </div>
+                                    <div className="flex-1 grid grid-cols-2 gap-4">
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                placeholder="Total"
+                                                value={examForm.scores[discName as keyof typeof examForm.scores].total}
+                                                onChange={(e) => {
+                                                    const newScores = { ...examForm.scores }
+                                                    newScores[discName as keyof typeof examForm.scores].total = e.target.value
+                                                    setExamForm({ ...examForm, scores: newScores })
+                                                }}
+                                                className="w-full pl-3 pr-8 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white text-sm"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">Qts</span>
+                                        </div>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                placeholder="Acertos"
+                                                value={examForm.scores[discName as keyof typeof examForm.scores].correct}
+                                                onChange={(e) => {
+                                                    const newScores = { ...examForm.scores }
+                                                    newScores[discName as keyof typeof examForm.scores].correct = e.target.value
+                                                    setExamForm({ ...examForm, scores: newScores })
+                                                }}
+                                                className="w-full pl-3 pr-8 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white text-sm"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">Acertos</span>
+                                        </div>
+                                    </div>
+                                </div>
                             ))}
-                        </select>
-                    </div>
-
-                    {/* Subdiscipline */}
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Subdisciplina</label>
-                        <div className="flex gap-2">
-                            <select
-                                value={form.subdisciplineId}
-                                onChange={(e) => setForm({
-                                    ...form,
-                                    subdisciplineId: e.target.value,
-                                    topicId: ''
-                                })}
-                                className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white disabled:opacity-50"
-                                disabled={!form.disciplineId}
-                            >
-                                <option value="">Selecione...</option>
-                                {filteredSubdisciplines.map((s) => (
-                                    <option key={s.id} value={s.id}>
-                                        {s.name}
-                                    </option>
-                                ))}
-                            </select>
-                            <button
-                                type="button"
-                                onClick={() => setShowAddModal(true)}
-                                disabled={!form.disciplineId}
-                                className="px-4 py-3 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-400 hover:bg-blue-500/30 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                title="Adicionar nova subdisciplina"
-                            >
-                                <Plus className="w-5 h-5" />
-                            </button>
                         </div>
-                        {form.disciplineId && (
-                            <p className="text-xs text-slate-500 mt-2">
-                                Não encontrou? Clique no + para adicionar uma nova subdisciplina.
-                            </p>
-                        )}
-                    </div>
 
-                    {/* Topic (Assunto) */}
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Assunto (Opcional)</label>
-                        <div className="flex gap-2">
-                            <select
-                                value={form.topicId}
-                                onChange={(e) => setForm({ ...form, topicId: e.target.value })}
-                                className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white disabled:opacity-50"
-                                disabled={!form.subdisciplineId}
-                            >
-                                <option value="">Selecione...</option>
-                                {filteredTopics.map((t) => (
-                                    <option key={t.id} value={t.id}>
-                                        {t.name}
-                                    </option>
-                                ))}
-                            </select>
-                            <button
-                                type="button"
-                                onClick={() => setShowAddTopicModal(true)}
-                                disabled={!form.subdisciplineId}
-                                className="px-4 py-3 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-400 hover:bg-blue-500/30 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                title="Adicionar novo assunto"
-                            >
-                                <Plus className="w-5 h-5" />
-                            </button>
-                        </div>
-                        {form.subdisciplineId && (
-                            <p className="text-xs text-slate-500 mt-2">
-                                Refine seu estudo selecionando um assunto específico.
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Source */}
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                            Fonte (banco, curso, etc.)
-                        </label>
-                        <input
-                            type="text"
-                            value={form.source}
-                            onChange={(e) => setForm({ ...form, source: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500"
-                            placeholder="Ex: Medcel, Estratégia, USP..."
-                        />
-                    </div>
-
-                    {/* Questions and Answers */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Questões feitas</label>
-                            <input
-                                type="number"
-                                min="1"
-                                value={form.questionsDone}
-                                onChange={(e) => setForm({ ...form, questionsDone: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Acertos</label>
-                            <input
-                                type="number"
-                                min="0"
-                                max={form.questionsDone || undefined}
-                                value={form.correctAnswers}
-                                onChange={(e) => setForm({ ...form, correctAnswers: e.target.value })}
-                                className={`w-full px-4 py-3 bg-slate-900/50 border rounded-xl text-white ${form.correctAnswers && form.questionsDone &&
-                                    Number(form.correctAnswers) > Number(form.questionsDone)
-                                    ? 'border-red-500'
-                                    : 'border-slate-700'
-                                    }`}
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    {/* Stats preview */}
-                    {errors !== null && (
-                        <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-900/30">
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-red-400">{errors}</p>
-                                <p className="text-xs text-slate-500">erros</p>
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="w-full mt-6 py-4 px-6 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.02]"
+                            style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)' }}
+                        >
+                            {submitting ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <>
+                                    <Save className="w-5 h-5" />
+                                    Salvar Prova Completa
+                                </>
+                            )}
+                        </button>
+                    </form>
+                ) : (
+                    <form onSubmit={handleSubmit} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                        <div className="space-y-5">
+                            {/* Date */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Data</label>
+                                <input
+                                    type="date"
+                                    value={form.date}
+                                    onChange={(e) => setForm({ ...form, date: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
+                                    required
+                                />
                             </div>
-                            <div className="text-center">
-                                <p className={`text-2xl font-bold ${Number(accuracy) >= 70 ? 'text-green-400' :
-                                    Number(accuracy) >= 50 ? 'text-yellow-400' : 'text-red-400'
-                                    }`}>{accuracy}%</p>
-                                <p className="text-xs text-slate-500">aproveitamento</p>
+
+                            {/* Discipline */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Disciplina</label>
+                                <select
+                                    value={form.disciplineId}
+                                    onChange={(e) => setForm({
+                                        ...form,
+                                        disciplineId: e.target.value,
+                                        subdisciplineId: '',
+                                        topicId: ''
+                                    })}
+                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
+                                    required
+                                >
+                                    <option value="">Selecione...</option>
+                                    {disciplines.map((d) => (
+                                        <option key={d.id} value={d.id}>
+                                            {d.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Subdiscipline */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Subdisciplina</label>
+                                <div className="flex gap-2">
+                                    <select
+                                        value={form.subdisciplineId}
+                                        onChange={(e) => setForm({
+                                            ...form,
+                                            subdisciplineId: e.target.value,
+                                            topicId: ''
+                                        })}
+                                        className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white disabled:opacity-50"
+                                        disabled={!form.disciplineId}
+                                    >
+                                        <option value="">Selecione...</option>
+                                        {filteredSubdisciplines.map((s) => (
+                                            <option key={s.id} value={s.id}>
+                                                {s.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddModal(true)}
+                                        disabled={!form.disciplineId}
+                                        className="px-4 py-3 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-400 hover:bg-blue-500/30 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        title="Adicionar nova subdisciplina"
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                    </button>
+                                </div>
+                                {form.disciplineId && (
+                                    <p className="text-xs text-slate-500 mt-2">
+                                        Não encontrou? Clique no + para adicionar uma nova subdisciplina.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Topic (Assunto) */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Assunto (Opcional)</label>
+                                <div className="flex gap-2">
+                                    <select
+                                        value={form.topicId}
+                                        onChange={(e) => setForm({ ...form, topicId: e.target.value })}
+                                        className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white disabled:opacity-50"
+                                        disabled={!form.subdisciplineId}
+                                    >
+                                        <option value="">Selecione...</option>
+                                        {filteredTopics.map((t) => (
+                                            <option key={t.id} value={t.id}>
+                                                {t.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddTopicModal(true)}
+                                        disabled={!form.subdisciplineId}
+                                        className="px-4 py-3 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-400 hover:bg-blue-500/30 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        title="Adicionar novo assunto"
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                    </button>
+                                </div>
+                                {form.subdisciplineId && (
+                                    <p className="text-xs text-slate-500 mt-2">
+                                        Refine seu estudo selecionando um assunto específico.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Source */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Fonte (banco, curso, etc.)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.source}
+                                    onChange={(e) => setForm({ ...form, source: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500"
+                                    placeholder="Ex: Medcel, Estratégia, USP..."
+                                />
+                            </div>
+
+                            {/* Questions and Answers */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Questões feitas</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={form.questionsDone}
+                                        onChange={(e) => setForm({ ...form, questionsDone: e.target.value })}
+                                        className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Acertos</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max={form.questionsDone || undefined}
+                                        value={form.correctAnswers}
+                                        onChange={(e) => setForm({ ...form, correctAnswers: e.target.value })}
+                                        className={`w-full px-4 py-3 bg-slate-900/50 border rounded-xl text-white ${form.correctAnswers && form.questionsDone &&
+                                            Number(form.correctAnswers) > Number(form.questionsDone)
+                                            ? 'border-red-500'
+                                            : 'border-slate-700'
+                                            }`}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Stats preview */}
+                            {errors !== null && (
+                                <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-900/30">
+                                    <div className="text-center">
+                                        <p className="text-2xl font-bold text-red-400">{errors}</p>
+                                        <p className="text-xs text-slate-500">erros</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className={`text-2xl font-bold ${Number(accuracy) >= 70 ? 'text-green-400' :
+                                            Number(accuracy) >= 50 ? 'text-yellow-400' : 'text-red-400'
+                                            }`}>{accuracy}%</p>
+                                        <p className="text-xs text-slate-500">aproveitamento</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Time */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Tempo (minutos) - opcional
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={form.timeMinutes}
+                                    onChange={(e) => setForm({ ...form, timeMinutes: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
+                                    placeholder="Ex: 60"
+                                />
+                            </div>
+
+                            {/* Notes */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Observações - opcional
+                                </label>
+                                <textarea
+                                    value={form.notes}
+                                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                                    rows={3}
+                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 resize-none"
+                                    placeholder="Anotações sobre este bloco de estudo..."
+                                />
                             </div>
                         </div>
-                    )}
 
-                    {/* Time */}
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                            Tempo (minutos) - opcional
-                        </label>
-                        <input
-                            type="number"
-                            min="1"
-                            value={form.timeMinutes}
-                            onChange={(e) => setForm({ ...form, timeMinutes: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
-                            placeholder="Ex: 60"
-                        />
-                    </div>
-
-                    {/* Notes */}
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                            Observações - opcional
-                        </label>
-                        <textarea
-                            value={form.notes}
-                            onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                            rows={3}
-                            className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 resize-none"
-                            placeholder="Anotações sobre este bloco de estudo..."
-                        />
-                    </div>
-                </div>
-
-                {/* Submit button */}
-                <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full mt-6 py-4 px-6 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.02]"
-                    style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)' }}
-                >
-                    {submitting ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                        <>
-                            <Save className="w-5 h-5" />
-                            Salvar Registro
-                        </>
-                    )}
-                </button>
-            </form>
+                        {/* Submit button */}
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="w-full mt-6 py-4 px-6 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.02]"
+                            style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)' }}
+                        >
+                            {submitting ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <>
+                                    <Save className="w-5 h-5" />
+                                    Salvar Registro
+                                </>
+                            )}
+                        </button>
+                    </form>
+                )
+            }
 
             {/* Modal para adicionar subdisciplina */}
-            {selectedDiscipline && (
-                <AddSubdisciplineModal
-                    isOpen={showAddModal}
-                    onClose={() => setShowAddModal(false)}
-                    disciplineId={Number(form.disciplineId)}
-                    disciplineName={selectedDiscipline.name}
-                    onCreated={handleSubdisciplineCreated}
-                />
-            )}
+            {
+                selectedDiscipline && (
+                    <AddSubdisciplineModal
+                        isOpen={showAddModal}
+                        onClose={() => setShowAddModal(false)}
+                        disciplineId={Number(form.disciplineId)}
+                        disciplineName={selectedDiscipline.name}
+                        onCreated={handleSubdisciplineCreated}
+                    />
+                )
+            }
 
             {/* Modal para adicionar assunto */}
-            {selectedSubdiscipline && (
-                <AddTopicModal
-                    isOpen={showAddTopicModal}
-                    onClose={() => setShowAddTopicModal(false)}
-                    subdisciplineId={Number(form.subdisciplineId)}
-                    subdisciplineName={selectedSubdiscipline.name}
-                    onCreated={handleTopicCreated}
-                />
-            )}
-        </div>
+            {
+                selectedSubdiscipline && (
+                    <AddTopicModal
+                        isOpen={showAddTopicModal}
+                        onClose={() => setShowAddTopicModal(false)}
+                        subdisciplineId={Number(form.subdisciplineId)}
+                        subdisciplineName={selectedSubdiscipline.name}
+                        onCreated={handleTopicCreated}
+                    />
+                )
+            }
+        </div >
     )
 }
 

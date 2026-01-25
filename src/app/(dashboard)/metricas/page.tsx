@@ -6,15 +6,17 @@ import {
     Layers,
     TrendingUp,
     Target,
-    Tags
+    Tags,
+    FileText
 } from 'lucide-react'
 import DisciplinasTab from './components/DisciplinasTab'
 import SubdisciplinasTab from './components/SubdisciplinasTab'
 import EvolucaoTab from './components/EvolucaoTab'
 import MetasTab from './components/MetasTab'
 import AssuntosTab from './components/AssuntosTab'
+import ProvasTab from './components/ProvasTab'
 
-type Tab = 'disciplinas' | 'subdisciplinas' | 'assuntos' | 'evolucao' | 'metas'
+type Tab = 'disciplinas' | 'subdisciplinas' | 'assuntos' | 'evolucao' | 'metas' | 'provas'
 
 export default function MetricasPage() {
     const [activeTab, setActiveTab] = useState<Tab>('disciplinas')
@@ -23,6 +25,7 @@ export default function MetricasPage() {
         { id: 'disciplinas', label: 'Disciplinas', icon: BookOpen },
         { id: 'subdisciplinas', label: 'Subdisciplinas', icon: Layers },
         { id: 'assuntos', label: 'Assuntos', icon: Tags },
+        { id: 'provas', label: 'Provas na Íntegra', icon: FileText },
         { id: 'evolucao', label: 'Evolução', icon: TrendingUp },
         { id: 'metas', label: 'Metas', icon: Target },
     ]
@@ -63,6 +66,7 @@ export default function MetricasPage() {
                 {activeTab === 'disciplinas' && <DisciplinasTab />}
                 {activeTab === 'subdisciplinas' && <SubdisciplinasTab />}
                 {activeTab === 'assuntos' && <AssuntosTab />}
+                {activeTab === 'provas' && <ProvasTab />}
                 {activeTab === 'evolucao' && <EvolucaoTab />}
                 {activeTab === 'metas' && <MetasTab />}
             </div>

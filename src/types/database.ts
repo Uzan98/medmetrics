@@ -20,28 +20,31 @@ export type Database = {
                     notes: string | null
                     review_count: number
                     created_at: string
+                    image_urls: string[] | null
                 }
                 Insert: {
-                    id?: string
-                    user_id: string
-                    discipline_id?: number | null
-                    topic_id?: number | null
-                    question_text: string
                     answer_text: string
-                    notes?: string | null
-                    review_count?: number
                     created_at?: string
+                    discipline_id?: number | null
+                    id?: string
+                    image_urls?: string[] | null
+                    notes?: string | null
+                    question_text: string
+                    review_count?: number
+                    topic_id?: number | null
+                    user_id: string
                 }
                 Update: {
-                    id?: string
-                    user_id?: string
-                    discipline_id?: number | null
-                    topic_id?: number | null
-                    question_text?: string
                     answer_text?: string
-                    notes?: string | null
-                    review_count?: number
                     created_at?: string
+                    discipline_id?: number | null
+                    id?: string
+                    image_urls?: string[] | null
+                    notes?: string | null
+                    question_text?: string
+                    review_count?: number
+                    topic_id?: number | null
+                    user_id?: string
                 }
                 Relationships: [
                     {
@@ -57,7 +60,105 @@ export type Database = {
                         isOneToOne: false
                         referencedRelation: "topics"
                         referencedColumns: ["id"]
-                    }
+                    },
+                ]
+            }
+            exam_boards: {
+                Row: {
+                    created_at: string
+                    id: number
+                    name: string
+                }
+                Insert: {
+                    created_at?: string
+                    id?: number
+                    name: string
+                }
+                Update: {
+                    created_at?: string
+                    id?: number
+                    name?: string
+                }
+                Relationships: []
+            }
+            exam_scores: {
+                Row: {
+                    created_at: string
+                    discipline_id: number
+                    exam_id: string
+                    id: string
+                    questions_correct: number
+                    questions_total: number
+                }
+                Insert: {
+                    created_at?: string
+                    discipline_id: number
+                    exam_id: string
+                    id?: string
+                    questions_correct: number
+                    questions_total: number
+                }
+                Update: {
+                    created_at?: string
+                    discipline_id?: number
+                    exam_id?: string
+                    id?: string
+                    questions_correct?: number
+                    questions_total?: number
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "exam_scores_discipline_id_fkey"
+                        columns: ["discipline_id"]
+                        isOneToOne: false
+                        referencedRelation: "disciplines"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "exam_scores_exam_id_fkey"
+                        columns: ["exam_id"]
+                        isOneToOne: false
+                        referencedRelation: "exams"
+                        referencedColumns: ["id"]
+                    },
+                ]
+            }
+            exams: {
+                Row: {
+                    board_id: number | null
+                    created_at: string
+                    date: string
+                    id: string
+                    title: string | null
+                    user_id: string
+                    year: number
+                }
+                Insert: {
+                    board_id?: number | null
+                    created_at?: string
+                    date?: string
+                    id?: string
+                    title?: string | null
+                    user_id: string
+                    year: number
+                }
+                Update: {
+                    board_id?: number | null
+                    created_at?: string
+                    date?: string
+                    id?: string
+                    title?: string | null
+                    user_id?: string
+                    year?: number
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "exams_board_id_fkey"
+                        columns: ["board_id"]
+                        isOneToOne: false
+                        referencedRelation: "exam_boards"
+                        referencedColumns: ["id"]
+                    },
                 ]
             }
             disciplines: {
@@ -391,5 +492,8 @@ export type Topic = Tables<'topics'>
 export type QuestionLog = Tables<'question_logs'>
 export type UserGoal = Tables<'user_goals'>
 export type ScheduledReview = Tables<'scheduled_reviews'>
+export type Exam = Tables<'exams'>
+export type ExamBoard = Tables<'exam_boards'>
+export type ExamScore = Tables<'exam_scores'>
 export type StudySchedule = Tables<'study_schedules'>
 export type ScheduleItem = Tables<'schedule_items'>

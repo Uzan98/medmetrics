@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { getMonthName } from '@/lib/utils'
-import { format, subDays, startOfMonth, endOfMonth, addDays, isToday, isPast } from 'date-fns'
+import { format, subDays, startOfMonth, endOfMonth, addDays, isToday, isPast, startOfDay, endOfDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
     LineChart,
@@ -200,24 +200,71 @@ export default function DashboardPage() {
                 .order('name')
             setAllDisciplines(disciplines || [])
 
-            // Build query with filters
-            let query = supabase
+            // 1. Fetch Question Logs
+            let queryLogs = supabase
                 .from('question_logs')
-                .select(`
-                    *,
-                    disciplines(id, name),
-                    subdisciplines(id, name)
-                `)
+                .select(`*, disciplines(id, name), subdisciplines(id, name)`)
                 .eq('user_id', user.id)
                 .gte('date', format(startDate, 'yyyy-MM-dd'))
-
                 .order('date', { ascending: true })
 
             if (disciplineFilter !== 'all') {
-                query = query.eq('discipline_id', Number(disciplineFilter))
+                queryLogs = queryLogs.eq('discipline_id', Number(disciplineFilter))
             }
 
-            const { data: logs } = await query
+            // 2. Fetch Exams (flattened scores)
+            let queryExams = supabase
+                .from('exam_scores')
+                .select(`
+                    questions_total,
+                    questions_correct,
+                    discipline_id,
+                    disciplines(id, name),
+                    exams!inner(date, user_id)
+                `)
+                .eq('exams.user_id', user.id)
+                .gte('exams.date', format(startDate, 'yyyy-MM-dd'))
+
+            if (disciplineFilter !== 'all') {
+                queryExams = queryExams.eq('discipline_id', Number(disciplineFilter))
+            }
+
+            const [logsRes, examsRes] = await Promise.all([queryLogs, queryExams])
+
+            const logs = logsRes.data || []
+            const titleExams = examsRes.data || []
+
+            // 3. Unify Data
+            // We convert everything to a standard format for calculation
+            const safeParseDate = (dateStr: string) => {
+                if (!dateStr) return new Date()
+                if (dateStr.includes('T')) return new Date(dateStr)
+                // Handle YYYY-MM-DD manually to avoid timezone shift
+                const [y, m, d] = dateStr.split('-').map(Number)
+                return new Date(y, m - 1, d, 12, 0, 0) // Midday to be safe
+            }
+
+            const unifiedData = [
+                ...logs.map(l => ({
+                    date: l.date,
+                    parsedDate: safeParseDate(l.date),
+                    questions: l.questions_done,
+                    correct: l.correct_answers,
+                    discipline: l.disciplines,
+                    subdiscipline: l.subdisciplines,
+                    type: 'log'
+                })),
+                ...titleExams.map(e => ({
+                    date: (e.exams as any).date,
+                    parsedDate: safeParseDate((e.exams as any).date),
+                    questions: e.questions_total,
+                    correct: e.questions_correct,
+                    discipline: e.disciplines,
+                    subdiscipline: null, // Exams don't track subdiscipline granularity in scores usually
+                    type: 'exam'
+                }))
+            ].sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime())
+
 
             // Get current month goal
             const { data: goalData } = await supabase
@@ -228,32 +275,26 @@ export default function DashboardPage() {
                 .eq('month', currentMonth)
                 .single()
 
-            if (!logs) {
-                setLoading(false)
-                return
-            }
-
             // Calculate stats
-            const totalQuestions = logs.reduce((sum, log) => sum + log.questions_done, 0)
-            const totalCorrect = logs.reduce((sum, log) => sum + log.correct_answers, 0)
+            const totalQuestions = unifiedData.reduce((sum, item) => sum + item.questions, 0)
+            const totalCorrect = unifiedData.reduce((sum, item) => sum + item.correct, 0)
             const overallAccuracy = totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0
 
-            // Week stats (today already declared above)
+            // Helper for date filtering
+            const isWithin = (date: Date, start: Date, end: Date) => date >= start && date <= end
+
+            // Week stats
             const weekStart = subDays(today, 7)
-            const weekLogs = logs.filter(log => {
-                const logDate = new Date(log.date)
-                return logDate >= weekStart && logDate <= today
-            })
-            const weekQuestions = weekLogs.reduce((sum, log) => sum + log.questions_done, 0)
+            const weekQuestions = unifiedData
+                .filter(item => isWithin(item.parsedDate, weekStart, today))
+                .reduce((sum, item) => sum + item.questions, 0)
 
             // Month stats
             const monthStart = startOfMonth(today)
             const monthEnd = endOfMonth(today)
-            const monthLogs = logs.filter(log => {
-                const logDate = new Date(log.date)
-                return logDate >= monthStart && logDate <= monthEnd
-            })
-            const monthQuestions = monthLogs.reduce((sum, log) => sum + log.questions_done, 0)
+            const monthQuestions = unifiedData
+                .filter(item => isWithin(item.parsedDate, monthStart, monthEnd))
+                .reduce((sum, item) => sum + item.questions, 0)
 
             // Calculate pace
             const daysInMonth = monthEnd.getDate()
@@ -276,83 +317,90 @@ export default function DashboardPage() {
                 daysRemaining,
             })
 
-            // Calculate streak (independent of filters - uses all logs)
-            const { data: allDatesLogs } = await supabase
+
+
+            // Calculate streak (needs ALL logs + exams, not just filtered)
+            // Separate query for streak to be accurate over ALL time
+            const { data: allLogsDates } = await supabase
                 .from('question_logs')
                 .select('date')
                 .eq('user_id', user.id)
-                .order('date', { ascending: false })
 
-            if (allDatesLogs && allDatesLogs.length > 0) {
-                // Get unique dates sorted descending
-                const uniqueDates = [...new Set(allDatesLogs.map(l => l.date))].sort((a, b) =>
-                    new Date(b).getTime() - new Date(a).getTime()
+            const { data: allExamsDates } = await supabase
+                .from('exams')
+                .select('date')
+                .eq('user_id', user.id)
+
+            const allActivityDates = [
+                ...(allLogsDates || []).map(d => d.date),
+                ...(allExamsDates || []).map(d => d.date)
+            ]
+
+            const streakCalculator = (dates: string[]) => {
+                if (dates.length === 0) return { current: 0, record: 0, lastStudyDate: null }
+
+                const uniqueDates = [...new Set(dates)].sort((a, b) =>
+                    safeParseDate(b).getTime() - safeParseDate(a).getTime()
                 )
 
-                // Calculate current streak
-                let currentStreak = 0
                 const todayStr = format(new Date(), 'yyyy-MM-dd')
                 const yesterdayStr = format(subDays(new Date(), 1), 'yyyy-MM-dd')
-
-                // Check if studied today or yesterday (streak continues)
                 const lastStudyDate = uniqueDates[0]
+
+                let current = 0
                 if (lastStudyDate === todayStr || lastStudyDate === yesterdayStr) {
-                    currentStreak = 1
+                    current = 1
                     let checkDate = lastStudyDate === todayStr ? subDays(new Date(), 1) : subDays(new Date(), 2)
 
                     for (let i = 1; i < uniqueDates.length; i++) {
-                        const expectedDate = format(checkDate, 'yyyy-MM-dd')
-                        if (uniqueDates[i] === expectedDate) {
-                            currentStreak++
+                        const d = safeParseDate(uniqueDates[i])
+                        // Compare YYYY-MM-DD strings to avoid confusion
+                        if (format(d, 'yyyy-MM-dd') === format(checkDate, 'yyyy-MM-dd')) {
+                            current++
                             checkDate = subDays(checkDate, 1)
-                        } else if (new Date(uniqueDates[i]) < checkDate) {
+                        } else if (d < checkDate) {
                             break
                         }
                     }
                 }
 
-                // Calculate record (longest streak ever)
-                let maxStreak = 0
-                let tempStreak = 1
+                let max = 0
+                let temp = 1
+                // Calculate max streak
+                // Sort Ascending
                 const sortedAsc = [...uniqueDates].sort((a, b) =>
-                    new Date(a).getTime() - new Date(b).getTime()
+                    safeParseDate(a).getTime() - safeParseDate(b).getTime()
                 )
 
                 for (let i = 1; i < sortedAsc.length; i++) {
-                    const prevDate = new Date(sortedAsc[i - 1])
-                    const currDate = new Date(sortedAsc[i])
-                    const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24))
-
-                    if (diffDays === 1) {
-                        tempStreak++
-                    } else {
-                        maxStreak = Math.max(maxStreak, tempStreak)
-                        tempStreak = 1
+                    const prev = safeParseDate(sortedAsc[i - 1])
+                    const curr = safeParseDate(sortedAsc[i])
+                    const diff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24))
+                    if (diff === 1) temp++
+                    else {
+                        max = Math.max(max, temp)
+                        temp = 1
                     }
                 }
-                maxStreak = Math.max(maxStreak, tempStreak)
+                max = Math.max(max, temp)
 
-                setStreakData({
-                    current: currentStreak,
-                    record: maxStreak,
-                    lastStudyDate,
-                })
+                return { current, record: max, lastStudyDate }
             }
 
-            // Calculate monthly accuracy trend with qualitative scale
-            const monthlyStats: { [key: number]: { questions: number; correct: number } } = {}
-            logs.forEach(log => {
-                const month = new Date(log.date).getMonth() + 1
-                if (!monthlyStats[month]) {
-                    monthlyStats[month] = { questions: 0, correct: 0 }
-                }
-                monthlyStats[month].questions += log.questions_done
-                monthlyStats[month].correct += log.correct_answers
+            setStreakData(streakCalculator(allActivityDates))
+
+            // Calculate monthly accuracy trend
+            const monthlyStatsMap: { [key: number]: { questions: number; correct: number } } = {}
+            unifiedData.forEach(item => {
+                const month = item.parsedDate.getMonth() + 1
+                if (!monthlyStatsMap[month]) monthlyStatsMap[month] = { questions: 0, correct: 0 }
+                monthlyStatsMap[month].questions += item.questions
+                monthlyStatsMap[month].correct += item.correct
             })
 
             const months = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ']
             const monthlyData: ChartData[] = months.map((name, i) => {
-                const data = monthlyStats[i + 1]
+                const data = monthlyStatsMap[i + 1]
                 return {
                     name,
                     questions: data?.questions || 0,
@@ -362,35 +410,33 @@ export default function DashboardPage() {
             setMonthlyAccuracy(monthlyData)
 
             // Calculate discipline stats
-            const discStats: { [key: string]: { questions: number; correct: number } } = {}
-            logs.forEach(log => {
-                if (!log.disciplines) return
-                const disc = log.disciplines as { id: number; name: string }
-                if (!discStats[disc.name]) {
-                    discStats[disc.name] = { questions: 0, correct: 0 }
-                }
-                discStats[disc.name].questions += log.questions_done
-                discStats[disc.name].correct += log.correct_answers
+            const discStatsMap: { [key: string]: { questions: number; correct: number } } = {}
+            unifiedData.forEach(item => {
+                if (!item.discipline) return
+                const name = (item.discipline as any).name
+                if (!discStatsMap[name]) discStatsMap[name] = { questions: 0, correct: 0 }
+                discStatsMap[name].questions += item.questions
+                discStatsMap[name].correct += item.correct
             })
 
-            const disciplineData = Object.entries(discStats)
+            const disciplineDataArray = Object.entries(discStatsMap)
                 .map(([name, data]) => ({
                     name,
                     accuracy: data.questions > 0 ? (data.correct / data.questions) * 100 : 0,
                     questions: data.questions,
                 }))
                 .sort((a, b) => b.accuracy - a.accuracy)
-            setDisciplineStats(disciplineData)
+            setDisciplineStats(disciplineDataArray)
 
-            // Calculate subdiscipline stats with REAL trends
+            // Calculate subdiscipline stats (Only from logs since exams don't have subdisciplines easy to map yet)
+            // Or we can just use logging data for subdisciplines as before
             const subStats: { [key: string]: { questions: number; correct: number; recentQuestions: number; recentCorrect: number } } = {}
             const thirtyDaysAgo = subDays(today, 30)
-            const sixtyDaysAgo = subDays(today, 60)
 
             logs.forEach(log => {
                 if (!log.subdisciplines) return
                 const sub = log.subdisciplines as { id: number; name: string }
-                const logDate = new Date(log.date)
+                const logDate = safeParseDate(log.date)
 
                 if (!subStats[sub.name]) {
                     subStats[sub.name] = { questions: 0, correct: 0, recentQuestions: 0, recentCorrect: 0 }
@@ -398,7 +444,6 @@ export default function DashboardPage() {
                 subStats[sub.name].questions += log.questions_done
                 subStats[sub.name].correct += log.correct_answers
 
-                // Track recent performance (last 30 days)
                 if (logDate >= thirtyDaysAgo) {
                     subStats[sub.name].recentQuestions += log.questions_done
                     subStats[sub.name].recentCorrect += log.correct_answers
@@ -409,26 +454,18 @@ export default function DashboardPage() {
                 .map(([name, data]) => {
                     const overallAccuracy = data.questions > 0 ? (data.correct / data.questions) * 100 : 0
                     const recentAccuracy = data.recentQuestions > 0 ? (data.recentCorrect / data.recentQuestions) * 100 : 0
-
-                    // Calculate trend comparing recent vs overall
                     let trend: 'up' | 'down' | 'neutral' = 'neutral'
-                    if (data.recentQuestions >= 5) { // Only show trend if enough recent data
+                    if (data.recentQuestions >= 5) {
                         if (recentAccuracy > overallAccuracy + 2) trend = 'up'
                         else if (recentAccuracy < overallAccuracy - 2) trend = 'down'
                     }
-
-                    return {
-                        name,
-                        questions: data.questions,
-                        accuracy: overallAccuracy,
-                        trend,
-                    }
+                    return { name, questions: data.questions, accuracy: overallAccuracy, trend }
                 })
                 .sort((a, b) => b.questions - a.questions)
                 .slice(0, 6)
             setSubdisciplineStats(subdisciplineData)
 
-            // Calculate time data (last 15 days)
+            // Calculate time data (from logs only as exams don't have time logged yet usually)
             const timeArr: TimeData[] = []
             for (let i = 14; i >= 0; i--) {
                 const date = subDays(today, i)
@@ -442,17 +479,10 @@ export default function DashboardPage() {
             }
             setTimeData(timeArr)
 
-            // Load pending reviews
-            const todayStr = format(today, 'yyyy-MM-dd')
+            // Load pending reviews (kept same)
             const { data: reviews } = await supabase
                 .from('scheduled_reviews')
-                .select(`
-                    id,
-                    scheduled_date,
-                    review_type,
-                    disciplines(name),
-                    subdisciplines(name)
-                `)
+                .select(`id, scheduled_date, review_type, disciplines(name), subdisciplines(name)`)
                 .eq('user_id', user.id)
                 .eq('completed', false)
                 .lte('scheduled_date', format(addDays(today, 7), 'yyyy-MM-dd'))

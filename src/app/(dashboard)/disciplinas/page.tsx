@@ -28,38 +28,65 @@ export default function DisciplinasPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            const { data: logs } = await supabase
-                .from('question_logs')
-                .select(`
-          questions_done,
-          correct_answers,
-          discipline_id,
-          disciplines(id, name)
-        `)
-                .eq('user_id', user.id)
+            const [
+                { data: logs },
+                { data: exams },
+                { data: disciplines }
+            ] = await Promise.all([
+                supabase
+                    .from('question_logs')
+                    .select('questions_done, correct_answers, discipline_id')
+                    .eq('user_id', user.id),
+                supabase
+                    .from('exam_scores')
+                    .select('questions_total, questions_correct, discipline_id, exams!inner(user_id)')
+                    .eq('exams.user_id', user.id),
+                supabase
+                    .from('disciplines')
+                    .select('id, name')
+            ])
 
-            if (!logs) return
+            // Helper to get discipline name
+            const getDisciplineName = (id: number) =>
+                disciplines?.find(d => d.id === id)?.name || 'Desconhecida'
 
-            // Aggregate by discipline
+            // Aggregate stats
             const statsMap: { [key: number]: DisciplineStats } = {}
 
-            logs.forEach((log) => {
-                if (!log.discipline_id || !log.disciplines) return
+            // Process Question Logs
+            logs?.forEach((log) => {
+                if (!log.discipline_id) return
 
-                const discipline = log.disciplines as { id: number; name: string }
-
-                if (!statsMap[discipline.id]) {
-                    statsMap[discipline.id] = {
-                        id: discipline.id,
-                        name: discipline.name,
+                if (!statsMap[log.discipline_id]) {
+                    statsMap[log.discipline_id] = {
+                        id: log.discipline_id,
+                        name: getDisciplineName(log.discipline_id),
                         totalQuestions: 0,
                         totalCorrect: 0,
                         accuracy: 0,
                     }
                 }
 
-                statsMap[discipline.id].totalQuestions += log.questions_done
-                statsMap[discipline.id].totalCorrect += log.correct_answers
+                statsMap[log.discipline_id].totalQuestions += log.questions_done
+                statsMap[log.discipline_id].totalCorrect += log.correct_answers
+            })
+
+            // Process Exam Scores
+            exams?.forEach((score) => {
+                const discId = score.discipline_id
+
+                if (!statsMap[discId]) {
+                    statsMap[discId] = {
+                        id: discId,
+                        name: getDisciplineName(discId),
+                        totalQuestions: 0,
+                        totalCorrect: 0,
+                        accuracy: 0,
+                    }
+                }
+
+                statsMap[discId].totalQuestions += score.questions_total
+                statsMap[discId].totalCorrect += score.questions_correct
             })
 
             // Calculate accuracy and sort
@@ -71,6 +98,7 @@ export default function DisciplinasPage() {
                             ? (stat.totalCorrect / stat.totalQuestions) * 100
                             : 0,
                 }))
+                .filter(stat => stat.totalQuestions > 0)
                 .sort((a, b) => b.accuracy - a.accuracy)
 
             setStats(result)
