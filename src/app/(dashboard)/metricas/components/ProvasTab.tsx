@@ -269,7 +269,7 @@ export default function ProvasTab() {
                                     dataKey="accuracy"
                                     position="right"
                                     fill="#94a3b8"
-                                    formatter={(val: number) => `${val}%`}
+                                    formatter={(val: any) => `${val}%`}
                                 />
                             </Bar>
                         </BarChart>

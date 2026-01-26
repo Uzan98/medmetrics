@@ -181,7 +181,7 @@ export default function EvolucaoDiariaTab() {
                             <Tooltip
                                 contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
                                 itemStyle={{ color: '#fff' }}
-                                formatter={(value: number) => [value, 'Questões']}
+                                formatter={(value: any) => [value, 'Questões']}
                                 labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem' }}
                             />
                             <Bar
@@ -229,7 +229,7 @@ export default function EvolucaoDiariaTab() {
                             <Tooltip
                                 contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
                                 itemStyle={{ color: '#fff' }}
-                                formatter={(value: number) => [`${value.toFixed(1)}%`, 'Acurácia']}
+                                formatter={(value: any) => [`${value.toFixed(1)}%`, 'Acurácia']}
                                 labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem' }}
                             />
                             <Area
