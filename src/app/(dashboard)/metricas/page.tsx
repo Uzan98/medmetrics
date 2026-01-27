@@ -41,7 +41,7 @@ export default function MetricasPage() {
             </div>
 
             {/* Tabs Navigation */}
-            <div className="flex space-x-1 rounded-xl bg-slate-900/50 p-1 border border-slate-700/50 overflow-x-auto">
+            <div className="flex space-x-1 rounded-full bg-slate-900/30 backdrop-blur-md p-1.5 border border-white/5 overflow-x-auto scrollbar-none snap-x sticky top-0 z-20">
                 {tabs.map((tab) => {
                     const isActive = activeTab === tab.id
                     const Icon = tab.icon
@@ -50,14 +50,14 @@ export default function MetricasPage() {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as Tab)}
                             className={`
-                                flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all min-w-[140px] justify-center
+                                flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full transition-all whitespace-nowrap snap-center
                                 ${isActive
-                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
+                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
                                 }
                             `}
                         >
-                            <Icon className="w-4 h-4" />
+                            <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-white'}`} />
                             {tab.label}
                         </button>
                     )

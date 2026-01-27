@@ -9,6 +9,7 @@ import {
 import { Loader2, AlertCircle, FileText, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { toast } from 'sonner'
 
 interface ExamMetric {
     id: string
@@ -51,7 +52,7 @@ export default function ProvasTab() {
             await loadData()
         } catch (err) {
             console.error('Error deleting exam:', err)
-            alert('Erro ao excluir prova')
+            toast.error('Erro ao excluir prova')
         } finally {
             setDeleting(null)
         }
@@ -166,7 +167,7 @@ export default function ProvasTab() {
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Evolution Chart */}
-            <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-slate-800/50 rounded-2xl p-4 sm:p-6 border border-slate-700/50">
                 <h3 className="text-lg font-semibold text-white mb-6">Evolução de Acertos (%)</h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -188,10 +189,10 @@ export default function ProvasTab() {
                                 unit="%"
                             />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
-                                itemStyle={{ color: '#fff' }}
+                                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
+                                itemStyle={{ color: '#fff', fontSize: '0.875rem', fontWeight: 600 }}
                                 formatter={(value: any) => [`${Number(value)}%`, 'Acertos']}
-                                labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem' }}
+                                labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
                             />
                             <Line
                                 type="monotone"
@@ -207,7 +208,7 @@ export default function ProvasTab() {
             </div>
 
             {/* Board Performance Chart -- NEW */}
-            <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-slate-800/50 rounded-2xl p-4 sm:p-6 border border-slate-700/50">
                 <h3 className="text-lg font-semibold text-white mb-6">Desempenho por Banca</h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -236,13 +237,14 @@ export default function ProvasTab() {
                                 axisLine={false}
                             />
                             <Tooltip
-                                cursor={{ fill: '#334155', opacity: 0.4 }}
-                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
-                                itemStyle={{ color: '#fff' }}
+                                cursor={{ fill: '#334155', opacity: 0.2 }}
+                                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
+                                itemStyle={{ color: '#e2e8f0', fontSize: '0.875rem' }}
                                 formatter={(value: any, name: any, props: any) => {
                                     const { total, correct } = props.payload
                                     return [`${value}% (${correct}/${total})`, 'Acurácia']
                                 }}
+                                labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
                             />
                             <Bar
                                 dataKey="accuracy"
@@ -278,7 +280,7 @@ export default function ProvasTab() {
             </div>
 
             {/* Performance by Area */}
-            <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-slate-800/50 rounded-2xl p-4 sm:p-6 border border-slate-700/50">
                 <h3 className="text-lg font-semibold text-white mb-6">Desempenho por Grande Área</h3>
                 <div className="space-y-4">
                     {disciplineMetrics.map((disc) => (

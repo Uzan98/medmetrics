@@ -310,22 +310,22 @@ export default function ErrorNotebookPage() {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
-                <div className="flex-1 relative">
-                    <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+            <div className="flex flex-col md:flex-row gap-4 bg-white/5 backdrop-blur-xl p-4 rounded-2xl border border-white/10 sticky top-4 z-20 shadow-2xl shadow-black/20">
+                <div className="flex-1 relative group">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3 group-focus-within:text-indigo-400 transition-colors" />
                     <input
                         type="text"
                         placeholder="Buscar por pergunta, notas ou disciplina..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl pl-10 pr-4 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
                     />
                 </div>
                 <div className="w-full md:w-64">
                     <select
                         value={disciplineFilter}
                         onChange={(e) => setDisciplineFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
+                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all appearance-none"
                     >
                         <option value="all">Todas as Disciplinas</option>
                         {disciplines.map(d => (
@@ -338,25 +338,25 @@ export default function ErrorNotebookPage() {
             {/* Content */}
             {loading ? (
                 <div className="text-center py-20">
-                    <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
-                    <p className="text-slate-500">Carregando seus registros...</p>
+                    <div className="animate-spin w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4" />
+                    <p className="text-slate-400 font-medium animate-pulse">Carregando seus flashcards...</p>
                 </div>
             ) : filteredEntries.length === 0 ? (
-                <div className="text-center py-20 bg-slate-900/30 rounded-2xl border border-slate-800 border-dashed">
-                    <div className="bg-slate-800/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <BookOpen className="w-8 h-8 text-slate-600" />
+                <div className="text-center py-20 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/5 border-dashed">
+                    <div className="bg-indigo-500/10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ring-4 ring-indigo-500/5">
+                        <BookOpen className="w-10 h-10 text-indigo-400" />
                     </div>
-                    <h3 className="text-lg font-medium text-white mb-2">Nenhum erro registrado</h3>
-                    <p className="text-slate-500 max-w-md mx-auto mb-6">Comece a registrar seus erros para criar um banco de conhecimento personalizado.</p>
+                    <h3 className="text-xl font-bold text-white mb-2">Nenhum erro registrado</h3>
+                    <p className="text-slate-400 max-w-md mx-auto mb-8">Comece a registrar seus erros para criar um banco de conhecimento personalizado.</p>
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                        className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors border-b border-indigo-500/30 hover:border-indigo-500"
                     >
-                        Criar primeiro registro
+                        Criar primeiro flashcard
                     </button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {filteredEntries.map(entry => (
                         <ErrorCard key={entry.id} entry={entry} onEdit={() => openEdit(entry)} onDelete={() => handleDelete(entry.id)} />
                     ))}
@@ -365,13 +365,14 @@ export default function ErrorNotebookPage() {
 
             {/* Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 sticky top-0 z-10 backdrop-blur-xl">
-                            <h2 className="text-xl font-bold text-white">
-                                {editingEntry ? 'Editar Registro' : 'Novo Registro de Erro'}
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-[#0f172a] border border-white/10 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl shadow-indigo-500/10">
+                        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900/50 sticky top-0 z-10 backdrop-blur-xl">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                {editingEntry ? <Edit className="w-5 h-5 text-indigo-400" /> : <Plus className="w-5 h-5 text-indigo-400" />}
+                                {editingEntry ? 'Editar Flashcard' : 'Novo Flashcard'}
                             </h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
+                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white transition-colors bg-white/5 p-1 rounded-lg hover:bg-white/10">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -379,12 +380,12 @@ export default function ErrorNotebookPage() {
                         <form onSubmit={handleSubmit} className="p-6 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-400">Disciplina</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Disciplina</label>
                                     <select
                                         required
                                         value={formData.discipline_id}
                                         onChange={(e) => setFormData({ ...formData, discipline_id: e.target.value, topic_id: '' })}
-                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500"
+                                        className="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-slate-500"
                                     >
                                         <option value="">Selecione...</option>
                                         {disciplines.map(d => (
@@ -393,12 +394,12 @@ export default function ErrorNotebookPage() {
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-400">Assunto (Opcional)</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Assunto</label>
                                     <select
                                         value={formData.topic_id}
                                         onChange={(e) => setFormData({ ...formData, topic_id: e.target.value })}
                                         disabled={!formData.discipline_id}
-                                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                                        className="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50 transition-colors"
                                     >
                                         <option value="">Selecione...</option>
                                         {topics.map(t => (
@@ -409,51 +410,57 @@ export default function ErrorNotebookPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-400">Pergunta / Conceito Errado</label>
-                                <textarea
-                                    required
-                                    rows={3}
-                                    value={formData.question_text}
-                                    onChange={(e) => setFormData({ ...formData, question_text: e.target.value })}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 resize-none"
-                                    placeholder="Ex: Qual o tratamento de primeira linha para..."
-                                />
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Pergunta / Conceito</label>
+                                <div className="relative">
+                                    <textarea
+                                        required
+                                        rows={3}
+                                        value={formData.question_text}
+                                        onChange={(e) => setFormData({ ...formData, question_text: e.target.value })}
+                                        className="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 resize-none"
+                                        placeholder="Ex: Qual o tratamento de primeira linha para..."
+                                    />
+                                    <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                                </div>
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-400">Resposta Correta / Explicação</label>
-                                <textarea
-                                    required
-                                    rows={4}
-                                    value={formData.answer_text}
-                                    onChange={(e) => setFormData({ ...formData, answer_text: e.target.value })}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500 resize-none"
-                                    placeholder="A resposta correta é..."
-                                />
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Resposta / Explicação</label>
+                                <div className="relative">
+                                    <textarea
+                                        required
+                                        rows={4}
+                                        value={formData.answer_text}
+                                        onChange={(e) => setFormData({ ...formData, answer_text: e.target.value })}
+                                        className="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 resize-none"
+                                        placeholder="A resposta correta é..."
+                                    />
+                                    <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-emerald-500" />
+                                </div>
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-400">Notas Adicionais (Mnemônicos, dicas...)</label>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Notas Adicionais</label>
                                 <textarea
                                     rows={2}
                                     value={formData.notes}
                                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500 resize-none"
+                                    className="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500 resize-none"
                                     placeholder="Dica: Lembrar da regra..."
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-400">Imagens</label>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Imagens</label>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
                                     {/* Existing Images */}
                                     {formData.image_urls.map((url, index) => (
-                                        <div key={`existing-${index}`} className="relative aspect-square rounded-xl overflow-hidden border border-slate-700 group">
+                                        <div key={`existing-${index}`} className="relative aspect-square rounded-xl overflow-hidden border border-slate-700/50 group">
                                             <Image
                                                 src={url}
                                                 alt={`Imagem ${index + 1}`}
                                                 fill
-                                                className="object-cover"
+                                                className="object-cover transition-transform group-hover:scale-110"
                                             />
                                             <button
                                                 type="button"
@@ -462,7 +469,7 @@ export default function ErrorNotebookPage() {
                                             >
                                                 <X className="w-3 h-3" />
                                             </button>
-                                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] p-1 text-center">
+                                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] p-1 text-center backdrop-blur-sm">
                                                 Salva
                                             </div>
                                         </div>
@@ -470,12 +477,12 @@ export default function ErrorNotebookPage() {
 
                                     {/* New File Previews */}
                                     {previewUrls.map((url, index) => (
-                                        <div key={`new-${index}`} className="relative aspect-square rounded-xl overflow-hidden border border-slate-700 group">
+                                        <div key={`new-${index}`} className="relative aspect-square rounded-xl overflow-hidden border border-slate-700/50 group">
                                             <Image
                                                 src={url}
                                                 alt={`Preview ${index + 1}`}
                                                 fill
-                                                className="object-cover"
+                                                className="object-cover transition-transform group-hover:scale-110"
                                             />
                                             <button
                                                 type="button"
@@ -487,9 +494,11 @@ export default function ErrorNotebookPage() {
                                         </div>
                                     ))}
 
-                                    <label className="aspect-square rounded-xl border-2 border-dashed border-slate-700 hover:border-blue-500 hover:bg-slate-800/50 cursor-pointer flex flex-col items-center justify-center transition-all group">
-                                        <ImageIcon className="w-6 h-6 text-slate-500 group-hover:text-blue-500 mb-2" />
-                                        <span className="text-xs text-slate-500 group-hover:text-blue-400 font-medium">Adicionar</span>
+                                    <label className="aspect-square rounded-xl border-2 border-dashed border-slate-700/50 hover:border-indigo-500 hover:bg-slate-800/50 cursor-pointer flex flex-col items-center justify-center transition-all group">
+                                        <div className="p-2 bg-slate-800 rounded-lg group-hover:bg-indigo-500/20 transition-colors mb-2">
+                                            <ImageIcon className="w-5 h-5 text-slate-500 group-hover:text-indigo-400" />
+                                        </div>
+                                        <span className="text-xs text-slate-500 group-hover:text-indigo-400 font-medium">Adicionar</span>
                                         <input
                                             type="file"
                                             multiple
@@ -501,21 +510,21 @@ export default function ErrorNotebookPage() {
                                 </div>
                             </div>
 
-                            <div className="pt-4 flex justify-end gap-3">
+                            <div className="pt-4 flex justify-end gap-3 border-t border-white/5">
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="px-4 py-2 text-slate-300 hover:text-white font-medium transition-colors"
+                                    className="px-4 py-2.5 text-slate-300 hover:text-white font-medium transition-colors"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors flex items-center gap-2 shadow-lg shadow-blue-500/20 disabled:opacity-50"
+                                    className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-medium transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95"
                                 >
                                     {saving && <Loader2 className="animate-spin w-4 h-4 mr-2" />}
-                                    {uploading ? 'Enviando Imagens...' : 'Salvar Registro'}
+                                    {uploading ? 'Enviando...' : 'Salvar Flashcard'}
                                 </button>
                             </div>
                         </form>
@@ -532,49 +541,53 @@ function ErrorCard({ entry, onEdit, onDelete }: { entry: ErrorEntry, onEdit: () 
 
     return (
         <>
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden hover:border-slate-700 transition-all group">
-                <div className="p-5">
+            <div className={`
+                relative bg-white/5 backdrop-blur-md rounded-2xl overflow-hidden border border-white/5 transition-all duration-300 group
+                flex flex-col h-full
+                ${showAnswer ? 'ring-1 ring-emerald-500/50 bg-emerald-900/10' : 'hover:border-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/10'}
+            `}>
+                <div className="p-6 flex-1 flex flex-col">
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex flex-wrap gap-2">
                             {entry.disciplines && (
-                                <span className="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-semibold border border-blue-500/20">
+                                <span className="px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/20">
                                     {entry.disciplines.name}
                                 </span>
                             )}
                             {entry.topics && (
-                                <span className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-xs font-medium border border-slate-700">
+                                <span className="px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-wider border border-slate-700/50">
                                     {entry.topics.name}
                                 </span>
                             )}
                         </div>
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={onEdit} className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={onEdit} className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors">
                                 <Edit className="w-4 h-4" />
                             </button>
-                            <button onClick={onDelete} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                            <button onClick={onDelete} className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
                                 <Trash2 className="w-4 h-4" />
                             </button>
                         </div>
                     </div>
 
-                    <div className="mb-4">
-                        <h3 className="text-white font-medium text-lg leading-snug">{entry.question_text}</h3>
+                    <div className="mb-6 flex-1">
+                        <h3 className="text-white font-semibold text-lg leading-relaxed">{entry.question_text}</h3>
                     </div>
 
                     {/* Image Gallery */}
                     {entry.image_urls && entry.image_urls.length > 0 && (
-                        <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
+                        <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
                             {entry.image_urls.map((url, i) => (
                                 <button
                                     key={i}
-                                    onClick={() => setSelectedImage(url)}
-                                    className="relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-slate-700 hover:border-blue-500 transition-colors"
+                                    onClick={(e) => { e.stopPropagation(); setSelectedImage(url); }}
+                                    className="relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-white/10 hover:border-indigo-500 transition-colors group/img"
                                 >
                                     <Image
                                         src={url}
                                         alt={`Imagem ${i + 1}`}
                                         fill
-                                        className="object-cover"
+                                        className="object-cover group-hover/img:scale-110 transition-transform duration-500"
                                     />
                                 </button>
                             ))}
@@ -582,65 +595,62 @@ function ErrorCard({ entry, onEdit, onDelete }: { entry: ErrorEntry, onEdit: () 
                     )}
 
                     {showAnswer ? (
-                        <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
-                            <div className="bg-green-500/5 border border-green-500/10 rounded-xl p-4">
-                                <h4 className="text-green-400 text-sm font-bold mb-1 flex items-center gap-2">
-                                    <Check className="w-4 h-4" /> Resposta
+                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 blur-xl rounded-full -mr-8 -mt-8" />
+                                <h4 className="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                                    <Check className="w-3 h-3" /> Resposta
                                 </h4>
-                                <p className="text-slate-300 whitespace-pre-line">{entry.answer_text}</p>
+                                <p className="text-slate-200 whitespace-pre-line text-sm leading-relaxed">{entry.answer_text}</p>
                             </div>
                             {entry.notes && (
-                                <div className="bg-yellow-500/5 border border-yellow-500/10 rounded-xl p-4">
-                                    <h4 className="text-yellow-400 text-sm font-bold mb-1 flex items-center gap-2">
-                                        <BrainCircuit className="w-4 h-4" /> Notas
+                                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 relative overflow-hidden">
+                                    <h4 className="text-amber-400 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                                        <BrainCircuit className="w-3 h-3" /> Notas
                                     </h4>
-                                    <p className="text-slate-300 text-sm whitespace-pre-line">{entry.notes}</p>
+                                    <p className="text-slate-300 text-sm whitespace-pre-line leading-relaxed">{entry.notes}</p>
                                 </div>
                             )}
                         </div>
                     ) : (
                         <button
                             onClick={() => setShowAnswer(true)}
-                            className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-medium text-sm transition-all border border-slate-700 border-dashed flex items-center justify-center gap-2"
+                            className="w-full py-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 text-slate-400 hover:text-white font-medium text-sm transition-all border border-slate-700/50 border-dashed hover:border-indigo-500/50 flex items-center justify-center gap-2 group/btn"
                         >
-                            <Eye className="w-4 h-4" />
-                            Ver Resposta
+                            <Eye className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
+                            Revelar Resposta
                         </button>
                     )}
 
                     {showAnswer && (
                         <button
-                            onClick={() => setShowAnswer(false)}
-                            className="w-full mt-4 py-2 text-xs text-slate-500 hover:text-slate-400 flex items-center justify-center gap-1"
+                            onClick={(e) => { e.stopPropagation(); setShowAnswer(false); }}
+                            className="w-full mt-4 py-2 text-xs text-slate-500 hover:text-slate-400 flex items-center justify-center gap-1 hover:bg-white/5 rounded-lg transition-colors"
                         >
-                            <ChevronUp className="w-3 h-3" /> Ocultar Resposta
+                            <ChevronUp className="w-3 h-3" /> Ocultar
                         </button>
                     )}
-                </div>
-                <div className="bg-slate-950/30 px-5 py-2 border-t border-slate-800 flex justify-between items-center text-xs text-slate-500">
-                    <span>Adicionado em {new Date(entry.created_at).toLocaleDateString('pt-BR')}</span>
-                    <span>Revisado {entry.review_count} vezes</span>
                 </div>
             </div>
 
             {/* Lightbox */}
             {selectedImage && (
                 <div
-                    className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200"
+                    className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200"
                     onClick={() => setSelectedImage(null)}
                 >
-                    <div className="relative w-full max-w-4xl max-h-full h-full flex items-center justify-center">
+                    <div className="relative w-full max-w-5xl h-full flex items-center justify-center">
                         <Image
                             src={selectedImage}
                             alt="Visualização"
                             width={1200}
                             height={800}
-                            className="object-contain max-h-[90vh] w-auto h-auto rounded-lg"
+                            className="object-contain max-h-[95vh] w-auto h-auto rounded-lg shadow-2xl"
                         />
                         <button
-                            className="absolute top-4 right-4 text-white/50 hover:text-white"
+                            className="absolute top-4 right-4 text-white/70 hover:text-white bg-black/50 rounded-full p-2 hover:bg-black/70 transition-all"
                         >
-                            <X className="w-8 h-8" />
+                            <X className="w-6 h-6" />
                         </button>
                     </div>
                 </div>

@@ -20,6 +20,8 @@ import {
     Flame,
     Trophy,
     BookOpen,
+    Filter,
+    Minus,
 } from 'lucide-react'
 import Link from 'next/link'
 import { getMonthName } from '@/lib/utils'
@@ -39,9 +41,11 @@ import {
     Area,
     AreaChart,
 } from 'recharts'
+import { toast } from 'sonner'
 
-// Ícones por disciplina
-const disciplineIcons: { [key: string]: React.ElementType } = {
+
+
+const disciplineIcons: { [key: string]: any } = {
     'Clínica Médica': Stethoscope,
     'Cirurgia': Scissors,
     'Ginecologia e Obstetrícia': Baby,
@@ -49,7 +53,6 @@ const disciplineIcons: { [key: string]: React.ElementType } = {
     'Medicina Preventiva': ShieldCheck,
 }
 
-// Cores por disciplina
 const disciplineColors: { [key: string]: string } = {
     'Clínica Médica': '#3b82f6',
     'Cirurgia': '#f59e0b',
@@ -80,8 +83,6 @@ interface DisciplineStats {
     accuracy: number
     questions: number
 }
-
-import { Minus } from 'lucide-react'
 
 interface SubdisciplineStats {
     name: string
@@ -121,6 +122,7 @@ export default function DashboardPage() {
     const [periodFilter, setPeriodFilter] = useState<'7d' | '30d' | '3m' | '6m' | 'year'>('year')
     const [disciplineFilter, setDisciplineFilter] = useState<string>('all')
     const [allDisciplines, setAllDisciplines] = useState<{ id: number, name: string }[]>([])
+    const [showFilters, setShowFilters] = useState(false)
 
     // Empty State Goal Logic
     const [goalInput, setGoalInput] = useState('800')
@@ -135,6 +137,10 @@ export default function DashboardPage() {
     useEffect(() => {
         loadDashboardData()
     }, [periodFilter, disciplineFilter])
+
+
+
+    // ... existing code ...
 
     async function saveInitialGoal() {
         setSavingGoal(true)
@@ -154,13 +160,14 @@ export default function DashboardPage() {
             if (error) throw error
 
             setGoalSaved(true)
+            toast.success('Meta salva com sucesso!')
             setTimeout(() => setGoalSaved(false), 3000)
 
             // Reload data to update stats
             loadDashboardData()
         } catch (error) {
             console.error('Error saving goal:', error)
-            alert('Erro ao salvar meta.')
+            toast.error('Erro ao salvar meta.')
         } finally {
             setSavingGoal(false)
         }
@@ -589,47 +596,103 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            {/* Header with Filters */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Meu Dashboard</h1>
-                    <p className="text-slate-400">Acompanhe seu desempenho para a residência</p>
+            {/* Header */}
+            <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-white">Meu Dashboard</h1>
+                        <p className="text-slate-400">Acompanhe seu desempenho para a residência</p>
+                    </div>
+
+                    {/* Desktop Actions */}
+                    <div className="hidden md:flex items-center gap-3">
+                        <select
+                            value={periodFilter}
+                            onChange={(e) => setPeriodFilter(e.target.value as typeof periodFilter)}
+                            className="px-3 py-2.5 bg-slate-800/80 border border-slate-700/50 rounded-xl text-sm text-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all cursor-pointer hover:bg-slate-800"
+                        >
+                            <option value="7d">Últimos 7 dias</option>
+                            <option value="30d">Últimos 30 dias</option>
+                            <option value="3m">Últimos 3 meses</option>
+                            <option value="6m">Últimos 6 meses</option>
+                            <option value="year">Este ano</option>
+                        </select>
+
+                        <select
+                            value={disciplineFilter}
+                            onChange={(e) => setDisciplineFilter(e.target.value)}
+                            className="px-3 py-2.5 bg-slate-800/80 border border-slate-700/50 rounded-xl text-sm text-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all cursor-pointer hover:bg-slate-800"
+                        >
+                            <option value="all">Todas disciplinas</option>
+                            {allDisciplines.map(d => (
+                                <option key={d.id} value={d.id}>{d.name}</option>
+                            ))}
+                        </select>
+
+                        <Link
+                            href="/registrar"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white transition-all hover:scale-105 shadow-lg shadow-emerald-500/20"
+                            style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
+                        >
+                            <Plus className="w-5 h-5" />
+                            Registrar
+                        </Link>
+                    </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                    {/* Period Filter */}
-                    <select
-                        value={periodFilter}
-                        onChange={(e) => setPeriodFilter(e.target.value as typeof periodFilter)}
-                        className="px-3 py-2 bg-slate-800/80 border border-slate-700 rounded-lg text-sm text-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    >
-                        <option value="7d">Últimos 7 dias</option>
-                        <option value="30d">Últimos 30 dias</option>
-                        <option value="3m">Últimos 3 meses</option>
-                        <option value="6m">Últimos 6 meses</option>
-                        <option value="year">Este ano</option>
-                    </select>
 
-                    {/* Discipline Filter */}
-                    <select
-                        value={disciplineFilter}
-                        onChange={(e) => setDisciplineFilter(e.target.value)}
-                        className="px-3 py-2 bg-slate-800/80 border border-slate-700 rounded-lg text-sm text-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                {/* Mobile Actions Row */}
+                <div className="flex md:hidden gap-3">
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`p-3 rounded-xl border transition-all flex items-center justify-center ${showFilters
+                            ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
+                            : 'bg-slate-800/80 border-slate-700/50 text-slate-300 hover:bg-slate-800'
+                            }`}
                     >
-                        <option value="all">Todas disciplinas</option>
-                        {allDisciplines.map(d => (
-                            <option key={d.id} value={d.id}>{d.name}</option>
-                        ))}
-                    </select>
-
+                        <Filter className="w-5 h-5" />
+                    </button>
                     <Link
                         href="/registrar"
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white transition-all hover:scale-105"
+                        className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-white transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/20"
                         style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
                     >
                         <Plus className="w-5 h-5" />
-                        Registrar
+                        Registrar Questões
                     </Link>
                 </div>
+
+                {/* Mobile Filters Panel */}
+                {showFilters && (
+                    <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-slate-800/50 rounded-2xl border border-slate-700/50 animate-in slide-in-from-top-2 fade-in duration-200">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-400 ml-1 uppercase tracking-wider">Período</label>
+                            <select
+                                value={periodFilter}
+                                onChange={(e) => setPeriodFilter(e.target.value as typeof periodFilter)}
+                                className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white text-sm outline-none focus:border-blue-500 transition-all"
+                            >
+                                <option value="7d">Últimos 7 dias</option>
+                                <option value="30d">Últimos 30 dias</option>
+                                <option value="3m">Últimos 3 meses</option>
+                                <option value="6m">Últimos 6 meses</option>
+                                <option value="year">Este ano</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-400 ml-1 uppercase tracking-wider">Disciplina</label>
+                            <select
+                                value={disciplineFilter}
+                                onChange={(e) => setDisciplineFilter(e.target.value)}
+                                className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white text-sm outline-none focus:border-blue-500 transition-all"
+                            >
+                                <option value="all">Todas disciplinas</option>
+                                {allDisciplines.map(d => (
+                                    <option key={d.id} value={d.id}>{d.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Stats Cards Row */}
@@ -876,7 +939,7 @@ export default function DashboardPage() {
 
                 {/* Questions per Month Card */}
                 <div className={`
-                    backdrop-blur-sm rounded-2xl p-6 border flex flex-col relative overflow-hidden items-center transition-all duration-500
+                    backdrop-blur-sm rounded-2xl p-4 sm:p-6 border flex flex-col relative overflow-hidden items-center transition-all duration-500
                     ${(stats.monthGoal && stats.monthQuestions >= stats.monthGoal)
                         ? 'bg-emerald-900/10 border-emerald-500/20 shadow-[0_0_30px_-10px_rgba(16,185,129,0.3)]'
                         : (stats.monthGoal && stats.monthQuestions >= (stats.monthGoal / 2))
@@ -1204,3 +1267,4 @@ function DailyReviewWidget() {
         </div>
     )
 }
+

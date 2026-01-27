@@ -156,7 +156,7 @@ export default function EvolucaoDiariaTab() {
             </div>
 
             {/* Questions Volume Chart */}
-            <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-slate-800/50 rounded-2xl p-4 sm:p-6 border border-slate-700/50">
                 <h3 className="font-semibold text-white mb-6 flex items-center gap-2">
                     <CalendarIcon className="w-5 h-5 text-blue-400" />
                     Volume de Questões
@@ -179,10 +179,11 @@ export default function EvolucaoDiariaTab() {
                                 axisLine={false}
                             />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
-                                itemStyle={{ color: '#fff' }}
+                                cursor={{ fill: '#334155', opacity: 0.2 }}
+                                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
+                                itemStyle={{ color: '#e2e8f0', fontSize: '0.875rem' }}
                                 formatter={(value: any) => [value, 'Questões']}
-                                labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem' }}
+                                labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
                             />
                             <Bar
                                 dataKey="questions"
@@ -196,7 +197,7 @@ export default function EvolucaoDiariaTab() {
             </div>
 
             {/* Accuracy Trend Chart */}
-            <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-slate-800/50 rounded-2xl p-4 sm:p-6 border border-slate-700/50">
                 <h3 className="font-semibold text-white mb-6 flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-emerald-400" />
                     Tendência de Acertos
@@ -227,10 +228,10 @@ export default function EvolucaoDiariaTab() {
                                 unit="%"
                             />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
-                                itemStyle={{ color: '#fff' }}
+                                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
+                                itemStyle={{ color: '#10b981', fontSize: '0.875rem', fontWeight: 600 }}
                                 formatter={(value: any) => [`${value.toFixed(1)}%`, 'Acurácia']}
-                                labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem' }}
+                                labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
                             />
                             <Area
                                 type="monotone"

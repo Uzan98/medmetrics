@@ -22,6 +22,7 @@ import {
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 interface UserStats {
     totalQuestions: number
@@ -193,10 +194,10 @@ export default function PerfilPage() {
             })
 
             setShowResetConfirm(false)
-            alert('Sua conta foi resetada com sucesso.')
+            toast.success('Sua conta foi resetada com sucesso.')
         } catch (error) {
             console.error('Error resetting data:', error)
-            alert('Erro ao resetar dados. Tente novamente.')
+            toast.error('Erro ao resetar dados. Tente novamente.')
         } finally {
             setResetting(false)
         }
@@ -225,101 +226,120 @@ export default function PerfilPage() {
             </div>
 
             {/* User Info Card */}
-            <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+            <div className="bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10 shadow-2xl shadow-black/20">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-8">
                     {/* Avatar */}
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
-                        <User className="w-10 h-10 text-white" />
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                            <Mail className="w-4 h-4 text-slate-500" />
-                            <span className="text-white">{user?.email}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Calendar className="w-4 h-4 text-slate-500" />
-                            <span className="text-slate-400 text-sm">
-                                Membro desde {user?.created_at ? format(new Date(user.created_at), "MMMM 'de' yyyy", { locale: ptBR }) : ''}
+                    <div className="relative group">
+                        <div className="absolute inset-0 bg-indigo-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity" />
+                        <div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/30">
+                            <span className="text-4xl font-bold text-white">
+                                {user?.email?.[0].toUpperCase() || <User className="w-10 h-10" />}
                             </span>
                         </div>
                     </div>
 
+                    {/* Info */}
+                    <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-2xl font-bold text-white">
+                                {user?.email?.split('@')[0]}
+                            </h2>
+                            <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold uppercase tracking-wider border border-indigo-500/30">
+                                Pro
+                            </span>
+                        </div>
+                        <div className="flex flex-col gap-1 text-slate-400">
+                            <div className="flex items-center gap-2">
+                                <Mail className="w-4 h-4" />
+                                <span>{user?.email}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
+                                <span className="text-sm">
+                                    Membro desde {user?.created_at ? format(new Date(user.created_at), "MMMM 'de' yyyy", { locale: ptBR }) : ''}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Actions */}
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:items-end gap-3">
                         <button
                             onClick={() => setShowPasswordForm(!showPasswordForm)}
-                            className="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-white rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
+                            className="w-full sm:w-auto px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 text-slate-200 hover:text-white group"
                         >
-                            <Lock className="w-4 h-4" />
+                            <Lock className="w-4 h-4 text-slate-400 group-hover:text-indigo-400 transition-colors" />
                             Alterar Senha
                         </button>
                         <button
                             onClick={handleLogout}
                             disabled={loggingOut}
-                            className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
+                            className="w-full sm:w-auto px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
                         >
                             {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
-                            Sair
+                            Sair da Conta
                         </button>
                     </div>
                 </div>
 
                 {/* Password Form */}
                 {showPasswordForm && (
-                    <form onSubmit={handlePasswordChange} className="mt-6 pt-6 border-t border-slate-700/50">
-                        <h3 className="font-medium text-white mb-4">Alterar Senha</h3>
+                    <form onSubmit={handlePasswordChange} className="mt-8 pt-6 border-t border-white/5 animate-in slide-in-from-top-4 fade-in">
+                        <h3 className="font-semibold text-white mb-6 flex items-center gap-2">
+                            <Lock className="w-5 h-5 text-indigo-400" />
+                            Nova Senha
+                        </h3>
 
                         {passwordError && (
-                            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4" />
                                 {passwordError}
                             </div>
                         )}
 
                         {passwordSuccess && (
-                            <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-sm flex items-center gap-2">
+                            <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-sm flex items-center gap-2">
                                 <CheckCircle2 className="w-4 h-4" />
                                 Senha alterada com sucesso!
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm text-slate-400 mb-2">Nova senha</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium uppercase tracking-wider text-slate-500">Nova senha</label>
                                 <input
                                     type="password"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
+                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-slate-600"
                                     placeholder="Mínimo 6 caracteres"
                                     required
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm text-slate-400 mb-2">Confirmar senha</label>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium uppercase tracking-wider text-slate-500">Confirmar senha</label>
                                 <input
                                     type="password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
+                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-slate-600"
                                     placeholder="Repita a senha"
                                     required
                                 />
                             </div>
                         </div>
-                        <div className="mt-4 flex gap-3">
+                        <div className="mt-6 flex justify-end gap-3">
                             <button
                                 type="button"
                                 onClick={() => setShowPasswordForm(false)}
-                                className="px-4 py-2 bg-slate-700/50 text-slate-300 rounded-xl text-sm"
+                                className="px-5 py-2.5 text-slate-400 hover:text-white font-medium transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button
                                 type="submit"
                                 disabled={passwordLoading}
-                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm font-medium disabled:opacity-50 flex items-center gap-2"
+                                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-indigo-500/20"
                             >
                                 {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                                 Salvar Nova Senha
@@ -332,48 +352,52 @@ export default function PerfilPage() {
             {/* Stats Grid */}
             {stats && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                                <Target className="w-4 h-4 text-blue-400" />
+                    <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/5 hover:bg-white/10 transition-colors group">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2.5 rounded-xl bg-blue-500/20 group-hover:scale-110 transition-transform duration-300">
+                                <Target className="w-5 h-5 text-blue-400" />
                             </div>
-                            <span className="text-sm text-slate-400">Total de Questões</span>
+                            <span className="text-sm font-medium text-slate-400">Total</span>
                         </div>
-                        <p className="text-2xl font-bold text-white">{stats.totalQuestions.toLocaleString('pt-BR')}</p>
+                        <p className="text-3xl font-bold text-white tracking-tight">{stats.totalQuestions.toLocaleString('pt-BR')}</p>
+                        <p className="text-xs text-slate-500 mt-1">questões realizadas</p>
                     </div>
 
-                    <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
-                                <CheckCircle2 className="w-4 h-4 text-green-400" />
+                    <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/5 hover:bg-white/10 transition-colors group">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2.5 rounded-xl bg-emerald-500/20 group-hover:scale-110 transition-transform duration-300">
+                                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                             </div>
-                            <span className="text-sm text-slate-400">Taxa de Acerto</span>
+                            <span className="text-sm font-medium text-slate-400">Acurácia</span>
                         </div>
-                        <p className="text-2xl font-bold text-white">
+                        <p className={`text-3xl font-bold tracking-tight ${(stats.totalQuestions > 0 ? (stats.totalCorrect / stats.totalQuestions) * 100 : 0) >= 70 ? 'text-emerald-400' : 'text-white'}`}>
                             {stats.totalQuestions > 0
                                 ? ((stats.totalCorrect / stats.totalQuestions) * 100).toFixed(1)
                                 : 0}%
                         </p>
+                        <p className="text-xs text-slate-500 mt-1">taxa de acerto global</p>
                     </div>
 
-                    <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                                <Calendar className="w-4 h-4 text-purple-400" />
+                    <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/5 hover:bg-white/10 transition-colors group">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2.5 rounded-xl bg-purple-500/20 group-hover:scale-110 transition-transform duration-300">
+                                <Calendar className="w-5 h-5 text-purple-400" />
                             </div>
-                            <span className="text-sm text-slate-400">Dias de Estudo</span>
+                            <span className="text-sm font-medium text-slate-400">Dias</span>
                         </div>
-                        <p className="text-2xl font-bold text-white">{stats.totalDays}</p>
+                        <p className="text-3xl font-bold text-white tracking-tight">{stats.totalDays}</p>
+                        <p className="text-xs text-slate-500 mt-1">dias estudados</p>
                     </div>
 
-                    <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center">
-                                <TrendingUp className="w-4 h-4 text-yellow-400" />
+                    <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/5 hover:bg-white/10 transition-colors group">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2.5 rounded-xl bg-amber-500/20 group-hover:scale-110 transition-transform duration-300">
+                                <TrendingUp className="w-5 h-5 text-amber-400" />
                             </div>
-                            <span className="text-sm text-slate-400">Média/Dia</span>
+                            <span className="text-sm font-medium text-slate-400">Ritmo</span>
                         </div>
-                        <p className="text-2xl font-bold text-white">{stats.avgQuestionsPerDay}</p>
+                        <p className="text-3xl font-bold text-white tracking-tight">{stats.avgQuestionsPerDay}</p>
+                        <p className="text-xs text-slate-500 mt-1">questões / dia</p>
                     </div>
                 </div>
             )}
@@ -382,27 +406,29 @@ export default function PerfilPage() {
             {stats && (stats.bestDiscipline || stats.worstDiscipline) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {stats.bestDiscipline && (
-                        <div className="bg-green-500/10 rounded-xl p-5 border border-green-500/20">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-                                    <TrendingUp className="w-5 h-5 text-green-400" />
+                        <div className="relative bg-emerald-500/5 backdrop-blur-sm rounded-2xl p-6 border border-emerald-500/20 overflow-hidden">
+                            <div className="absolute top-0 right-0 p-32 bg-emerald-500/5 blur-3xl rounded-full -mr-16 -mt-16 pointer-events-none" />
+                            <div className="relative flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0 ring-1 ring-emerald-500/30">
+                                    <TrendingUp className="w-6 h-6 text-emerald-400" />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-green-400">Melhor Desempenho</p>
-                                    <p className="text-lg font-semibold text-white">{stats.bestDiscipline}</p>
+                                    <p className="text-sm font-semibold text-emerald-400 uppercase tracking-wider">Ponto Forte</p>
+                                    <p className="text-xl font-bold text-white mt-0.5">{stats.bestDiscipline}</p>
                                 </div>
                             </div>
                         </div>
                     )}
                     {stats.worstDiscipline && stats.worstDiscipline !== stats.bestDiscipline && (
-                        <div className="bg-orange-500/10 rounded-xl p-5 border border-orange-500/20">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-                                    <BookOpen className="w-5 h-5 text-orange-400" />
+                        <div className="relative bg-orange-500/5 backdrop-blur-sm rounded-2xl p-6 border border-orange-500/20 overflow-hidden">
+                            <div className="absolute top-0 right-0 p-32 bg-orange-500/5 blur-3xl rounded-full -mr-16 -mt-16 pointer-events-none" />
+                            <div className="relative flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center shrink-0 ring-1 ring-orange-500/30">
+                                    <BookOpen className="w-6 h-6 text-orange-400" />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-orange-400">Foco de Melhoria</p>
-                                    <p className="text-lg font-semibold text-white">{stats.worstDiscipline}</p>
+                                    <p className="text-sm font-semibold text-orange-400 uppercase tracking-wider">Foco de Melhoria</p>
+                                    <p className="text-xl font-bold text-white mt-0.5">{stats.worstDiscipline}</p>
                                 </div>
                             </div>
                         </div>
@@ -412,58 +438,56 @@ export default function PerfilPage() {
 
             {/* Time Stats */}
             {stats && stats.totalTime > 0 && (
-                <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
-                            <Clock className="w-5 h-5 text-cyan-400" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-slate-400">Tempo Total de Estudo</p>
-                            <p className="text-lg font-semibold text-white">
-                                {Math.floor(stats.totalTime / 60)}h {stats.totalTime % 60}min
-                            </p>
-                        </div>
+                <div className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/5 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center shrink-0">
+                        <Clock className="w-6 h-6 text-cyan-400" />
+                    </div>
+                    <div>
+                        <p className="text-sm text-slate-400 font-medium uppercase tracking-wider">Dedicação Total</p>
+                        <p className="text-2xl font-bold text-white mt-0.5">
+                            {Math.floor(stats.totalTime / 60)}h {stats.totalTime % 60}min
+                        </p>
                     </div>
                 </div>
             )}
 
             {/* Danger Zone */}
-            <div className="bg-red-500/5 rounded-xl p-6 border border-red-500/20 mt-8">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
-                            <Trash2 className="w-5 h-5 text-red-500" />
+            <div className="rounded-2xl border border-red-500/20 bg-red-950/10 p-6 backdrop-blur-sm mt-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0 ring-1 ring-red-500/20">
+                            <Trash2 className="w-6 h-6 text-red-500" />
                         </div>
                         <div>
-                            <h3 className="font-semibold text-red-400">Zona de Perigo</h3>
-                            <p className="text-sm text-red-400/70">Ações irreversíveis para sua conta</p>
+                            <h3 className="text-lg font-bold text-red-500">Zona de Perigo</h3>
+                            <p className="text-sm text-red-400/60 font-medium">Esta ação apagará todo o seu progresso e não poderá ser desfeita.</p>
                         </div>
                     </div>
 
                     {!showResetConfirm ? (
                         <button
                             onClick={() => setShowResetConfirm(true)}
-                            className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-sm font-medium transition-colors border border-red-500/20"
+                            className="px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-sm font-bold transition-all border border-red-500/20 hover:border-red-500/40"
                         >
                             Resetar Todos os Dados
                         </button>
                     ) : (
-                        <div className="flex flex-col sm:flex-row items-center gap-3 animate-in fade-in slide-in-from-right-4">
-                            <span className="text-sm font-medium text-red-400">Tem certeza? Isso apagará TUDO.</span>
-                            <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row items-center gap-3 animate-in fade-in slide-in-from-right-4 bg-red-500/10 p-2 rounded-xl border border-red-500/20">
+                            <span className="text-sm font-bold text-red-400 px-2">Tem certeza absoluta?</span>
+                            <div className="flex gap-2 w-full sm:w-auto">
                                 <button
                                     onClick={() => setShowResetConfirm(false)}
-                                    className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-xs hover:bg-slate-700 font-medium"
+                                    className="flex-1 sm:flex-none px-3 py-1.5 bg-slate-800 text-slate-400 rounded-lg text-xs hover:bg-slate-700 font-medium transition-colors"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={handleResetData}
                                     disabled={resetting}
-                                    className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold flex items-center gap-2"
+                                    className="flex-1 sm:flex-none px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
                                 >
                                     {resetting ? <Loader2 className="w-3 h-3 animate-spin" /> : <AlertTriangle className="w-3 h-3" />}
-                                    SIM, APAGAR TUDO
+                                    SIM, APAGAR
                                 </button>
                             </div>
                         </div>

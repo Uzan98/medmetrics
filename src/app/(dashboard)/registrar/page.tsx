@@ -684,28 +684,33 @@ function RegistrarContent() {
 
             {
                 registrationMode === 'exam' ? (
-                    <form onSubmit={handleExamSubmit} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 space-y-6 animate-fade-in">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Banca</label>
+                    <form onSubmit={handleExamSubmit} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 space-y-6 animate-fade-in shadow-xl shadow-black/10">
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Banca</label>
                                 <div className="flex gap-2">
-                                    <select
-                                        value={examForm.boardId}
-                                        onChange={(e) => setExamForm({ ...examForm, boardId: e.target.value })}
-                                        className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white outline-none focus:border-blue-500 transition-all"
-                                        required
-                                    >
-                                        <option value="">Selecione...</option>
-                                        {boards.map(b => (
-                                            <option key={b.id} value={b.id}>{b.name}</option>
-                                        ))}
-                                    </select>
+                                    <div className="relative flex-1">
+                                        <select
+                                            value={examForm.boardId}
+                                            onChange={(e) => setExamForm({ ...examForm, boardId: e.target.value })}
+                                            className="w-full pl-4 pr-10 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none"
+                                            required
+                                        >
+                                            <option value="">Selecione a banca...</option>
+                                            {boards.map(b => (
+                                                <option key={b.id} value={b.id}>{b.name}</option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                            <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+                                        </div>
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={() => setShowAddBoard(!showAddBoard)}
                                         className={`px-3 py-3 rounded-xl border transition-all ${showAddBoard
-                                            ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
-                                            : 'bg-slate-900/50 border-slate-700 text-slate-400 hover:text-white'
+                                            ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400'
+                                            : 'bg-slate-900 border-slate-700/50 text-slate-400 hover:text-white hover:border-slate-600'
                                             }`}
                                     >
                                         <Plus className="w-5 h-5" />
@@ -713,20 +718,20 @@ function RegistrarContent() {
                                 </div>
 
                                 {showAddBoard && (
-                                    <div className="mt-2 flex gap-2 animate-fade-in">
+                                    <div className="mt-2 flex gap-2 animate-in slide-in-from-top-2 fade-in">
                                         <input
                                             type="text"
                                             value={newBoardName}
                                             onChange={(e) => setNewBoardName(e.target.value)}
-                                            placeholder="Nome da banca..."
-                                            className="flex-1 px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-white"
+                                            placeholder="Nome da nova banca..."
+                                            className="flex-1 px-4 py-2 bg-slate-900 border border-slate-700/50 rounded-lg text-sm text-white focus:border-indigo-500 outline-none"
                                             autoFocus
                                         />
                                         <button
                                             type="button"
                                             onClick={handleCreateBoard}
                                             disabled={creatingBoard || !newBoardName.trim()}
-                                            className="px-3 py-2 bg-blue-500 rounded-lg text-white text-sm font-medium disabled:opacity-50"
+                                            className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-white text-sm font-medium disabled:opacity-50 transition-colors"
                                         >
                                             {creatingBoard ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Criar'}
                                         </button>
@@ -734,89 +739,94 @@ function RegistrarContent() {
                                 )}
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Ano</label>
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ano</label>
                                 <input
                                     type="number"
                                     min="2000"
                                     max={new Date().getFullYear() + 1}
                                     value={examForm.year}
                                     onChange={(e) => setExamForm({ ...examForm, year: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white outline-none focus:border-blue-500 transition-all"
+                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-slate-600"
                                     required
                                 />
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Data Realizada</label>
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Data Realizada</label>
                                 <input
                                     type="date"
                                     value={examForm.date}
                                     onChange={(e) => setExamForm({ ...examForm, date: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white outline-none focus:border-blue-500 transition-all"
+                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-slate-400 focus:text-white"
                                     required
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Título (Opcional)</label>
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Título (Opcional)</label>
                                 <input
                                     type="text"
                                     value={examForm.title}
                                     onChange={(e) => setExamForm({ ...examForm, title: e.target.value })}
                                     placeholder="Ex: Simulado Nacional 1"
-                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white outline-none focus:border-blue-500 transition-all"
+                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-slate-600"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-4 pt-4 border-t border-slate-700/50">
-                            <h3 className="text-lg font-semibold text-white mb-4">Notas por Grande Área</h3>
-                            {Object.keys(examForm.scores).map((discName) => (
-                                <div key={discName} className="flex items-center gap-4">
-                                    <div className="w-48">
-                                        <span className="text-sm font-medium text-slate-300">{discName}</span>
-                                    </div>
-                                    <div className="flex-1 grid grid-cols-2 gap-4">
-                                        <div className="relative">
-                                            <input
-                                                type="number"
-                                                placeholder="Total"
-                                                value={examForm.scores[discName as keyof typeof examForm.scores].total}
-                                                onChange={(e) => {
-                                                    const newScores = { ...examForm.scores }
-                                                    newScores[discName as keyof typeof examForm.scores].total = e.target.value
-                                                    setExamForm({ ...examForm, scores: newScores })
-                                                }}
-                                                className="w-full pl-3 pr-8 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white text-sm"
-                                            />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">Qts</span>
+                        <div className="space-y-5 pt-6 border-t border-slate-700/50">
+                            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                <CheckCircle2 className="w-5 h-5 text-indigo-400" />
+                                Notas por Grande Área
+                            </h3>
+                            <div className="space-y-3">
+                                {Object.keys(examForm.scores).map((discName) => (
+                                    <div key={discName} className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/5">
+                                        <div className="w-48">
+                                            <span className="text-sm font-medium text-slate-300">{discName}</span>
                                         </div>
-                                        <div className="relative">
-                                            <input
-                                                type="number"
-                                                placeholder="Acertos"
-                                                value={examForm.scores[discName as keyof typeof examForm.scores].correct}
-                                                onChange={(e) => {
-                                                    const newScores = { ...examForm.scores }
-                                                    newScores[discName as keyof typeof examForm.scores].correct = e.target.value
-                                                    setExamForm({ ...examForm, scores: newScores })
-                                                }}
-                                                className="w-full pl-3 pr-8 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white text-sm"
-                                            />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">Acertos</span>
+                                        <div className="flex-1 grid grid-cols-2 gap-4">
+                                            <div className="relative group">
+                                                <input
+                                                    type="number"
+                                                    placeholder="0"
+                                                    value={examForm.scores[discName as keyof typeof examForm.scores].total}
+                                                    onChange={(e) => {
+                                                        const newScores = { ...examForm.scores }
+                                                        newScores[discName as keyof typeof examForm.scores].total = e.target.value
+                                                        setExamForm({ ...examForm, scores: newScores })
+                                                    }}
+                                                    className="w-full pl-4 pr-12 py-2.5 bg-slate-900 border border-slate-700/50 rounded-lg text-white text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder-slate-600"
+                                                />
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500 group-focus-within:text-indigo-400 transition-colors">Total</span>
+                                            </div>
+                                            <div className="relative group">
+                                                <input
+                                                    type="number"
+                                                    placeholder="0"
+                                                    value={examForm.scores[discName as keyof typeof examForm.scores].correct}
+                                                    onChange={(e) => {
+                                                        const newScores = { ...examForm.scores }
+                                                        newScores[discName as keyof typeof examForm.scores].correct = e.target.value
+                                                        setExamForm({ ...examForm, scores: newScores })
+                                                    }}
+                                                    className="w-full pl-4 pr-12 py-2.5 bg-slate-900 border border-slate-700/50 rounded-lg text-white text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all placeholder-slate-600"
+                                                />
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500 group-focus-within:text-emerald-400 transition-colors">Acertos</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
 
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="w-full mt-6 py-4 px-6 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.02]"
-                            style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)' }}
+                            className="w-full mt-6 py-4 px-6 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.02] shadow-lg shadow-indigo-500/25"
+                            style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' }}
                         >
                             {submitting ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -829,179 +839,197 @@ function RegistrarContent() {
                         </button>
                     </form>
                 ) : (
-                    <form onSubmit={handleSubmit} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
-                        <div className="space-y-5">
+                    <form onSubmit={handleSubmit} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 shadow-xl shadow-black/10">
+                        <div className="space-y-6">
                             {/* Date */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Data</label>
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Data</label>
                                 <input
                                     type="date"
                                     value={form.date}
                                     onChange={(e) => setForm({ ...form, date: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
+                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-slate-400 focus:text-white"
                                     required
                                 />
                             </div>
 
                             {/* Discipline */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Disciplina</label>
-                                <select
-                                    value={form.disciplineId}
-                                    onChange={(e) => setForm({
-                                        ...form,
-                                        disciplineId: e.target.value,
-                                        subdisciplineId: '',
-                                        topicId: ''
-                                    })}
-                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
-                                    required
-                                >
-                                    <option value="">Selecione...</option>
-                                    {disciplines.map((d) => (
-                                        <option key={d.id} value={d.id}>
-                                            {d.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Subdiscipline */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Subdisciplina</label>
-                                <div className="flex gap-2">
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Disciplina</label>
+                                <div className="relative">
                                     <select
-                                        value={form.subdisciplineId}
+                                        value={form.disciplineId}
                                         onChange={(e) => setForm({
                                             ...form,
-                                            subdisciplineId: e.target.value,
+                                            disciplineId: e.target.value,
+                                            subdisciplineId: '',
                                             topicId: ''
                                         })}
-                                        className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white disabled:opacity-50"
-                                        disabled={!form.disciplineId}
+                                        className="w-full pl-4 pr-10 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none"
+                                        required
                                     >
-                                        <option value="">Selecione...</option>
-                                        {filteredSubdisciplines.map((s) => (
-                                            <option key={s.id} value={s.id}>
-                                                {s.name}
+                                        <option value="">Selecione a disciplina...</option>
+                                        {disciplines.map((d) => (
+                                            <option key={d.id} value={d.id}>
+                                                {d.name}
                                             </option>
                                         ))}
                                     </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                        <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Subdiscipline */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Subdisciplina</label>
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                        <select
+                                            value={form.subdisciplineId}
+                                            onChange={(e) => setForm({
+                                                ...form,
+                                                subdisciplineId: e.target.value,
+                                                topicId: ''
+                                            })}
+                                            className="w-full pl-4 pr-10 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white disabled:opacity-50 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none"
+                                            disabled={!form.disciplineId}
+                                        >
+                                            <option value="">Selecione...</option>
+                                            {filteredSubdisciplines.map((s) => (
+                                                <option key={s.id} value={s.id}>
+                                                    {s.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                            <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+                                        </div>
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={() => setShowAddModal(true)}
                                         disabled={!form.disciplineId}
-                                        className="px-4 py-3 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-400 hover:bg-blue-500/30 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="px-4 py-3 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                         title="Adicionar nova subdisciplina"
                                     >
                                         <Plus className="w-5 h-5" />
                                     </button>
                                 </div>
-                                {form.disciplineId && (
-                                    <p className="text-xs text-slate-500 mt-2">
-                                        Não encontrou? Clique no + para adicionar uma nova subdisciplina.
+                                {form.disciplineId && !filteredSubdisciplines.length && (
+                                    <p className="text-xs text-indigo-400 mt-1 flex items-center gap-1 animate-fade-in">
+                                        <AlertCircle className="w-3 h-3" />
+                                        Nenhuma subdisciplina encontrada. Adicione uma!
                                     </p>
                                 )}
                             </div>
 
                             {/* Topic (Assunto) */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Assunto (Opcional)</label>
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Assunto (Opcional)</label>
                                 <div className="flex gap-2">
-                                    <select
-                                        value={form.topicId}
-                                        onChange={(e) => setForm({ ...form, topicId: e.target.value })}
-                                        className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white disabled:opacity-50"
-                                        disabled={!form.subdisciplineId}
-                                    >
-                                        <option value="">Selecione...</option>
-                                        {filteredTopics.map((t) => (
-                                            <option key={t.id} value={t.id}>
-                                                {t.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative flex-1">
+                                        <select
+                                            value={form.topicId}
+                                            onChange={(e) => setForm({ ...form, topicId: e.target.value })}
+                                            className="w-full pl-4 pr-10 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white disabled:opacity-50 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none"
+                                            disabled={!form.subdisciplineId}
+                                        >
+                                            <option value="">Selecione...</option>
+                                            {filteredTopics.map((t) => (
+                                                <option key={t.id} value={t.id}>
+                                                    {t.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                            <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+                                        </div>
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={() => setShowAddTopicModal(true)}
                                         disabled={!form.subdisciplineId}
-                                        className="px-4 py-3 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-400 hover:bg-blue-500/30 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="px-4 py-3 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                         title="Adicionar novo assunto"
                                     >
                                         <Plus className="w-5 h-5" />
                                     </button>
                                 </div>
-                                {form.subdisciplineId && (
-                                    <p className="text-xs text-slate-500 mt-2">
-                                        Refine seu estudo selecionando um assunto específico.
-                                    </p>
-                                )}
                             </div>
 
                             {/* Source */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                                     Fonte (banco, curso, etc.)
                                 </label>
                                 <input
                                     type="text"
                                     value={form.source}
                                     onChange={(e) => setForm({ ...form, source: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500"
+                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white placeholder-slate-600 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                                     placeholder="Ex: Medcel, Estratégia, USP..."
                                 />
                             </div>
 
                             {/* Questions and Answers */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Questões feitas</label>
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Questões feitas</label>
                                     <input
                                         type="number"
                                         min="1"
                                         value={form.questionsDone}
                                         onChange={(e) => setForm({ ...form, questionsDone: e.target.value })}
-                                        className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
+                                        className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-slate-600"
                                         required
+                                        placeholder="0"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Acertos</label>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Acertos</label>
                                     <input
                                         type="number"
                                         min="0"
                                         max={form.questionsDone || undefined}
                                         value={form.correctAnswers}
                                         onChange={(e) => setForm({ ...form, correctAnswers: e.target.value })}
-                                        className={`w-full px-4 py-3 bg-slate-900/50 border rounded-xl text-white ${form.correctAnswers && form.questionsDone &&
+                                        className={`w-full px-4 py-3 bg-slate-900 border rounded-xl text-white outline-none focus:ring-1 transition-all placeholder-slate-600 ${form.correctAnswers && form.questionsDone &&
                                             Number(form.correctAnswers) > Number(form.questionsDone)
-                                            ? 'border-red-500'
-                                            : 'border-slate-700'
+                                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                            : 'border-slate-700/50 focus:border-emerald-500 focus:ring-emerald-500'
                                             }`}
                                         required
+                                        placeholder="0"
                                     />
                                 </div>
                             </div>
 
                             {/* Stats preview */}
                             {errors !== null && (
-                                <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-900/30">
-                                    <div className="text-center">
-                                        <p className="text-2xl font-bold text-red-400">{errors}</p>
-                                        <p className="text-xs text-slate-500">erros</p>
+                                <div className="grid grid-cols-2 gap-4 animate-in zoom-in-95 duration-200">
+                                    <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
+                                        <p className="text-3xl font-bold text-white">{errors}</p>
+                                        <p className="text-xs font-medium text-red-400 uppercase tracking-wider mt-1">Erros</p>
                                     </div>
-                                    <div className="text-center">
-                                        <p className={`text-2xl font-bold ${Number(accuracy) >= 70 ? 'text-green-400' :
-                                            Number(accuracy) >= 50 ? 'text-yellow-400' : 'text-red-400'
+                                    <div className={`p-4 rounded-xl border text-center ${Number(accuracy) >= 80 ? 'bg-emerald-500/10 border-emerald-500/20' :
+                                        Number(accuracy) >= 60 ? 'bg-yellow-500/10 border-yellow-500/20' :
+                                            'bg-red-500/10 border-red-500/20'
+                                        }`}>
+                                        <p className={`text-3xl font-bold ${Number(accuracy) >= 80 ? 'text-emerald-400' :
+                                            Number(accuracy) >= 60 ? 'text-yellow-400' : 'text-red-400'
                                             }`}>{accuracy}%</p>
-                                        <p className="text-xs text-slate-500">aproveitamento</p>
+                                        <p className={`text-xs font-medium uppercase tracking-wider mt-1 ${Number(accuracy) >= 80 ? 'text-emerald-400' :
+                                            Number(accuracy) >= 60 ? 'text-yellow-400' : 'text-red-400'
+                                            }`}>Aproveitamento</p>
                                     </div>
                                 </div>
                             )}
 
                             {/* Time */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                                     Tempo (minutos) - opcional
                                 </label>
                                 <input
@@ -1009,21 +1037,21 @@ function RegistrarContent() {
                                     min="1"
                                     value={form.timeMinutes}
                                     onChange={(e) => setForm({ ...form, timeMinutes: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
+                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-slate-600"
                                     placeholder="Ex: 60"
                                 />
                             </div>
 
                             {/* Notes */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                                     Observações - opcional
                                 </label>
                                 <textarea
                                     value={form.notes}
                                     onChange={(e) => setForm({ ...form, notes: e.target.value })}
                                     rows={3}
-                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 resize-none"
+                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white placeholder-slate-600 resize-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                                     placeholder="Anotações sobre este bloco de estudo..."
                                 />
                             </div>
@@ -1033,8 +1061,8 @@ function RegistrarContent() {
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="w-full mt-6 py-4 px-6 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.02]"
-                            style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)' }}
+                            className="w-full mt-8 py-4 px-6 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.02] shadow-lg shadow-indigo-500/25"
+                            style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' }}
                         >
                             {submitting ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />

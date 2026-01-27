@@ -50,10 +50,10 @@ export function AccuracyLineChart({
                 />
                 <Tooltip
                     contentStyle={{
-                        background: '#1e293b',
-                        border: '1px solid #334155',
+                        background: '#0f172a',
+                        border: '1px solid rgba(51, 65, 85, 0.5)',
                         borderRadius: '12px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
                     }}
                     labelStyle={{ color: '#f1f5f9', fontWeight: 600 }}
                     itemStyle={{ color: '#94a3b8' }}
@@ -108,10 +108,10 @@ export function QuestionsBarChart({
                 />
                 <Tooltip
                     contentStyle={{
-                        background: '#1e293b',
-                        border: '1px solid #334155',
+                        background: '#0f172a',
+                        border: '1px solid rgba(51, 65, 85, 0.5)',
                         borderRadius: '12px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
                     }}
                     labelStyle={{ color: '#f1f5f9', fontWeight: 600 }}
                     itemStyle={{ color: '#94a3b8' }}
@@ -174,10 +174,10 @@ export function DisciplineComparisonChart({
                 />
                 <Tooltip
                     contentStyle={{
-                        background: '#1e293b',
-                        border: '1px solid #334155',
+                        background: '#0f172a',
+                        border: '1px solid rgba(51, 65, 85, 0.5)',
                         borderRadius: '12px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
                     }}
                     labelStyle={{ color: '#f1f5f9', fontWeight: 600 }}
                     formatter={(value, name) => {
@@ -247,10 +247,10 @@ export function MonthlyEvolutionChart({
                 />
                 <Tooltip
                     contentStyle={{
-                        background: '#1e293b',
-                        border: '1px solid #334155',
+                        background: '#0f172a',
+                        border: '1px solid rgba(51, 65, 85, 0.5)',
                         borderRadius: '12px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
                     }}
                     labelStyle={{ color: '#f1f5f9', fontWeight: 600 }}
                     formatter={(value, name) => {
@@ -328,10 +328,10 @@ export function DisciplineRadarChart({
                 />
                 <Tooltip
                     contentStyle={{
-                        background: '#1e293b',
-                        border: '1px solid #334155',
+                        background: '#0f172a',
+                        border: '1px solid rgba(51, 65, 85, 0.5)',
                         borderRadius: '12px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
                     }}
                     labelStyle={{ color: '#f1f5f9', fontWeight: 600 }}
                     formatter={(value) => [`${(value as number)?.toFixed(1) ?? 0}%`, 'Aproveitamento']}
@@ -370,10 +370,10 @@ export function StudyDistributionChart({
                 </Pie>
                 <Tooltip
                     contentStyle={{
-                        background: '#1e293b',
-                        border: '1px solid #334155',
+                        background: '#0f172a',
+                        border: '1px solid rgba(51, 65, 85, 0.5)',
                         borderRadius: '12px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
                     }}
                     itemStyle={{ color: '#f1f5f9' }}
                     formatter={(value) => [(value as number)?.toLocaleString('pt-BR') ?? 0, 'Questões']}

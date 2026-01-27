@@ -75,8 +75,12 @@ export function Speedometer({ value, max, label, sublabel, size = 200, color = "
     const needleEndPos = polarToCartesian(center, center, needleLength, currentAngle)
 
     return (
-        <div className="relative flex flex-col items-center justify-center p-4" style={{ width: size, height: size }}>
-            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <div className="relative flex flex-col items-center justify-center w-full" style={{ maxWidth: size, aspectRatio: '1/1' }}>
+            <svg
+                viewBox={`0 0 ${size} ${size}`}
+                className="w-full h-full"
+                preserveAspectRatio="xMidYMid meet"
+            >
                 <defs>
                     <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="#ef4444" />
@@ -106,28 +110,31 @@ export function Speedometer({ value, max, label, sublabel, size = 200, color = "
                 />
 
                 {/* Needle */}
-                <circle cx={center} cy={center} r="6" fill="#fff" />
+                <circle cx={center} cy={center} r={size * 0.03} fill="#fff" />
                 <line
                     x1={center}
                     y1={center}
                     x2={needleEndPos.x}
                     y2={needleEndPos.y}
                     stroke="white"
-                    strokeWidth="4"
+                    strokeWidth={size * 0.02}
                     strokeLinecap="round"
                     className="transition-all duration-1000 ease-out"
                 />
             </svg>
 
             {/* Labels - Absolute centered but offset down to fit in the opening */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-2 flex flex-col items-center justify-center text-center">
-                <span className="text-4xl font-bold text-white tabular-nums drop-shadow-lg">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-2 flex flex-col items-center justify-center text-center pointer-events-none">
+                <span className="font-bold text-white tabular-nums drop-shadow-lg" style={{ fontSize: `${size * 0.2}px`, lineHeight: 1 }}>
                     {value.toLocaleString()}
                 </span>
-                <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">
+                <span className="text-slate-400 font-medium uppercase tracking-wider" style={{ fontSize: `${size * 0.06}px` }}>
                     {sublabel || 'Questões'}
                 </span>
-                <span className="text-xs text-slate-500 mt-1 font-medium bg-slate-800/50 px-2 py-0.5 rounded-full border border-slate-700/50">
+                <span
+                    className="text-slate-500 mt-1 font-medium bg-slate-800/50 rounded-full border border-slate-700/50"
+                    style={{ fontSize: `${size * 0.05}px`, padding: `${size * 0.01}px ${size * 0.04}px` }}
+                >
                     Meta: {max.toLocaleString()}
                 </span>
             </div>

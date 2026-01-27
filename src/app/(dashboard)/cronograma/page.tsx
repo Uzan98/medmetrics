@@ -22,13 +22,16 @@ import {
     Grid,
     List,
     ChevronLeft,
-    GripVertical
+    GripVertical,
+    Plus,
+    Minus
 } from 'lucide-react'
 import Link from 'next/link'
 import { format, addDays, isSameDay, startOfWeek, addWeeks, isBefore, startOfToday, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { EmptyState } from '@/components/ui'
 import type { Discipline, Topic, StudySchedule, ScheduleItem } from '@/types/database'
+import { toast } from 'sonner'
 import { DndContext, DragEndEvent, DragOverlay, useDraggable, useDroppable, closestCenter } from '@dnd-kit/core'
 
 export default function CronogramaPage() {
@@ -47,11 +50,13 @@ export default function CronogramaPage() {
     const [disciplines, setDisciplines] = useState<Discipline[]>([])
     const [config, setConfig] = useState({
         disciplineId: '',
-        durationWeeks: 4,
+        durationWeeks: 4, // Will be calculated automatically now
         selectedDays: [] as number[], // 0 = Sun, 1 = Mon...
+        dailyCapacities: {} as Record<number, number>, // Day ID -> Capacity
         startDate: new Date().toISOString().split('T')[0]
     })
     const [generating, setGenerating] = useState(false)
+    const [totalTopics, setTotalTopics] = useState<number>(0)
 
     const supabase = createClient()
 
@@ -64,6 +69,37 @@ export default function CronogramaPage() {
         const { data } = await supabase.from('disciplines').select('*').order('name')
         if (data) setDisciplines(data)
     }
+
+    // Load topic count when discipline changes in wizard
+    useEffect(() => {
+        async function fetchTopicCount() {
+            if (!config.disciplineId) return
+
+            try {
+                // Get subdisciplines first
+                const { data: subs } = await supabase
+                    .from('subdisciplines')
+                    .select('id')
+                    .eq('discipline_id', Number(config.disciplineId))
+
+                if (!subs || subs.length === 0) {
+                    setTotalTopics(0)
+                    return
+                }
+
+                const subIds = subs.map(s => s.id)
+                const { count } = await supabase
+                    .from('topics')
+                    .select('id', { count: 'exact', head: true })
+                    .in('subdiscipline_id', subIds)
+
+                setTotalTopics(count || 0)
+            } catch (err) {
+                console.error('Error fetching topic count:', err)
+            }
+        }
+        fetchTopicCount()
+    }, [config.disciplineId])
 
     async function loadSchedule() {
         setLoading(true)
@@ -161,12 +197,48 @@ export default function CronogramaPage() {
 
     function toggleDay(dayId: number) {
         setConfig(prev => {
-            const days = prev.selectedDays.includes(dayId)
+            const isSelected = prev.selectedDays.includes(dayId)
+            let newDays = isSelected
                 ? prev.selectedDays.filter(d => d !== dayId)
                 : [...prev.selectedDays, dayId].sort()
-            return { ...prev, selectedDays: days }
+
+            // Manage capacities
+            const newCapacities = { ...prev.dailyCapacities }
+            if (!isSelected) {
+                // Default capacity of 2 when selecting a new day
+                newCapacities[dayId] = 2
+            } else {
+                // Optional: keep capacity in memory or delete? Let's keep it clean
+                delete newCapacities[dayId]
+            }
+
+            return { ...prev, selectedDays: newDays, dailyCapacities: newCapacities }
         })
     }
+
+    function updateDayCapacity(dayId: number, delta: number) {
+        setConfig(prev => {
+            const current = prev.dailyCapacities[dayId] || 2
+            const newCap = Math.max(1, Math.min(10, current + delta))
+            return {
+                ...prev,
+                dailyCapacities: { ...prev.dailyCapacities, [dayId]: newCap }
+            }
+        })
+    }
+
+    // Calculate estimated duration based on capacity
+    const estimatedWeeks = (() => {
+        if (config.selectedDays.length === 0 || totalTopics === 0) return 0
+
+        let weeklyCapacity = 0
+        config.selectedDays.forEach(day => {
+            weeklyCapacity += (config.dailyCapacities[day] || 2)
+        })
+
+        if (weeklyCapacity === 0) return 0
+        return Math.ceil(totalTopics / weeklyCapacity)
+    })()
 
     async function generateSchedule() {
         if (!config.disciplineId || config.selectedDays.length === 0) return
@@ -176,18 +248,11 @@ export default function CronogramaPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            // 1. Check for existing schedule to preserve completed items if strictly "recalculating"
-            // Actually, the user might want to keep completed items as completed in history?
-            // The requirement is: "completed activities are not changed and should not return to the schedule".
-            // Implementation: We find which topics were completed in the previous schedule, and EXCLUDE them from the new one.
-
+            // 1. Check for existing schedule to preserve completed items
             let completedTopicIds: number[] = []
-
-            // Check if we are recalculating an existing schedule
             const scheduleIdToRecalculate = schedule?.id || recalculatingScheduleId
 
             if (scheduleIdToRecalculate) {
-                // Fetch completed items from current schedule
                 const { data: completedItems } = await supabase
                     .from('schedule_items')
                     .select('topic_id')
@@ -199,28 +264,10 @@ export default function CronogramaPage() {
                 }
 
                 await supabase.from('study_schedules').delete().eq('id', String(scheduleIdToRecalculate))
-
-                // Clear the ID reset state
                 if (recalculatingScheduleId) setRecalculatingScheduleId(null)
             }
 
-            // 2. Create new schedule
-            const { data: newSchedule, error: schedError } = await supabase
-                .from('study_schedules')
-                .insert({
-                    user_id: user.id,
-                    rotation_discipline_id: Number(config.disciplineId),
-                    duration_weeks: config.durationWeeks,
-                    start_date: config.startDate
-                })
-                .select()
-                .single()
-
-            if (schedError) throw schedError
-
-            // 3. Fetch topics
-            // We need to fetch topics for the discipline.
-            // Since topics are linked to subdisciplines, we join: topics -> subdisciplines -> discipline_id
+            // 2. Fetch topics
             const { data: subdisciplines } = await supabase
                 .from('subdisciplines')
                 .select('id')
@@ -239,87 +286,81 @@ export default function CronogramaPage() {
             // Filter out completed topics
             const topicsToSchedule = topics.filter(t => !completedTopicIds.includes(t.id))
 
-            // 4. Distribute topics
-            const totalStudyDays = config.durationWeeks * config.selectedDays.length
+            // 3. Prepare schedule distribution
+            // We don't create the schedule record yet because we need to know the final duration
             const itemsToInsert = []
-
-            let currentDate = new Date(config.startDate)
-            let topicIndex = 0
-
-            // Loop through weeks
-            for (let week = 0; week < config.durationWeeks; week++) {
-                // Determine dates for this week based on selected days
-                // Sort selected days to be chronological within the week
-                const sortedDays = [...config.selectedDays].sort((a, b) => a - b)
-
-                // Find the dates for these days in the current week relative to startDate
-                // Actually simpler: Iterate day by day from start date and check if match
-                // Let's do a reliable approach:
-                // Find connection between current date and next valid study date
-
-                for (const dayOfWeek of sortedDays) {
-                    // Find the date for this dayOfWeek in the current week
-                    // Logic: Get start of this week, add 'dayOfWeek' offset?
-                    // Better: We iterate through 7 days of the week and pick matches
-
-                    // Simple "Next X Dates" logic
-                }
-            }
-
-            // SIMPLER ALGORITHM:
-            // Generate all valid study dates first
-            // Fix: append T12:00:00 to ensure we are in the middle of the day, avoiding timezone shifts
-            const validDates: Date[] = []
             let iterDate = new Date(config.startDate + 'T12:00:00')
             let safety = 0
+            let topicsAssigned = 0
 
-            while (validDates.length < totalStudyDays && safety < 365) {
-                if (config.selectedDays.includes(iterDate.getDay())) {
-                    validDates.push(new Date(iterDate))
+            // Generate assignments until all topics are assigned
+            while (topicsAssigned < topicsToSchedule.length && safety < 1000) {
+                const dayOfWeek = iterDate.getDay() // 0-6
+
+                if (config.selectedDays.includes(dayOfWeek)) {
+                    // It's a study day. Get capacity.
+                    const capacity = config.dailyCapacities[dayOfWeek] || 2
+
+                    // Assign up to 'capacity' topics
+                    for (let i = 0; i < capacity; i++) {
+                        if (topicsAssigned >= topicsToSchedule.length) break
+
+                        itemsToInsert.push({
+                            topic_id: topicsToSchedule[topicsAssigned].id,
+                            study_date: format(iterDate, 'yyyy-MM-dd'),
+                            status: 'pending' as const
+                        })
+                        topicsAssigned++
+                    }
                 }
-                iterDate = addDays(iterDate, 1)
+
+                // Move to next day if we still have topics (or just move always)
+                if (topicsAssigned < topicsToSchedule.length) {
+                    iterDate = addDays(iterDate, 1)
+                }
                 safety++
             }
 
-            // Distribute topics across these dates
-            // If more topics than days, stack them. If fewer, spread them.
+            // Calculate final duration in weeks
+            // Start Date to Last Date
+            const endDate = itemsToInsert.length > 0 ? new Date(itemsToInsert[itemsToInsert.length - 1].study_date) : new Date(config.startDate)
+            const startDate = new Date(config.startDate)
+            const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 // +1 inclusive
+            const calculatedWeeks = Math.max(1, Math.ceil(diffDays / 7))
 
-            const topicsPerDay = Math.max(1, Math.ceil(topicsToSchedule.length / validDates.length))
 
-            let currentDayIdx = 0
-            for (let i = 0; i < topicsToSchedule.length; i++) {
-                if (currentDayIdx >= validDates.length) currentDayIdx = validDates.length - 1 // Fallback to last day
-
-                itemsToInsert.push({
-                    schedule_id: newSchedule.id,
-                    topic_id: topicsToSchedule[i].id,
-                    study_date: format(validDates[currentDayIdx], 'yyyy-MM-dd'),
-                    status: 'pending' as const
+            // 4. Create new schedule with calculated duration
+            const { data: newSchedule, error: schedError } = await supabase
+                .from('study_schedules')
+                .insert({
+                    user_id: user.id,
+                    rotation_discipline_id: Number(config.disciplineId),
+                    duration_weeks: calculatedWeeks,
+                    start_date: config.startDate
                 })
+                .select()
+                .single()
 
-                // Move to next day if we filled the quota for today
-                // But we must ensure all topics are scheduled.
-                // Simple distribution: i % validDates.length ? No, that scatters related topics.
-                // We want to fill Day 1, then Day 2.
+            if (schedError) throw schedError
 
-                // Check how many items already assigned to this day
-                const itemsOnThisDay = itemsToInsert.filter(item => item.study_date === format(validDates[currentDayIdx], 'yyyy-MM-dd')).length
-                if (itemsOnThisDay >= topicsPerDay && currentDayIdx < validDates.length - 1) {
-                    currentDayIdx++
-                }
-            }
+            // 5. Insert items with the new schedule ID
+            const itemsWithId = itemsToInsert.map(item => ({
+                ...item,
+                schedule_id: newSchedule.id
+            }))
 
             const { error: itemsError } = await supabase
                 .from('schedule_items')
-                .insert(itemsToInsert)
+                .insert(itemsWithId)
 
             if (itemsError) throw itemsError
 
             await loadSchedule()
-            setStep(1) // Reset wizard visual but currently we show schedule if 'schedule' object exists
+            setStep(1)
         } catch (error) {
             console.error('Error generating:', error)
-            alert('Erro ao gerar cronograma. Tente novamente.')
+            toast.error('Erro ao gerar cronograma. Tente novamente.')
         } finally {
             setGenerating(false)
         }
@@ -477,24 +518,23 @@ export default function CronogramaPage() {
 
                         {step === 2 && (
                             <div className="space-y-8">
-                                {/* Duration */}
+                                {/* Estimation */}
                                 <div>
                                     <h3 className="text-white font-medium mb-4 flex items-center gap-2">
                                         <Clock className="w-4 h-4 text-blue-400" />
-                                        Duração da Rotação
+                                        Estimativa de Duração
                                     </h3>
-                                    <div className="flex items-center gap-4">
-                                        <input
-                                            type="range"
-                                            min="1"
-                                            max="12"
-                                            value={config.durationWeeks}
-                                            onChange={(e) => setConfig({ ...config, durationWeeks: Number(e.target.value) })}
-                                            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                                        />
-                                        <span className="text-2xl font-bold text-white w-24 text-center">
-                                            {config.durationWeeks} <span className="text-sm font-normal text-slate-400">semanas</span>
-                                        </span>
+                                    <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-4 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-slate-400 text-sm mb-1">Com base na sua disponibilidade:</p>
+                                            <p className="text-2xl font-bold text-white">
+                                                {estimatedWeeks > 0 ? estimatedWeeks : '-'} <span className="text-sm font-normal text-slate-400">semanas</span>
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-slate-400 text-sm mb-1">Total de tópicos:</p>
+                                            <p className="text-lg font-semibold text-white">{totalTopics}</p>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -502,23 +542,58 @@ export default function CronogramaPage() {
                                 <div>
                                     <h3 className="text-white font-medium mb-4 flex items-center gap-2">
                                         <CalendarDays className="w-4 h-4 text-blue-400" />
-                                        Dias de Estudo
+                                        Disponibilidade Semanal
                                     </h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {weekDays.map(day => (
-                                            <button
-                                                key={day.id}
-                                                onClick={() => toggleDay(day.id)}
-                                                className={`w-12 h-12 rounded-xl font-medium transition-all ${config.selectedDays.includes(day.id)
-                                                    ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
-                                                    : 'bg-slate-900/50 text-slate-400 hover:bg-slate-700'
-                                                    }`}
-                                            >
-                                                {day.label}
-                                            </button>
-                                        ))}
+
+                                    <div className="space-y-4">
+                                        <div className="flex flex-wrap gap-2">
+                                            {weekDays.map(day => (
+                                                <button
+                                                    key={day.id}
+                                                    onClick={() => toggleDay(day.id)}
+                                                    className={`w-12 h-12 rounded-xl font-medium transition-all ${config.selectedDays.includes(day.id)
+                                                        ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
+                                                        : 'bg-slate-900/50 text-slate-400 hover:bg-slate-700'
+                                                        }`}
+                                                >
+                                                    {day.label}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        {/* Capacity Controls for Selected Days */}
+                                        {config.selectedDays.length > 0 && (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 animate-fade-in pt-2">
+                                                {config.selectedDays.sort((a, b) => a - b).map(dayId => {
+                                                    const day = weekDays.find(d => d.id === dayId)
+                                                    const capacity = config.dailyCapacities[dayId] || 2
+
+                                                    return (
+                                                        <div key={dayId} className="bg-slate-900/30 border border-slate-700/50 rounded-xl p-3 flex items-center justify-between">
+                                                            <span className="text-sm text-slate-300 font-medium">{day?.name}</span>
+                                                            <div className="flex items-center gap-3">
+                                                                <button
+                                                                    onClick={() => updateDayCapacity(dayId, -1)}
+                                                                    className="p-1 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors"
+                                                                >
+                                                                    <Minus className="w-4 h-4" />
+                                                                </button>
+                                                                <span className="w-4 text-center text-white font-bold">{capacity}</span>
+                                                                <button
+                                                                    onClick={() => updateDayCapacity(dayId, 1)}
+                                                                    className="p-1 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors"
+                                                                >
+                                                                    <Plus className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        )}
+
+                                        <p className="text-sm text-slate-500">Selecione os dias e defina quantos assuntos estudar em cada um.</p>
                                     </div>
-                                    <p className="text-sm text-slate-500 mt-2">Selecione os dias que você terá disponíveis para estudar.</p>
                                 </div>
 
                                 {/* Start Date */}
@@ -644,6 +719,7 @@ export default function CronogramaPage() {
                                     ...config,
                                     disciplineId: schedule.rotation_discipline_id.toString(),
                                     durationWeeks: schedule.duration_weeks,
+                                    dailyCapacities: {},
                                     startDate: new Date().toISOString().split('T')[0]
                                 })
                                 setRecalculatingScheduleId(schedule.id)
@@ -664,6 +740,7 @@ export default function CronogramaPage() {
                                     disciplineId: '',
                                     durationWeeks: 4,
                                     selectedDays: [],
+                                    dailyCapacities: {},
                                     startDate: new Date().toISOString().split('T')[0]
                                 })
                                 setStep(1)
@@ -908,54 +985,69 @@ export default function CronogramaPage() {
 
                                                     return (
                                                         <DraggableItem key={studyItem.id} id={studyItem.id}>
-                                                            <div
-                                                                onClick={() => toggleItemStatus(studyItem.id, studyItem.status)}
-                                                                className={`group p-4 rounded-xl border cursor-pointer transition-all ${studyItem.status === 'completed'
-                                                                    ? 'bg-green-500/5 border-green-500/20 hover:bg-green-500/10'
-                                                                    : isOverdue
-                                                                        ? 'bg-red-500/5 border-red-500/30 hover:bg-red-500/10'
-                                                                        : 'bg-slate-800/50 border-slate-700/50 hover:border-blue-500/50'
-                                                                    }`}
-                                                            >
-                                                                <div className="flex items-start gap-4">
-                                                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${studyItem.status === 'completed'
-                                                                        ? 'bg-green-500 border-green-500'
+                                                            {({ listeners, attributes, isDragging }) => (
+                                                                <div
+                                                                    onClick={() => toggleItemStatus(studyItem.id, studyItem.status)}
+                                                                    className={`group p-3 rounded-xl border relative transition-all ${studyItem.status === 'completed'
+                                                                        ? 'bg-green-500/5 border-green-500/20 hover:bg-green-500/10'
                                                                         : isOverdue
-                                                                            ? 'border-red-500 text-red-500'
-                                                                            : 'border-slate-600 group-hover:border-blue-500'
-                                                                        }`}>
-                                                                        {studyItem.status === 'completed' && <CheckCircle2 className="w-4 h-4 text-white" />}
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className={`font-medium transition-colors ${studyItem.status === 'completed'
-                                                                            ? 'text-slate-500 line-through'
+                                                                            ? 'bg-red-500/5 border-red-500/30 hover:bg-red-500/10'
+                                                                            : 'bg-slate-800/50 border-slate-700/50 hover:border-blue-500/50'
+                                                                        } ${isDragging ? 'opacity-50 ring-2 ring-blue-500 z-50' : ''}`}
+                                                                >
+                                                                    <div className="flex items-start gap-3">
+                                                                        {/* Drag Handle */}
+                                                                        <div
+                                                                            {...listeners}
+                                                                            {...attributes}
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                            className="mt-0.5 p-1 -ml-1 text-slate-600 hover:text-slate-400 cursor-grab active:cursor-grabbing rounded"
+                                                                        >
+                                                                            <GripVertical className="w-4 h-4" />
+                                                                        </div>
+
+                                                                        {/* Check Box */}
+                                                                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors mt-0.5 cursor-pointer ${studyItem.status === 'completed'
+                                                                            ? 'bg-green-500 border-green-500'
                                                                             : isOverdue
-                                                                                ? 'text-red-400'
-                                                                                : 'text-white'
+                                                                                ? 'border-red-500 text-red-500'
+                                                                                : 'border-slate-600 group-hover:border-blue-500'
                                                                             }`}>
-                                                                            {studyItem.topics?.name}
-                                                                        </p>
-                                                                        <div className="flex items-center gap-2 mt-1">
-                                                                            <span className={`text-xs px-2 py-0.5 rounded ${isOverdue
-                                                                                ? 'bg-red-500/20 text-red-300'
-                                                                                : 'bg-slate-700 text-slate-300'
+                                                                            {studyItem.status === 'completed' && <CheckCircle2 className="w-4 h-4 text-white" />}
+                                                                        </div>
+
+                                                                        {/* Content */}
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <p className={`font-medium transition-colors text-sm break-words ${studyItem.status === 'completed'
+                                                                                ? 'text-slate-500 line-through'
+                                                                                : isOverdue
+                                                                                    ? 'text-red-400'
+                                                                                    : 'text-white'
                                                                                 }`}>
-                                                                                {isOverdue ? 'Atrasado' : 'Tópico'}
-                                                                            </span>
-                                                                            {studyItem.status !== 'completed' && (
-                                                                                <Link
-                                                                                    href={`/registrar?disciplineId=${schedule.rotation_discipline_id}&subdisciplineId=${studyItem.topics?.subdiscipline_id}&topicId=${studyItem.topic_id}`}
-                                                                                    onClick={(e) => e.stopPropagation()}
-                                                                                    className="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 flex items-center gap-1 transition-colors"
-                                                                                >
-                                                                                    Registrar questões
-                                                                                    <ArrowRight className="w-3 h-3" />
-                                                                                </Link>
-                                                                            )}
+                                                                                {studyItem.topics?.name}
+                                                                            </p>
+                                                                            <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                                                <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${isOverdue
+                                                                                    ? 'bg-red-500/20 text-red-300'
+                                                                                    : 'bg-slate-700 text-slate-400'
+                                                                                    }`}>
+                                                                                    {isOverdue ? 'Atrasado' : 'Tópico'}
+                                                                                </span>
+                                                                                {studyItem.status !== 'completed' && (
+                                                                                    <Link
+                                                                                        href={`/registrar?disciplineId=${schedule.rotation_discipline_id}&subdisciplineId=${studyItem.topics?.subdiscipline_id}&topicId=${studyItem.topic_id}`}
+                                                                                        onClick={(e) => e.stopPropagation()}
+                                                                                        className="text-xs px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 flex items-center gap-1 transition-colors ml-auto"
+                                                                                    >
+                                                                                        Registrar
+                                                                                        <ArrowRight className="w-3 h-3" />
+                                                                                    </Link>
+                                                                                )}
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
+                                                            )}
                                                         </DraggableItem>
                                                     )
                                                 }
@@ -972,25 +1064,18 @@ export default function CronogramaPage() {
     )
 }
 
-// Draggable Item Wrapper - Entire item is draggable
-function DraggableItem({ id, children }: { id: string, children: React.ReactNode }) {
+// Draggable Item Wrapper
+function DraggableItem({ id, children }: { id: string, children: (props: { listeners: any, attributes: any, isDragging: boolean }) => React.ReactNode }) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
 
     const style: React.CSSProperties = {
         transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-        zIndex: isDragging ? 1000 : undefined,
+        zIndex: isDragging ? 20 : undefined,
     }
 
-    // Apply listeners to entire wrapper so the whole item moves with drag
     return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            className={`cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-50 shadow-2xl' : ''}`}
-            {...listeners}
-            {...attributes}
-        >
-            {children}
+        <div ref={setNodeRef} style={style}>
+            {children({ listeners, attributes, isDragging })}
         </div>
     )
 }
