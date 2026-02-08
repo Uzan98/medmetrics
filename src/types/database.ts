@@ -464,6 +464,128 @@ export type Database = {
                     }
                 ]
             }
+            study_sessions: {
+                Row: {
+                    id: string
+                    user_id: string
+                    started_at: string
+                    completed_at: string | null
+                    cards_reviewed: number
+                    cards_correct: number
+                    cards_wrong: number
+                    xp_earned: number
+                    discipline_id: number | null
+                }
+                Insert: {
+                    id?: string
+                    user_id: string
+                    started_at?: string
+                    completed_at?: string | null
+                    cards_reviewed?: number
+                    cards_correct?: number
+                    cards_wrong?: number
+                    xp_earned?: number
+                    discipline_id?: number | null
+                }
+                Update: {
+                    id?: string
+                    user_id?: string
+                    started_at?: string
+                    completed_at?: string | null
+                    cards_reviewed?: number
+                    cards_correct?: number
+                    cards_wrong?: number
+                    xp_earned?: number
+                    discipline_id?: number | null
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "study_sessions_discipline_id_fkey"
+                        columns: ["discipline_id"]
+                        isOneToOne: false
+                        referencedRelation: "disciplines"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            flashcard_reviews: {
+                Row: {
+                    id: string
+                    flashcard_id: string
+                    session_id: string | null
+                    user_id: string
+                    reviewed_at: string
+                    difficulty: 'easy' | 'hard' | 'wrong'
+                    xp_earned: number
+                }
+                Insert: {
+                    id?: string
+                    flashcard_id: string
+                    session_id?: string | null
+                    user_id: string
+                    reviewed_at?: string
+                    difficulty: 'easy' | 'hard' | 'wrong'
+                    xp_earned?: number
+                }
+                Update: {
+                    id?: string
+                    flashcard_id?: string
+                    session_id?: string | null
+                    user_id?: string
+                    reviewed_at?: string
+                    difficulty?: 'easy' | 'hard' | 'wrong'
+                    xp_earned?: number
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "flashcard_reviews_flashcard_id_fkey"
+                        columns: ["flashcard_id"]
+                        isOneToOne: false
+                        referencedRelation: "error_notebook"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "flashcard_reviews_session_id_fkey"
+                        columns: ["session_id"]
+                        isOneToOne: false
+                        referencedRelation: "study_sessions"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            user_study_stats: {
+                Row: {
+                    id: string
+                    user_id: string
+                    current_streak: number
+                    longest_streak: number
+                    total_xp: number
+                    total_cards_reviewed: number
+                    last_study_date: string | null
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    user_id: string
+                    current_streak?: number
+                    longest_streak?: number
+                    total_xp?: number
+                    total_cards_reviewed?: number
+                    last_study_date?: string | null
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    user_id?: string
+                    current_streak?: number
+                    longest_streak?: number
+                    total_xp?: number
+                    total_cards_reviewed?: number
+                    last_study_date?: string | null
+                    updated_at?: string
+                }
+                Relationships: []
+            }
 
         }
         Views: {
@@ -497,3 +619,7 @@ export type ExamBoard = Tables<'exam_boards'>
 export type ExamScore = Tables<'exam_scores'>
 export type StudySchedule = Tables<'study_schedules'>
 export type ScheduleItem = Tables<'schedule_items'>
+export type StudySession = Tables<'study_sessions'>
+export type FlashcardReview = Tables<'flashcard_reviews'>
+export type UserStudyStats = Tables<'user_study_stats'>
+

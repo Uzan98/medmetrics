@@ -866,16 +866,20 @@ export default function CronogramaPage() {
                                                         if (item.type === 'study') {
                                                             return (
                                                                 <DraggableItem key={item.data.id} id={item.data.id}>
-                                                                    <div
-                                                                        className={`text-xs px-1.5 py-0.5 rounded truncate ${item.data.status === 'completed'
-                                                                            ? 'bg-green-500/20 text-green-300 line-through'
-                                                                            : isOverdue
-                                                                                ? 'bg-red-500/20 text-red-300'
-                                                                                : 'bg-slate-700 text-slate-300'
-                                                                            }`}
-                                                                    >
-                                                                        {item.data.topics?.name?.slice(0, 12)}...
-                                                                    </div>
+                                                                    {({ listeners, attributes, isDragging }) => (
+                                                                        <div
+                                                                            {...listeners}
+                                                                            {...attributes}
+                                                                            className={`text-xs px-1.5 py-0.5 rounded truncate cursor-grab active:cursor-grabbing ${item.data.status === 'completed'
+                                                                                ? 'bg-green-500/20 text-green-300 line-through'
+                                                                                : isOverdue
+                                                                                    ? 'bg-red-500/20 text-red-300'
+                                                                                    : 'bg-slate-700 text-slate-300'
+                                                                                } ${isDragging ? 'opacity-50 z-50' : ''}`}
+                                                                        >
+                                                                            {item.data.topics?.name?.slice(0, 12)}...
+                                                                        </div>
+                                                                    )}
                                                                 </DraggableItem>
                                                             )
                                                         }

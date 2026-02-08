@@ -1142,124 +1142,214 @@ export default function DashboardPage() {
 }
 
 function DailyReviewWidget() {
-    const [reviewItem, setReviewItem] = useState<any>(null)
+    const [reviewItems, setReviewItems] = useState<any[]>([])
+    const [currentIndex, setCurrentIndex] = useState(0)
     const [loading, setLoading] = useState(true)
     const [showAnswer, setShowAnswer] = useState(false)
     const [reviewed, setReviewed] = useState(false)
+    const [pendingCount, setPendingCount] = useState(0)
     const supabase = createClient()
 
     useEffect(() => {
-        loadDailyReview()
+        loadDailyReviews()
     }, [])
 
-    async function loadDailyReview() {
+    async function loadDailyReviews() {
         try {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            // Get a random item that hasn't been reviewed much, or simply random
-            // Ideally we'd implement SR algorithm, but for now random selection is fine
-            // We fetch up to 10 items and pick 1 randomly client-side to be efficient
-            const { data } = await supabase
+            const today = new Date().toISOString().split('T')[0]
+
+            // Get items that need review (no next_review_date or past due)
+            const { data, count } = await supabase
                 .from('error_notebook')
-                .select('*, disciplines(name)')
+                .select('*, disciplines(name)', { count: 'exact' })
                 .eq('user_id', user.id)
-                .limit(10)
+                .or(`next_review_date.is.null,next_review_date.lte.${today}`)
+                .order('review_count', { ascending: true })
+                .limit(5)
 
             if (data && data.length > 0) {
-                const randomItem = data[Math.floor(Math.random() * data.length)]
-                setReviewItem(randomItem)
+                setReviewItems(data)
+                setPendingCount(count || data.length)
             }
         } catch (error) {
-            console.error('Error loading daily review:', error)
+            console.error('Error loading daily reviews:', error)
         } finally {
             setLoading(false)
         }
     }
 
-    async function markAsReviewed() {
+    async function handleReviewAction(difficulty: 'easy' | 'hard' | 'wrong') {
+        const reviewItem = reviewItems[currentIndex]
         if (!reviewItem) return
+
         try {
+            // Calculate next review date based on difficulty
+            const now = new Date()
+            let daysToAdd = 1
+            if (difficulty === 'easy') daysToAdd = 7
+            else if (difficulty === 'hard') daysToAdd = 3
+            else daysToAdd = 1
+
+            const nextReview = new Date(now)
+            nextReview.setDate(nextReview.getDate() + daysToAdd)
+
             await supabase.from('error_notebook')
-                .update({ review_count: (reviewItem.review_count || 0) + 1 })
+                .update({
+                    review_count: (reviewItem.review_count || 0) + 1,
+                    last_reviewed_at: now.toISOString(),
+                    next_review_date: nextReview.toISOString().split('T')[0]
+                })
                 .eq('id', reviewItem.id)
+
             setReviewed(true)
+
+            // Auto advance after 1.5s
+            setTimeout(() => {
+                if (currentIndex < reviewItems.length - 1) {
+                    setCurrentIndex(currentIndex + 1)
+                    setShowAnswer(false)
+                    setReviewed(false)
+                }
+            }, 1500)
         } catch (error) {
             console.error('Error marking as reviewed:', error)
         }
     }
 
     if (loading) return <Skeleton className="h-64 rounded-3xl w-full" />
+    if (reviewItems.length === 0) return null
 
-    if (!reviewItem) return null // Don't show widget if no errors logged
+    const reviewItem = reviewItems[currentIndex]
+    const xpEstimated = pendingCount * 15
 
     return (
-        <div className="mb-8 p-6 bg-gradient-to-br from-indigo-900/40 to-slate-900/60 rounded-3xl border border-indigo-500/20 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                <BookOpen className="w-32 h-32 text-indigo-400" />
+        <div className="relative overflow-hidden rounded-3xl border border-indigo-500/30 bg-gradient-to-br from-indigo-900/50 via-purple-900/30 to-slate-900/50">
+            {/* Background Effects */}
+            <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-br from-yellow-500/20 to-orange-500/10 rounded-full blur-3xl" />
+                <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-indigo-500/20 to-purple-500/10 rounded-full blur-3xl" />
             </div>
 
-            <div className="relative z-10">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400">
-                        <CalendarCheck className="w-5 h-5" />
+            <div className="relative z-10 p-6">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-4">
+                        <div className="relative">
+                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                                <BookOpen className="w-7 h-7 text-white" />
+                            </div>
+                            {pendingCount > 0 && (
+                                <div className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg animate-pulse">
+                                    {pendingCount > 9 ? '9+' : pendingCount}
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                Revisão do Dia
+                                <span className="text-sm font-normal text-slate-400">
+                                    ({currentIndex + 1}/{reviewItems.length})
+                                </span>
+                            </h3>
+                            <p className="text-slate-400 text-sm">
+                                {pendingCount} cards aguardando revisão
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="text-lg font-bold text-white">Revisão do Dia</h3>
-                        <p className="text-slate-400 text-sm">Responda mentalmente antes de revelar.</p>
+
+                    <div className="flex items-center gap-3">
+                        {/* XP Badge */}
+                        <div className="flex items-center gap-2 px-4 py-2 bg-yellow-500/20 rounded-xl border border-yellow-500/30">
+                            <Flame className="w-5 h-5 text-yellow-400" />
+                            <span className="text-yellow-300 font-bold">+{xpEstimated} XP</span>
+                        </div>
+
+                        {/* Go to Study Mode */}
+                        <Link
+                            href="/caderno-de-erros"
+                            className="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 rounded-xl text-emerald-300 font-medium transition-all flex items-center gap-2"
+                        >
+                            <Target className="w-4 h-4" />
+                            <span className="hidden sm:inline">Modo Estudo</span>
+                        </Link>
                     </div>
-                    {reviewItem.disciplines && (
-                        <span className="ml-auto px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs font-medium border border-slate-700">
-                            {reviewItem.disciplines.name}
-                        </span>
-                    )}
                 </div>
 
-                <div className="bg-slate-950/50 rounded-xl p-5 border border-slate-800/50 mb-4 backdrop-blur-sm">
-                    <p className="text-lg text-slate-200 font-medium leading-relaxed">
+                {/* Discipline Badge */}
+                {reviewItem.disciplines && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 text-slate-300 text-sm font-medium border border-slate-700 mb-4">
+                        <div className="w-2 h-2 rounded-full bg-blue-400" />
+                        {reviewItem.disciplines.name}
+                    </div>
+                )}
+
+                {/* Question Card */}
+                <div className="bg-slate-950/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-800/50 mb-4 transition-all hover:border-indigo-500/30">
+                    <p className="text-lg text-slate-100 font-medium leading-relaxed">
                         {reviewItem.question_text}
                     </p>
                 </div>
 
+                {/* Answer Section */}
                 {showAnswer ? (
-                    <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
-                        <div className="bg-emerald-900/20 border border-emerald-500/20 rounded-xl p-5">
-                            <h4 className="text-emerald-400 text-sm font-bold mb-2 flex items-center gap-2">
-                                <Target className="w-4 h-4" /> Resposta Correta
+                    <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-300">
+                        <div className="bg-emerald-900/30 border border-emerald-500/30 rounded-2xl p-5">
+                            <h4 className="text-emerald-400 text-sm font-bold mb-3 flex items-center gap-2">
+                                <Target className="w-4 h-4" /> Resposta
                             </h4>
-                            <p className="text-slate-300 whitespace-pre-line leading-relaxed">
+                            <p className="text-slate-200 whitespace-pre-line leading-relaxed">
                                 {reviewItem.answer_text}
                             </p>
                             {reviewItem.notes && (
                                 <div className="mt-4 pt-4 border-t border-emerald-500/20">
-                                    <p className="text-indigo-300 text-sm flex gap-2">
-                                        <span className="font-bold">Nota:</span> {reviewItem.notes}
+                                    <p className="text-indigo-300 text-sm">
+                                        <span className="font-bold">📝 Nota:</span> {reviewItem.notes}
                                     </p>
                                 </div>
                             )}
                         </div>
 
+                        {/* Rating Buttons */}
                         {!reviewed ? (
-                            <button
-                                onClick={markAsReviewed}
-                                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
-                            >
-                                <Trophy className="w-5 h-5" />
-                                Marcar como Revisado
-                            </button>
+                            <div className="grid grid-cols-3 gap-3">
+                                <button
+                                    onClick={() => handleReviewAction('wrong')}
+                                    className="py-3 px-4 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 hover:border-red-500/50 rounded-xl text-red-300 font-bold transition-all flex items-center justify-center gap-2"
+                                >
+                                    <TrendingDown className="w-4 h-4" />
+                                    Errei
+                                </button>
+                                <button
+                                    onClick={() => handleReviewAction('hard')}
+                                    className="py-3 px-4 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 hover:border-orange-500/50 rounded-xl text-orange-300 font-bold transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Minus className="w-4 h-4" />
+                                    Difícil
+                                </button>
+                                <button
+                                    onClick={() => handleReviewAction('easy')}
+                                    className="py-3 px-4 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 hover:border-emerald-500/50 rounded-xl text-emerald-300 font-bold transition-all flex items-center justify-center gap-2"
+                                >
+                                    <TrendingUp className="w-4 h-4" />
+                                    Fácil
+                                </button>
+                            </div>
                         ) : (
-                            <div className="flex items-center justify-center gap-2 py-3 text-emerald-400 font-medium bg-emerald-900/20 rounded-xl border border-emerald-500/20">
-                                <Trophy className="w-5 h-5" />
-                                Revisão Concluída!
+                            <div className="flex items-center justify-center gap-3 py-4 bg-emerald-900/30 rounded-2xl border border-emerald-500/30 animate-in zoom-in duration-300">
+                                <Trophy className="w-6 h-6 text-yellow-400" />
+                                <span className="text-emerald-300 font-bold text-lg">+15 XP</span>
                             </div>
                         )}
                     </div>
                 ) : (
                     <button
                         onClick={() => setShowAnswer(true)}
-                        className="w-full py-3 bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-300 rounded-xl font-medium transition-all border border-slate-700 hover:border-indigo-500 hover:shadow-lg hover:shadow-indigo-500/20 flex items-center justify-center gap-2"
+                        className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 flex items-center justify-center gap-3 group"
                     >
-                        <BookOpen className="w-5 h-5" />
+                        <BookOpen className="w-5 h-5 group-hover:scale-110 transition-transform" />
                         Revelar Resposta
                     </button>
                 )}
