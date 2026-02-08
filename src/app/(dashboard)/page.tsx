@@ -1142,8 +1142,7 @@ export default function DashboardPage() {
 }
 
 function DailyReviewWidget() {
-    const [reviewItems, setReviewItems] = useState<any[]>([])
-    const [currentIndex, setCurrentIndex] = useState(0)
+    const [reviewItem, setReviewItem] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [showAnswer, setShowAnswer] = useState(false)
     const [reviewed, setReviewed] = useState(false)
@@ -1151,48 +1150,41 @@ function DailyReviewWidget() {
     const supabase = createClient()
 
     useEffect(() => {
-        loadDailyReviews()
+        loadDailyReview()
     }, [])
 
-    async function loadDailyReviews() {
+    async function loadDailyReview() {
         try {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
             const today = new Date().toISOString().split('T')[0]
 
-            // Get items that need review (no next_review_date or past due)
             const { data, count } = await supabase
                 .from('error_notebook')
                 .select('*, disciplines(name)', { count: 'exact' })
                 .eq('user_id', user.id)
                 .or(`next_review_date.is.null,next_review_date.lte.${today}`)
                 .order('review_count', { ascending: true })
-                .limit(5)
+                .limit(1)
 
             if (data && data.length > 0) {
-                setReviewItems(data)
-                setPendingCount(count || data.length)
+                setReviewItem(data[0])
+                setPendingCount(count || 1)
             }
         } catch (error) {
-            console.error('Error loading daily reviews:', error)
+            console.error('Error loading daily review:', error)
         } finally {
             setLoading(false)
         }
     }
 
-    async function handleReviewAction(difficulty: 'easy' | 'hard' | 'wrong') {
-        const reviewItem = reviewItems[currentIndex]
+    async function handleReview(difficulty: 'easy' | 'hard' | 'wrong') {
         if (!reviewItem) return
 
         try {
-            // Calculate next review date based on difficulty
             const now = new Date()
-            let daysToAdd = 1
-            if (difficulty === 'easy') daysToAdd = 7
-            else if (difficulty === 'hard') daysToAdd = 3
-            else daysToAdd = 1
-
+            const daysToAdd = difficulty === 'easy' ? 7 : difficulty === 'hard' ? 3 : 1
             const nextReview = new Date(now)
             nextReview.setDate(nextReview.getDate() + daysToAdd)
 
@@ -1205,154 +1197,99 @@ function DailyReviewWidget() {
                 .eq('id', reviewItem.id)
 
             setReviewed(true)
-
-            // Auto advance after 1.5s
-            setTimeout(() => {
-                if (currentIndex < reviewItems.length - 1) {
-                    setCurrentIndex(currentIndex + 1)
-                    setShowAnswer(false)
-                    setReviewed(false)
-                }
-            }, 1500)
         } catch (error) {
             console.error('Error marking as reviewed:', error)
         }
     }
 
-    if (loading) return <Skeleton className="h-64 rounded-3xl w-full" />
-    if (reviewItems.length === 0) return null
-
-    const reviewItem = reviewItems[currentIndex]
-    const xpEstimated = pendingCount * 15
+    if (loading) return <Skeleton className="h-20 rounded-2xl w-full" />
+    if (!reviewItem) return null
 
     return (
-        <div className="relative overflow-hidden rounded-3xl border border-indigo-500/30 bg-gradient-to-br from-indigo-900/50 via-purple-900/30 to-slate-900/50">
-            {/* Background Effects */}
-            <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-br from-yellow-500/20 to-orange-500/10 rounded-full blur-3xl" />
-                <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-indigo-500/20 to-purple-500/10 rounded-full blur-3xl" />
-            </div>
-
-            <div className="relative z-10 p-6">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                    <div className="flex items-center gap-4">
-                        <div className="relative">
-                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                                <BookOpen className="w-7 h-7 text-white" />
-                            </div>
-                            {pendingCount > 0 && (
-                                <div className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg animate-pulse">
-                                    {pendingCount > 9 ? '9+' : pendingCount}
-                                </div>
-                            )}
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                Revisão do Dia
-                                <span className="text-sm font-normal text-slate-400">
-                                    ({currentIndex + 1}/{reviewItems.length})
-                                </span>
-                            </h3>
-                            <p className="text-slate-400 text-sm">
-                                {pendingCount} cards aguardando revisão
-                            </p>
-                        </div>
+        <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-pink-500/10 rounded-2xl border border-indigo-500/20 p-4 hover:border-indigo-500/40 transition-all">
+            <div className="flex items-center gap-4">
+                {/* Icon */}
+                <div className="relative shrink-0">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                        <BookOpen className="w-5 h-5 text-white" />
                     </div>
-
-                    <div className="flex items-center gap-3">
-                        {/* XP Badge */}
-                        <div className="flex items-center gap-2 px-4 py-2 bg-yellow-500/20 rounded-xl border border-yellow-500/30">
-                            <Flame className="w-5 h-5 text-yellow-400" />
-                            <span className="text-yellow-300 font-bold">+{xpEstimated} XP</span>
+                    {pendingCount > 0 && (
+                        <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow animate-pulse">
+                            {pendingCount > 9 ? '9+' : pendingCount}
                         </div>
-
-                        {/* Go to Study Mode */}
-                        <Link
-                            href="/caderno-de-erros"
-                            className="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 rounded-xl text-emerald-300 font-medium transition-all flex items-center gap-2"
-                        >
-                            <Target className="w-4 h-4" />
-                            <span className="hidden sm:inline">Modo Estudo</span>
-                        </Link>
-                    </div>
+                    )}
                 </div>
 
-                {/* Discipline Badge */}
-                {reviewItem.disciplines && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 text-slate-300 text-sm font-medium border border-slate-700 mb-4">
-                        <div className="w-2 h-2 rounded-full bg-blue-400" />
-                        {reviewItem.disciplines.name}
-                    </div>
-                )}
-
-                {/* Question Card */}
-                <div className="bg-slate-950/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-800/50 mb-4 transition-all hover:border-indigo-500/30">
-                    <p className="text-lg text-slate-100 font-medium leading-relaxed">
-                        {reviewItem.question_text}
-                    </p>
-                </div>
-
-                {/* Answer Section */}
-                {showAnswer ? (
-                    <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-300">
-                        <div className="bg-emerald-900/30 border border-emerald-500/30 rounded-2xl p-5">
-                            <h4 className="text-emerald-400 text-sm font-bold mb-3 flex items-center gap-2">
-                                <Target className="w-4 h-4" /> Resposta
-                            </h4>
-                            <p className="text-slate-200 whitespace-pre-line leading-relaxed">
-                                {reviewItem.answer_text}
-                            </p>
-                            {reviewItem.notes && (
-                                <div className="mt-4 pt-4 border-t border-emerald-500/20">
-                                    <p className="text-indigo-300 text-sm">
-                                        <span className="font-bold">📝 Nota:</span> {reviewItem.notes}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Rating Buttons */}
-                        {!reviewed ? (
-                            <div className="grid grid-cols-3 gap-3">
-                                <button
-                                    onClick={() => handleReviewAction('wrong')}
-                                    className="py-3 px-4 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 hover:border-red-500/50 rounded-xl text-red-300 font-bold transition-all flex items-center justify-center gap-2"
-                                >
-                                    <TrendingDown className="w-4 h-4" />
-                                    Errei
-                                </button>
-                                <button
-                                    onClick={() => handleReviewAction('hard')}
-                                    className="py-3 px-4 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 hover:border-orange-500/50 rounded-xl text-orange-300 font-bold transition-all flex items-center justify-center gap-2"
-                                >
-                                    <Minus className="w-4 h-4" />
-                                    Difícil
-                                </button>
-                                <button
-                                    onClick={() => handleReviewAction('easy')}
-                                    className="py-3 px-4 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 hover:border-emerald-500/50 rounded-xl text-emerald-300 font-bold transition-all flex items-center justify-center gap-2"
-                                >
-                                    <TrendingUp className="w-4 h-4" />
-                                    Fácil
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="flex items-center justify-center gap-3 py-4 bg-emerald-900/30 rounded-2xl border border-emerald-500/30 animate-in zoom-in duration-300">
-                                <Trophy className="w-6 h-6 text-yellow-400" />
-                                <span className="text-emerald-300 font-bold text-lg">+15 XP</span>
-                            </div>
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-semibold text-indigo-400">Revisão do Dia</span>
+                        {reviewItem.disciplines && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                                {reviewItem.disciplines.name}
+                            </span>
                         )}
                     </div>
-                ) : (
-                    <button
-                        onClick={() => setShowAnswer(true)}
-                        className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 flex items-center justify-center gap-3 group"
+
+                    {!showAnswer ? (
+                        <p className="text-sm text-slate-200 line-clamp-1">
+                            {reviewItem.question_text}
+                        </p>
+                    ) : (
+                        <p className="text-sm text-emerald-300 line-clamp-1">
+                            {reviewItem.answer_text}
+                        </p>
+                    )}
+                </div>
+
+                {/* Actions */}
+                <div className="shrink-0 flex items-center gap-2">
+                    {!showAnswer ? (
+                        <button
+                            onClick={() => setShowAnswer(true)}
+                            className="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 rounded-lg text-indigo-300 text-xs font-medium transition-all"
+                        >
+                            Revelar
+                        </button>
+                    ) : !reviewed ? (
+                        <>
+                            <button
+                                onClick={() => handleReview('wrong')}
+                                className="p-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg text-red-400 transition-all"
+                                title="Errei"
+                            >
+                                <TrendingDown className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                                onClick={() => handleReview('hard')}
+                                className="p-1.5 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 rounded-lg text-orange-400 transition-all"
+                                title="Difícil"
+                            >
+                                <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                                onClick={() => handleReview('easy')}
+                                className="p-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 rounded-lg text-emerald-400 transition-all"
+                                title="Fácil"
+                            >
+                                <TrendingUp className="w-3.5 h-3.5" />
+                            </button>
+                        </>
+                    ) : (
+                        <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-medium">
+                            <Trophy className="w-4 h-4 text-yellow-400" />
+                            +15 XP
+                        </span>
+                    )}
+
+                    <Link
+                        href="/caderno-de-erros"
+                        className="p-1.5 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 rounded-lg text-slate-400 hover:text-white transition-all"
+                        title="Ver todos"
                     >
-                        <BookOpen className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        Revelar Resposta
-                    </button>
-                )}
+                        <ChevronDown className="w-3.5 h-3.5 rotate-[-90deg]" />
+                    </Link>
+                </div>
             </div>
         </div>
     )
