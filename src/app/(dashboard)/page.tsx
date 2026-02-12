@@ -786,7 +786,7 @@ export default function DashboardPage() {
                             Ver todas →
                         </Link>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                         {pendingReviews.map((review) => {
                             const reviewDate = new Date(review.scheduled_date + 'T12:00:00')
                             const isOverdue = isPast(reviewDate) && !isToday(reviewDate)
@@ -999,14 +999,14 @@ export default function DashboardPage() {
                         const Icon = disciplineIcons[disc.name] || Stethoscope
                         const color = disciplineColors[disc.name] || '#3b82f6'
                         return (
-                            <div key={disc.name} className="flex items-center gap-4">
+                            <div key={disc.name} className="flex items-center gap-2 sm:gap-4">
                                 <div
                                     className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                                     style={{ backgroundColor: `${color}20` }}
                                 >
                                     <Icon className="w-4 h-4" style={{ color }} />
                                 </div>
-                                <div className="w-36 text-sm text-white truncate">{disc.name}</div>
+                                <div className="w-20 sm:w-36 text-xs sm:text-sm text-white truncate">{disc.name}</div>
                                 <div className="flex-1 h-6 bg-slate-800 rounded-full overflow-hidden relative">
                                     <div
                                         className="h-full rounded-full transition-all duration-500"
@@ -1017,7 +1017,7 @@ export default function DashboardPage() {
                                     />
                                 </div>
                                 <div className="w-12 text-right text-sm text-slate-300">{disc.accuracy.toFixed(0)}%</div>
-                                <div className="w-24 text-right text-sm text-slate-500">{disc.questions} questões</div>
+                                <div className="hidden sm:block w-24 text-right text-sm text-slate-500">{disc.questions} questões</div>
                             </div>
                         )
                     })}
@@ -1207,7 +1207,7 @@ function DailyReviewWidget() {
 
     return (
         <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-pink-500/10 rounded-2xl border border-indigo-500/20 p-4 hover:border-indigo-500/40 transition-all">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                 {/* Icon */}
                 <div className="relative shrink-0">
                     <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -1243,7 +1243,7 @@ function DailyReviewWidget() {
                 </div>
 
                 {/* Actions */}
-                <div className="shrink-0 flex items-center gap-2">
+                <div className="shrink-0 flex items-center gap-2 self-end sm:self-auto">
                     {!showAnswer ? (
                         <button
                             onClick={() => setShowAnswer(true)}

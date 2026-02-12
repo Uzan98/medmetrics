@@ -710,7 +710,7 @@ export default function CronogramaPage() {
                     </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <button
                         onClick={() => {
                             if (confirm('Deseja recalcular o cronograma? Isso permitirá redefinir a duração e os dias, mantendo a disciplina.')) {
@@ -831,7 +831,7 @@ export default function CronogramaPage() {
 
                                 // Empty cells for days before month starts
                                 for (let i = 0; i < startDay; i++) {
-                                    cells.push(<div key={`empty-${i}`} className="min-h-[100px] bg-slate-900/20 border-r border-b border-slate-700/30" />)
+                                    cells.push(<div key={`empty-${i}`} className="min-h-[60px] sm:min-h-[100px] bg-slate-900/20 border-r border-b border-slate-700/30" />)
                                 }
 
                                 // Days of the month
@@ -851,7 +851,7 @@ export default function CronogramaPage() {
                                     cells.push(
                                         <DroppableDay key={dateStr} id={dateStr}>
                                             <div
-                                                className={`min-h-[100px] p-2 border-r border-b border-slate-700/30 transition-colors ${isTodayCheck ? 'bg-blue-500/10' :
+                                                className={`min-h-[60px] sm:min-h-[100px] p-2 border-r border-b border-slate-700/30 transition-colors ${isTodayCheck ? 'bg-blue-500/10' :
                                                     isOverdue ? 'bg-red-500/5' :
                                                         allComplete ? 'bg-green-500/5' : 'hover:bg-slate-800/50'
                                                     }`}

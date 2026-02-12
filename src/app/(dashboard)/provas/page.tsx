@@ -270,7 +270,7 @@ export default function ExamsPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-auto">
+                                <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity ml-auto">
                                     <button
                                         onClick={() => handleDelete(exam.id)}
                                         disabled={deleting === exam.id}

@@ -685,7 +685,7 @@ function RegistrarContent() {
             {
                 registrationMode === 'exam' ? (
                     <form onSubmit={handleExamSubmit} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 space-y-6 animate-fade-in shadow-xl shadow-black/10">
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Banca</label>
                                 <div className="flex gap-2">
@@ -753,7 +753,7 @@ function RegistrarContent() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Data Realizada</label>
                                 <input
@@ -783,8 +783,8 @@ function RegistrarContent() {
                             </h3>
                             <div className="space-y-3">
                                 {Object.keys(examForm.scores).map((discName) => (
-                                    <div key={discName} className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/5">
-                                        <div className="w-48">
+                                    <div key={discName} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/5">
+                                        <div className="w-full sm:w-48">
                                             <span className="text-sm font-medium text-slate-300">{discName}</span>
                                         </div>
                                         <div className="flex-1 grid grid-cols-2 gap-4">

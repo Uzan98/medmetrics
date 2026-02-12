@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/types/database'
 import {
@@ -23,12 +23,16 @@ import {
     Zap,
     Target,
     Trophy,
-    Sparkles
+    Sparkles,
+    Clock,
+    SlidersHorizontal
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import Image from 'next/image'
 import { StudyMode } from './StudyMode'
+import { format, formatDistanceToNow, isPast, isToday } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 type ErrorEntry = Database['public']['Tables']['error_notebook']['Row'] & {
     disciplines: { name: string } | null
@@ -61,6 +65,7 @@ export default function ErrorNotebookPage() {
     const [disciplineFilter, setDisciplineFilter] = useState<number | 'all'>('all')
     const [errorTypeFilter, setErrorTypeFilter] = useState<'all' | 'knowledge_gap' | 'interpretation' | 'distraction' | 'reasoning'>('all')
     const [showOnlyPending, setShowOnlyPending] = useState(false)
+    const [showFilters, setShowFilters] = useState(false)
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -85,6 +90,14 @@ export default function ErrorNotebookPage() {
     const [showStudySetup, setShowStudySetup] = useState(false)
     const [studyDiscipline, setStudyDiscipline] = useState<number | 'all'>('all')
     const [userStats, setUserStats] = useState<UserStudyStats | null>(null)
+
+    // Pagination
+    const ITEMS_PER_PAGE = 20
+    const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE)
+
+    // Delete Confirmation Modal
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+    const [deleting, setDeleting] = useState(false)
 
     useEffect(() => {
         loadData()
@@ -256,9 +269,7 @@ export default function ErrorNotebookPage() {
                 toast.success('Erro registrado com sucesso!')
             }
 
-            setIsModalOpen(false)
-            setEditingEntry(null)
-            resetForm()
+            closeModal()
             loadData()
 
         } catch (error) {
@@ -269,9 +280,17 @@ export default function ErrorNotebookPage() {
         }
     }
 
-    async function handleDelete(id: string) {
-        if (!confirm('Tem certeza que deseja excluir este registro?')) return
+    // Fix #3: Clean up Object URLs on modal close to prevent memory leaks
+    function closeModal() {
+        previewUrls.forEach(url => URL.revokeObjectURL(url))
+        setIsModalOpen(false)
+        setEditingEntry(null)
+        resetForm()
+    }
 
+    // Fix #8: Custom delete with modal instead of confirm()
+    async function handleDelete(id: string) {
+        setDeleting(true)
         try {
             const { error } = await supabase
                 .from('error_notebook')
@@ -284,6 +303,9 @@ export default function ErrorNotebookPage() {
         } catch (error) {
             console.error('Error deleting:', error)
             toast.error('Erro ao excluir registro')
+        } finally {
+            setDeleting(false)
+            setDeleteTarget(null)
         }
     }
 
@@ -341,6 +363,15 @@ export default function ErrorNotebookPage() {
         return matchesSearch && matchesDiscipline && matchesErrorType && matchesPending
     })
 
+    // Fix #9: Pagination
+    const paginatedEntries = filteredEntries.slice(0, visibleCount)
+    const hasMore = filteredEntries.length > visibleCount
+
+    // Reset pagination when filters change
+    useEffect(() => {
+        setVisibleCount(ITEMS_PER_PAGE)
+    }, [searchTerm, disciplineFilter, errorTypeFilter, showOnlyPending])
+
     return (
         <>
             {/* Study Mode */}
@@ -359,7 +390,7 @@ export default function ErrorNotebookPage() {
                 />
             )}
 
-            <div className="p-8 space-y-8 animate-fade-in pb-24">
+            <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 animate-fade-in pb-24">
                 {/* Gamification Header */}
                 <div className="bg-gradient-to-r from-indigo-600/20 via-purple-600/20 to-pink-600/20 rounded-3xl p-6 border border-white/10 relative overflow-hidden">
                     {/* Background decoration */}
@@ -523,54 +554,70 @@ export default function ErrorNotebookPage() {
                     </div>
                 )}
 
-                {/* Filters */}
-                <div className="flex flex-col md:flex-row gap-4 bg-white/5 backdrop-blur-xl p-4 rounded-2xl border border-white/10 sticky top-4 z-20 shadow-2xl shadow-black/20">
-                    <div className="flex-1 relative group">
-                        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3 group-focus-within:text-indigo-400 transition-colors" />
-                        <input
-                            type="text"
-                            placeholder="Buscar por pergunta, notas ou disciplina..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl pl-10 pr-4 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
-                        />
-                    </div>
-                    <div className="w-full md:w-48">
-                        <select
-                            value={disciplineFilter}
-                            onChange={(e) => setDisciplineFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                            className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all appearance-none"
+                {/* Filters — Fix #5: collapsible on mobile */}
+                <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 sticky top-4 z-20 shadow-2xl shadow-black/20">
+                    <div className="flex gap-3 p-3 sm:p-4">
+                        <div className="flex-1 relative group">
+                            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3 group-focus-within:text-indigo-400 transition-colors" />
+                            <input
+                                type="text"
+                                placeholder="Buscar cards..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl pl-10 pr-4 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
+                            />
+                        </div>
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={`md:hidden px-3 py-2.5 rounded-xl border transition-all flex items-center gap-2 ${showFilters || disciplineFilter !== 'all' || errorTypeFilter !== 'all' || showOnlyPending
+                                ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300'
+                                : 'bg-slate-900/50 border-slate-700/50 text-slate-400'
+                                }`}
                         >
-                            <option value="all">Todas Disciplinas</option>
-                            {disciplines.map(d => (
-                                <option key={d.id} value={d.id}>{d.name}</option>
-                            ))}
-                        </select>
+                            <SlidersHorizontal className="w-4 h-4" />
+                            {(disciplineFilter !== 'all' || errorTypeFilter !== 'all' || showOnlyPending) && (
+                                <span className="w-2 h-2 rounded-full bg-indigo-400" />
+                            )}
+                        </button>
                     </div>
-                    <div className="w-full md:w-48">
-                        <select
-                            value={errorTypeFilter}
-                            onChange={(e) => setErrorTypeFilter(e.target.value as any)}
-                            className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all appearance-none"
+                    <div className={`${showFilters ? 'flex' : 'hidden'} md:flex flex-col md:flex-row gap-3 px-3 sm:px-4 pb-3 sm:pb-4 border-t border-white/5 md:border-t-0 pt-3 md:pt-0`}>
+                        <div className="w-full md:w-48">
+                            <select
+                                value={disciplineFilter}
+                                onChange={(e) => setDisciplineFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                                className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all appearance-none"
+                            >
+                                <option value="all">Todas Disciplinas</option>
+                                {disciplines.map(d => (
+                                    <option key={d.id} value={d.id}>{d.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="w-full md:w-48">
+                            <select
+                                value={errorTypeFilter}
+                                onChange={(e) => setErrorTypeFilter(e.target.value as any)}
+                                className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all appearance-none"
+                            >
+                                <option value="all">Todos Tipos de Erro</option>
+                                <option value="knowledge_gap">🔴 Lacuna de Conteúdo</option>
+                                <option value="interpretation">🟠 Falha de Interpretação</option>
+                                <option value="distraction">🟡 Falta de Atenção</option>
+                                <option value="reasoning">🔵 Raciocínio Incorreto</option>
+                            </select>
+                        </div>
+                        <button
+                            onClick={() => setShowOnlyPending(!showOnlyPending)}
+                            className={`px-4 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 whitespace-nowrap ${showOnlyPending
+                                ? 'bg-rose-500/30 border border-rose-500/50 text-rose-300'
+                                : 'bg-slate-900/50 border border-slate-700/50 text-slate-400 hover:text-white hover:border-slate-600'
+                                }`}
                         >
-                            <option value="all">Todos Tipos de Erro</option>
-                            <option value="knowledge_gap">🔴 Lacuna de Conteúdo</option>
-                            <option value="interpretation">🟠 Falha de Interpretação</option>
-                            <option value="distraction">🟡 Falta de Atenção</option>
-                            <option value="reasoning">🔵 Raciocínio Incorreto</option>
-                        </select>
+                            <BookOpen className="w-4 h-4" />
+                            Só Pendentes
+                            {showOnlyPending && <span className="font-bold">({pendingCount})</span>}
+                        </button>
                     </div>
-                    <button
-                        onClick={() => setShowOnlyPending(!showOnlyPending)}
-                        className={`px-4 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 whitespace-nowrap ${showOnlyPending
-                            ? 'bg-rose-500/30 border border-rose-500/50 text-rose-300'
-                            : 'bg-slate-900/50 border border-slate-700/50 text-slate-400 hover:text-white hover:border-slate-600'
-                            }`}
-                    >
-                        <BookOpen className="w-4 h-4" />
-                        <span className="hidden sm:inline">Só Pendentes</span>
-                        {showOnlyPending && <span className="font-bold">({pendingCount})</span>}
-                    </button>
                 </div>
 
                 {/* Content */}
@@ -595,22 +642,83 @@ export default function ErrorNotebookPage() {
                     </div>
                 ) : (
                     <div className="space-y-2">
+                        {/* Fix #7: Result counter */}
+                        <div className="flex items-center justify-between px-1">
+                            <p className="text-sm text-slate-500">
+                                {filteredEntries.length === entries.length
+                                    ? <span><span className="font-semibold text-slate-300">{entries.length}</span> cards</span>
+                                    : <span><span className="font-semibold text-slate-300">{filteredEntries.length}</span> de {entries.length} cards</span>
+                                }
+                            </p>
+                            {(disciplineFilter !== 'all' || errorTypeFilter !== 'all' || showOnlyPending || searchTerm) && (
+                                <button
+                                    onClick={() => { setSearchTerm(''); setDisciplineFilter('all'); setErrorTypeFilter('all'); setShowOnlyPending(false) }}
+                                    className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                                >
+                                    Limpar filtros
+                                </button>
+                            )}
+                        </div>
+
                         {/* Table Header */}
                         <div className="hidden md:grid md:grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
                             <div className="col-span-2">Disciplina</div>
-                            <div className="col-span-5">Pergunta</div>
-                            <div className="col-span-3">Motivo do Erro</div>
+                            <div className="col-span-4">Pergunta</div>
+                            <div className="col-span-2">Motivo do Erro</div>
+                            <div className="col-span-2">Revisão</div>
                             <div className="col-span-2 text-right">Ações</div>
                         </div>
 
-                        {/* Rows */}
-                        {filteredEntries.map(entry => (
-                            <ErrorRow key={entry.id} entry={entry} onEdit={() => openEdit(entry)} onDelete={() => handleDelete(entry.id)} />
+                        {/* Rows — Fix #9: Paginated */}
+                        {paginatedEntries.map(entry => (
+                            <ErrorRow key={entry.id} entry={entry} onEdit={() => openEdit(entry)} onDelete={() => setDeleteTarget(entry.id)} />
                         ))}
+
+                        {/* Fix #9: Load more button */}
+                        {hasMore && (
+                            <div className="flex justify-center pt-4">
+                                <button
+                                    onClick={() => setVisibleCount(prev => prev + ITEMS_PER_PAGE)}
+                                    className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl text-slate-300 hover:text-white font-medium transition-all flex items-center gap-2"
+                                >
+                                    <ChevronDown className="w-4 h-4" />
+                                    Carregar mais ({filteredEntries.length - visibleCount} restantes)
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
 
             </div>
+
+            {/* Fix #8: Custom Delete Confirmation Modal */}
+            {deleteTarget && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200" style={{ zIndex: 110 }}>
+                    <div className="bg-[#0f172a] border border-white/10 rounded-2xl w-full max-w-sm p-6 shadow-2xl shadow-red-500/10 animate-in zoom-in-95 duration-200">
+                        <div className="w-14 h-14 rounded-2xl bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                            <Trash2 className="w-7 h-7 text-red-400" />
+                        </div>
+                        <h3 className="text-lg font-bold text-white text-center mb-2">Excluir Flashcard</h3>
+                        <p className="text-slate-400 text-sm text-center mb-6">Tem certeza que deseja excluir este card? Esta ação não pode ser desfeita.</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setDeleteTarget(null)}
+                                className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-slate-300 font-medium transition-all"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => handleDelete(deleteTarget)}
+                                disabled={deleting}
+                                className="flex-1 px-4 py-2.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-xl text-red-300 font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                Excluir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Modal - Moved outside to escape transform context */}
             {
@@ -622,7 +730,7 @@ export default function ErrorNotebookPage() {
                                     {editingEntry ? <Edit className="w-5 h-5 text-indigo-400" /> : <Plus className="w-5 h-5 text-indigo-400" />}
                                     {editingEntry ? 'Editar Flashcard' : 'Novo Flashcard'}
                                 </h2>
-                                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white transition-colors bg-white/5 p-1 rounded-lg hover:bg-white/10">
+                                <button onClick={closeModal} className="text-slate-400 hover:text-white transition-colors bg-white/5 p-1 rounded-lg hover:bg-white/10">
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
@@ -790,7 +898,7 @@ export default function ErrorNotebookPage() {
                                 <div className="pt-4 flex justify-end gap-3 border-t border-white/5">
                                     <button
                                         type="button"
-                                        onClick={() => setIsModalOpen(false)}
+                                        onClick={closeModal}
                                         className="px-4 py-2.5 text-slate-300 hover:text-white font-medium transition-colors"
                                     >
                                         Cancelar
@@ -922,35 +1030,35 @@ function ErrorRow({ entry, onEdit, onDelete }: { entry: ErrorEntry, onEdit: () =
                     </div>
 
                     {/* Question */}
-                    <div className="col-span-5">
+                    <div className="md:col-span-4">
                         <p className="text-slate-200 text-sm line-clamp-2 group-hover:text-white transition-colors">
                             {entry.question_text}
                         </p>
                     </div>
 
-                    {/* Error Type - Full visibility */}
-                    <div className="col-span-3 flex items-center gap-2">
+                    {/* Error Type */}
+                    <div className="md:col-span-2 flex items-center gap-2">
                         {entry.error_type ? (
                             <div className={`
-                                inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
+                                inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium
                                 ${entry.error_type === 'knowledge_gap' ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
                                     entry.error_type === 'interpretation' ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' :
                                         entry.error_type === 'distraction' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
                                             'bg-blue-500/20 text-blue-300 border border-blue-500/30'}
                             `}>
-                                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${entry.error_type === 'knowledge_gap' ? 'bg-red-400' :
+                                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${entry.error_type === 'knowledge_gap' ? 'bg-red-400' :
                                     entry.error_type === 'interpretation' ? 'bg-orange-400' :
                                         entry.error_type === 'distraction' ? 'bg-yellow-400' : 'bg-blue-400'
                                     }`} />
                                 <span className="truncate">
-                                    {entry.error_type === 'knowledge_gap' && 'Lacuna de Conteúdo'}
-                                    {entry.error_type === 'interpretation' && 'Falha de Interpretação'}
-                                    {entry.error_type === 'distraction' && 'Falta de Atenção'}
-                                    {entry.error_type === 'reasoning' && 'Raciocínio Incorreto'}
+                                    {entry.error_type === 'knowledge_gap' && 'Lacuna'}
+                                    {entry.error_type === 'interpretation' && 'Interpretação'}
+                                    {entry.error_type === 'distraction' && 'Atenção'}
+                                    {entry.error_type === 'reasoning' && 'Raciocínio'}
                                 </span>
                             </div>
                         ) : (
-                            <span className="text-slate-600 text-sm italic">Não classificado</span>
+                            <span className="text-slate-600 text-xs italic">—</span>
                         )}
                         {entry.image_urls && entry.image_urls.length > 0 && (
                             <span className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-slate-800 rounded-lg text-slate-400 flex-shrink-0">
@@ -960,8 +1068,29 @@ function ErrorRow({ entry, onEdit, onDelete }: { entry: ErrorEntry, onEdit: () =
                         )}
                     </div>
 
-                    {/* Actions */}
-                    <div className="col-span-2 flex items-center justify-end gap-1">
+                    {/* Fix #10: Review Date */}
+                    <div className="md:col-span-2">
+                        {(() => {
+                            const nextReview = (entry as any).next_review_date
+                            if (!nextReview) {
+                                return <span className="text-xs text-slate-600 italic">Nunca revisado</span>
+                            }
+                            const reviewDate = new Date(nextReview + 'T12:00:00')
+                            const overdue = isPast(reviewDate) && !isToday(reviewDate)
+                            const dueToday = isToday(reviewDate)
+                            return (
+                                <div className="flex items-center gap-1.5">
+                                    <Clock className={`w-3.5 h-3.5 flex-shrink-0 ${overdue ? 'text-rose-400' : dueToday ? 'text-amber-400' : 'text-slate-500'}`} />
+                                    <span className={`text-xs ${overdue ? 'text-rose-400 font-medium' : dueToday ? 'text-amber-400 font-medium' : 'text-slate-500'}`}>
+                                        {overdue ? 'Atrasado' : dueToday ? 'Hoje' : format(reviewDate, "dd/MM", { locale: ptBR })}
+                                    </span>
+                                </div>
+                            )
+                        })()}
+                    </div>
+
+                    {/* Actions — Fix #1: always visible on mobile */}
+                    <div className="md:col-span-2 flex items-center justify-end gap-1">
                         <button
                             onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
                             className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
@@ -970,13 +1099,13 @@ function ErrorRow({ entry, onEdit, onDelete }: { entry: ErrorEntry, onEdit: () =
                         </button>
                         <button
                             onClick={(e) => { e.stopPropagation(); onEdit() }}
-                            className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                            className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors sm:opacity-0 sm:group-hover:opacity-100"
                         >
                             <Edit className="w-4 h-4" />
                         </button>
                         <button
                             onClick={(e) => { e.stopPropagation(); onDelete() }}
-                            className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                            className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors sm:opacity-0 sm:group-hover:opacity-100"
                         >
                             <Trash2 className="w-4 h-4" />
                         </button>
@@ -1053,7 +1182,7 @@ function ErrorRow({ entry, onEdit, onDelete }: { entry: ErrorEntry, onEdit: () =
                             height={800}
                             className="object-contain max-h-[95vh] w-auto h-auto rounded-lg shadow-2xl"
                         />
-                        <button className="absolute top-4 right-4 text-white/70 hover:text-white bg-black/50 rounded-full p-2 hover:bg-black/70 transition-all">
+                        <button onClick={() => setSelectedImage(null)} className="absolute top-4 right-4 text-white/70 hover:text-white bg-black/50 rounded-full p-2 hover:bg-black/70 transition-all">
                             <X className="w-6 h-6" />
                         </button>
                     </div>
