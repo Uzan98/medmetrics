@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
     public: {
         Tables: {
+            appointments: {
+                Row: {
+                    id: string
+                    user_id: string
+                    title: string
+                    description: string | null
+                    date: string
+                    start_time: string | null
+                    end_time: string | null
+                    category: 'aula' | 'plantao' | 'prova' | 'estudo' | 'pessoal' | 'outro'
+                    color: string | null
+                    completed: boolean
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    user_id: string
+                    title: string
+                    description?: string | null
+                    date: string
+                    start_time?: string | null
+                    end_time?: string | null
+                    category?: 'aula' | 'plantao' | 'prova' | 'estudo' | 'pessoal' | 'outro'
+                    color?: string | null
+                    completed?: boolean
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    user_id?: string
+                    title?: string
+                    description?: string | null
+                    date?: string
+                    start_time?: string | null
+                    end_time?: string | null
+                    category?: 'aula' | 'plantao' | 'prova' | 'estudo' | 'pessoal' | 'outro'
+                    color?: string | null
+                    completed?: boolean
+                    created_at?: string
+                }
+                Relationships: []
+            }
             error_notebook: {
                 Row: {
                     id: string
@@ -622,4 +664,5 @@ export type ScheduleItem = Tables<'schedule_items'>
 export type StudySession = Tables<'study_sessions'>
 export type FlashcardReview = Tables<'flashcard_reviews'>
 export type UserStudyStats = Tables<'user_study_stats'>
+export type Appointment = Tables<'appointments'>
 

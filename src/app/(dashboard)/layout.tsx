@@ -17,6 +17,7 @@ import {
     CalendarCheck,
     User,
     Calendar,
+    CalendarDays,
     FileText
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -30,6 +31,7 @@ const navItems = [
     { href: '/revisoes', label: 'Revisões', icon: CalendarCheck },
     { href: '/historico', label: 'Histórico', icon: History },
     { href: '/caderno-de-erros', label: 'Caderno de Erros', icon: BookOpen },
+    { href: '/agenda', label: 'Agenda', icon: CalendarDays },
     { href: '/cronograma', label: 'Cronograma', icon: Calendar },
     { href: '/perfil', label: 'Meu Perfil', icon: User },
 ]
