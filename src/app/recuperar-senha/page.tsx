@@ -34,7 +34,7 @@ export default function RecuperarSenhaPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4" style={{
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)'
+            background: 'linear-gradient(135deg, #09090b 0%, #1e1b4b 50%, #09090b 100%)'
         }}>
             <div className="w-full max-w-md">
                 {/* Logo */}
@@ -43,20 +43,20 @@ export default function RecuperarSenhaPage() {
                         <Mail className="w-8 h-8 text-white" />
                     </div>
                     <h1 className="text-2xl font-bold text-white">Recuperar Senha</h1>
-                    <p className="text-slate-400 mt-2">
+                    <p className="text-zinc-400 mt-2">
                         Digite seu email para receber o link de recuperação
                     </p>
                 </div>
 
                 {/* Card */}
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/50">
+                <div className="bg-zinc-800/50 backdrop-blur-sm rounded-2xl p-8 border border-zinc-700/50">
                     {success ? (
                         <div className="text-center">
                             <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
                                 <CheckCircle2 className="w-8 h-8 text-green-500" />
                             </div>
                             <h2 className="text-xl font-semibold text-white mb-2">Email enviado!</h2>
-                            <p className="text-slate-400 mb-6">
+                            <p className="text-zinc-400 mb-6">
                                 Verifique sua caixa de entrada e clique no link para redefinir sua senha.
                             </p>
                             <Link
@@ -76,14 +76,14 @@ export default function RecuperarSenhaPage() {
                             )}
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-zinc-300 mb-2">
                                     Email
                                 </label>
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                                    className="w-full px-4 py-3 bg-zinc-900/50 border border-zinc-700 rounded-xl text-white placeholder-zinc-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                                     placeholder="seu@email.com"
                                     required
                                 />
@@ -108,7 +108,7 @@ export default function RecuperarSenhaPage() {
                             <div className="text-center">
                                 <Link
                                     href="/login"
-                                    className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm"
+                                    className="inline-flex items-center gap-2 text-zinc-400 hover:text-white text-sm"
                                 >
                                     <ArrowLeft className="w-4 h-4" />
                                     Voltar para o login

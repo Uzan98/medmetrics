@@ -30,7 +30,7 @@ export function StatCard({
     accentColor = 'blue',
 }: StatCardProps) {
     return (
-        <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 hover:border-slate-600/50 transition-all">
+        <div className="bg-zinc-800/50 rounded-2xl p-6 border border-zinc-700/50 hover:border-zinc-600/50 transition-all">
             <div className="flex items-start justify-between mb-4">
                 <div
                     className={cn(
@@ -55,9 +55,9 @@ export function StatCard({
                 )}
             </div>
             <div>
-                <p className="text-slate-400 text-sm mb-1">{title}</p>
+                <p className="text-zinc-400 text-sm mb-1">{title}</p>
                 <p className="text-3xl font-bold text-white">{value}</p>
-                {subtitle && <p className="text-slate-500 text-sm mt-1">{subtitle}</p>}
+                {subtitle && <p className="text-zinc-500 text-sm mt-1">{subtitle}</p>}
             </div>
         </div>
     )
@@ -76,7 +76,7 @@ export function AccuracyBadge({ accuracy, size = 'md' }: AccuracyBadgeProps) {
     }
 
     const getBgColor = (acc: number | null) => {
-        if (acc === null) return 'bg-slate-500/10 text-slate-400'
+        if (acc === null) return 'bg-zinc-500/10 text-zinc-400'
         if (acc < 60) return 'bg-red-500/10 text-red-400'
         if (acc < 75) return 'bg-yellow-500/10 text-yellow-400'
         return 'bg-green-500/10 text-green-400'
@@ -115,15 +115,15 @@ export function ProgressBar({
         <div className="space-y-2">
             {(label || showPercent) && (
                 <div className="flex items-center justify-between text-sm">
-                    {label && <span className="text-slate-400">{label}</span>}
+                    {label && <span className="text-zinc-400">{label}</span>}
                     {showPercent && (
-                        <span className="text-slate-300 font-medium">
+                        <span className="text-zinc-300 font-medium">
                             {current.toLocaleString('pt-BR')} / {target.toLocaleString('pt-BR')} ({percent.toFixed(0)}%)
                         </span>
                     )}
                 </div>
             )}
-            <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
+            <div className="h-3 bg-zinc-700 rounded-full overflow-hidden">
                 <div
                     className={cn(
                         'h-full rounded-full transition-all duration-500',
@@ -142,7 +142,7 @@ export function Skeleton({ className }: { className?: string }) {
     return (
         <div
             className={cn(
-                'animate-pulse bg-slate-700/50 rounded-lg',
+                'animate-pulse bg-zinc-700/50 rounded-lg',
                 className
             )}
         />
@@ -162,11 +162,11 @@ export function EmptyState({
 }) {
     return (
         <div className="flex flex-col items-center justify-center p-12 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center mb-4">
-                <Icon className="w-8 h-8 text-slate-500" />
+            <div className="w-16 h-16 rounded-2xl bg-zinc-800 flex items-center justify-center mb-4">
+                <Icon className="w-8 h-8 text-zinc-500" />
             </div>
             <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-            <p className="text-slate-400 max-w-sm mb-6">{description}</p>
+            <p className="text-zinc-400 max-w-sm mb-6">{description}</p>
             {action}
         </div>
     )

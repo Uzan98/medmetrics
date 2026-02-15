@@ -32,16 +32,16 @@ export function AccuracyLineChart({
     return (
         <ResponsiveContainer width="100%" height={height}>
             <LineChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
                 <XAxis
                     dataKey="name"
-                    stroke="#94a3b8"
+                    stroke="#a1a1aa"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
                 />
                 <YAxis
-                    stroke="#94a3b8"
+                    stroke="#a1a1aa"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
@@ -50,13 +50,13 @@ export function AccuracyLineChart({
                 />
                 <Tooltip
                     contentStyle={{
-                        background: '#0f172a',
+                        background: '#09090b',
                         border: '1px solid rgba(51, 65, 85, 0.5)',
                         borderRadius: '12px',
                         boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
                     }}
                     labelStyle={{ color: '#f1f5f9', fontWeight: 600 }}
-                    itemStyle={{ color: '#94a3b8' }}
+                    itemStyle={{ color: '#a1a1aa' }}
                     formatter={(value) => [`${(value as number)?.toFixed(1) ?? 0}%`, 'Acerto']}
                 />
                 <Line
@@ -65,7 +65,7 @@ export function AccuracyLineChart({
                     stroke="url(#lineGradient)"
                     strokeWidth={3}
                     dot={{ fill: '#3b82f6', strokeWidth: 0, r: 4 }}
-                    activeDot={{ r: 6, fill: '#3b82f6', stroke: '#1e293b', strokeWidth: 2 }}
+                    activeDot={{ r: 6, fill: '#3b82f6', stroke: '#18181b', strokeWidth: 2 }}
                 />
                 <defs>
                     <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
@@ -92,29 +92,29 @@ export function QuestionsBarChart({
     return (
         <ResponsiveContainer width="100%" height={height}>
             <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                 <XAxis
                     dataKey="name"
-                    stroke="#94a3b8"
+                    stroke="#a1a1aa"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
                 />
                 <YAxis
-                    stroke="#94a3b8"
+                    stroke="#a1a1aa"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
                 />
                 <Tooltip
                     contentStyle={{
-                        background: '#0f172a',
+                        background: '#09090b',
                         border: '1px solid rgba(51, 65, 85, 0.5)',
                         borderRadius: '12px',
                         boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
                     }}
                     labelStyle={{ color: '#f1f5f9', fontWeight: 600 }}
-                    itemStyle={{ color: '#94a3b8' }}
+                    itemStyle={{ color: '#a1a1aa' }}
                     formatter={(value) => [(value as number)?.toLocaleString('pt-BR') ?? 0, 'Questões']}
                 />
                 <Bar
@@ -153,11 +153,11 @@ export function DisciplineComparisonChart({
                 layout="vertical"
                 margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
             >
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
                 <XAxis
                     type="number"
                     domain={[0, 100]}
-                    stroke="#94a3b8"
+                    stroke="#a1a1aa"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
@@ -166,7 +166,7 @@ export function DisciplineComparisonChart({
                 <YAxis
                     type="category"
                     dataKey="name"
-                    stroke="#94a3b8"
+                    stroke="#a1a1aa"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
@@ -174,7 +174,7 @@ export function DisciplineComparisonChart({
                 />
                 <Tooltip
                     contentStyle={{
-                        background: '#0f172a',
+                        background: '#09090b',
                         border: '1px solid rgba(51, 65, 85, 0.5)',
                         borderRadius: '12px',
                         boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
@@ -187,7 +187,7 @@ export function DisciplineComparisonChart({
                     }}
                 />
                 <Legend
-                    wrapperStyle={{ color: '#94a3b8' }}
+                    wrapperStyle={{ color: '#a1a1aa' }}
                     formatter={(value) => (value === 'accuracy' ? 'Acerto' : 'Questões')}
                 />
                 <Bar
@@ -220,17 +220,17 @@ export function MonthlyEvolutionChart({
     return (
         <ResponsiveContainer width="100%" height={height}>
             <LineChart data={data} margin={{ top: 10, right: 30, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
                 <XAxis
                     dataKey="name"
-                    stroke="#94a3b8"
+                    stroke="#a1a1aa"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
                 />
                 <YAxis
                     yAxisId="left"
-                    stroke="#94a3b8"
+                    stroke="#a1a1aa"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
@@ -238,7 +238,7 @@ export function MonthlyEvolutionChart({
                 <YAxis
                     yAxisId="right"
                     orientation="right"
-                    stroke="#94a3b8"
+                    stroke="#a1a1aa"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
@@ -247,7 +247,7 @@ export function MonthlyEvolutionChart({
                 />
                 <Tooltip
                     contentStyle={{
-                        background: '#0f172a',
+                        background: '#09090b',
                         border: '1px solid rgba(51, 65, 85, 0.5)',
                         borderRadius: '12px',
                         boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
@@ -260,7 +260,7 @@ export function MonthlyEvolutionChart({
                     }}
                 />
                 <Legend
-                    wrapperStyle={{ color: '#94a3b8' }}
+                    wrapperStyle={{ color: '#a1a1aa' }}
                     formatter={(value) => (value === 'accuracy' ? 'Acerto' : 'Questões')}
                 />
                 <Line
@@ -307,10 +307,10 @@ export function DisciplineRadarChart({
     return (
         <ResponsiveContainer width="100%" height={height}>
             <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
-                <PolarGrid stroke="#334155" />
+                <PolarGrid stroke="#27272a" />
                 <PolarAngleAxis
                     dataKey="subject"
-                    tick={{ fill: '#94a3b8', fontSize: 12 }}
+                    tick={{ fill: '#a1a1aa', fontSize: 12 }}
                 />
                 <PolarRadiusAxis
                     angle={30}
@@ -328,7 +328,7 @@ export function DisciplineRadarChart({
                 />
                 <Tooltip
                     contentStyle={{
-                        background: '#0f172a',
+                        background: '#09090b',
                         border: '1px solid rgba(51, 65, 85, 0.5)',
                         borderRadius: '12px',
                         boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
@@ -370,7 +370,7 @@ export function StudyDistributionChart({
                 </Pie>
                 <Tooltip
                     contentStyle={{
-                        background: '#0f172a',
+                        background: '#09090b',
                         border: '1px solid rgba(51, 65, 85, 0.5)',
                         borderRadius: '12px',
                         boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
@@ -382,7 +382,7 @@ export function StudyDistributionChart({
                     verticalAlign="bottom"
                     height={36}
                     iconType="circle"
-                    formatter={(value) => <span style={{ color: '#94a3b8' }}>{value}</span>}
+                    formatter={(value) => <span style={{ color: '#a1a1aa' }}>{value}</span>}
                 />
             </PieChart>
         </ResponsiveContainer>
@@ -436,7 +436,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
 
     const getIntensityColor = (count: number) => {
         if (count === -1) return 'bg-transparent' // Padding
-        if (count === 0) return 'bg-slate-800/50'
+        if (count === 0) return 'bg-zinc-800/50'
         if (count <= 10) return 'bg-emerald-900/50 border border-emerald-900'
         if (count <= 30) return 'bg-emerald-700/50 border border-emerald-700'
         if (count <= 50) return 'bg-emerald-500/50 border border-emerald-500'
@@ -448,14 +448,14 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
     return (
         <div className="w-full overflow-x-auto pb-2">
             <div className="min-w-[800px]">
-                <div className="flex text-xs text-slate-500 mb-2 gap-[18px] pl-8">
+                <div className="flex text-xs text-zinc-500 mb-2 gap-[18px] pl-8">
                     {/* Simplified month labels - rendered every ~4 weeks approx */}
                     {months.map(m => (
                         <span key={m} className="w-8">{m}</span>
                     ))}
                 </div>
                 <div className="flex gap-1">
-                    <div className="flex flex-col gap-1 pr-2 text-[10px] text-slate-500 pt-2">
+                    <div className="flex flex-col gap-1 pr-2 text-[10px] text-zinc-500 pt-2">
                         <span className="h-3">Seg</span>
                         <span className="h-3">Quar</span>
                         <span className="h-3">Sex</span>
@@ -469,7 +469,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                                         className={`w-3 h-3 rounded-sm ${getIntensityColor(day.count)} transition-all hover:ring-2 hover:ring-white/20 relative group`}
                                     >
                                         {day.count >= 0 && (
-                                            <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 pointer-events-none border border-slate-700">
+                                            <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 pointer-events-none border border-zinc-700">
                                                 {day.count} questões em {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR')}
                                             </div>
                                         )}
@@ -479,9 +479,9 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                         ))}
                     </div>
                 </div>
-                <div className="flex items-center gap-2 mt-4 text-xs text-slate-500 justify-end">
+                <div className="flex items-center gap-2 mt-4 text-xs text-zinc-500 justify-end">
                     <span>Menos</span>
-                    <div className="w-3 h-3 rounded-sm bg-slate-800/50" />
+                    <div className="w-3 h-3 rounded-sm bg-zinc-800/50" />
                     <div className="w-3 h-3 rounded-sm bg-emerald-900/50" />
                     <div className="w-3 h-3 rounded-sm bg-emerald-700/50" />
                     <div className="w-3 h-3 rounded-sm bg-emerald-500/50" />

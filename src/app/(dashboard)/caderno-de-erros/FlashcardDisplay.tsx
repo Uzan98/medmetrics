@@ -94,7 +94,7 @@ export function FlashcardDisplay({
                     <div
                         className={`
                             absolute inset-0 backface-hidden
-                            bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900
+                            bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900
                             rounded-3xl p-8 flex flex-col
                             border-2 ${colors.border}
                             shadow-2xl ${colors.glow}
@@ -119,7 +119,7 @@ export function FlashcardDisplay({
                                     )}
                                 </div>
                             </div>
-                            <div className="text-slate-500 text-sm font-medium uppercase tracking-wider">
+                            <div className="text-zinc-500 text-sm font-medium uppercase tracking-wider">
                                 Pergunta
                             </div>
                         </div>
@@ -153,7 +153,7 @@ export function FlashcardDisplay({
 
                         {/* Tap hint */}
                         <div className="text-center mt-6">
-                            <p className="text-slate-400 text-sm animate-pulse">
+                            <p className="text-zinc-400 text-sm animate-pulse">
                                 Toque para revelar a resposta
                             </p>
                         </div>
@@ -163,7 +163,7 @@ export function FlashcardDisplay({
                     <div
                         className={`
                             absolute inset-0 backface-hidden
-                            bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-900
+                            bg-gradient-to-br from-emerald-950 via-zinc-900 to-zinc-900
                             rounded-3xl p-8 flex flex-col overflow-y-auto
                             border-2 border-emerald-500/30
                             shadow-2xl shadow-emerald-500/20
@@ -186,7 +186,7 @@ export function FlashcardDisplay({
                                 onClick={(e) => { e.stopPropagation(); onFlip(); }}
                                 className="p-2 hover:bg-white/10 rounded-xl transition-colors"
                             >
-                                <RotateCcw className="w-5 h-5 text-slate-400" />
+                                <RotateCcw className="w-5 h-5 text-zinc-400" />
                             </button>
                         </div>
 
@@ -209,10 +209,10 @@ export function FlashcardDisplay({
 
                             {/* Error Type & Action */}
                             {(errorType || actionItem) && (
-                                <div className="mt-4 p-4 bg-slate-800/80 border border-slate-700 rounded-2xl space-y-3">
+                                <div className="mt-4 p-4 bg-zinc-800/80 border border-zinc-700 rounded-2xl space-y-3">
                                     {errorType && (
                                         <div>
-                                            <span className="text-xs font-bold uppercase tracking-widest text-slate-500 block mb-1">
+                                            <span className="text-xs font-bold uppercase tracking-widest text-zinc-500 block mb-1">
                                                 Diagnóstico
                                             </span>
                                             <span className={`
@@ -231,7 +231,7 @@ export function FlashcardDisplay({
                                     )}
                                     {actionItem && (
                                         <div>
-                                            <span className="text-xs font-bold uppercase tracking-widest text-slate-500 block mb-1">
+                                            <span className="text-xs font-bold uppercase tracking-widest text-zinc-500 block mb-1">
                                                 Ação Futura
                                             </span>
                                             <p className="text-indigo-300 font-medium">→ {actionItem}</p>

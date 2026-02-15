@@ -433,7 +433,7 @@ export default function CronogramaPage() {
         return (
             <div className="space-y-6 animate-fade-in">
                 {/* Discipline Header */}
-                <div className="flex items-center justify-center gap-6 mb-8 overflow-x-auto p-6 scrollbar-thin scrollbar-thumb-slate-700">
+                <div className="flex items-center justify-center gap-6 mb-8 overflow-x-auto p-6 scrollbar-thin scrollbar-thumb-zinc-700">
                     {disciplines.map(d => {
                         const Icon = iconMap[d.id] || LayoutDashboard
                         const isActive = activeDisciplineId === d.id
@@ -443,22 +443,22 @@ export default function CronogramaPage() {
                         // Inactive: Transparent/Dark BG, Colored Border, Colored Icon
                         // Active: Solid BG, Matching Border, Shadow
                         const colorClass =
-                            d.id === 1 ? (isActive ? 'bg-amber-500 border-amber-500 shadow-lg shadow-amber-500/40' : 'bg-slate-900/50 border-amber-500/50 text-amber-500 hover:border-amber-500 hover:bg-amber-500/10') :
-                                d.id === 2 ? (isActive ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-600/40' : 'bg-slate-900/50 border-blue-500/50 text-blue-500 hover:border-blue-600 hover:bg-blue-600/10') :
-                                    d.id === 3 ? (isActive ? 'bg-orange-500 border-orange-500 shadow-lg shadow-orange-500/40' : 'bg-slate-900/50 border-orange-500/50 text-orange-500 hover:border-orange-500 hover:bg-orange-500/10') :
-                                        d.id === 4 ? (isActive ? 'bg-pink-500 border-pink-500 shadow-lg shadow-pink-500/40' : 'bg-slate-900/50 border-pink-500/50 text-pink-500 hover:border-pink-500 hover:bg-pink-500/10') :
-                                            (isActive ? 'bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-500/40' : 'bg-slate-900/50 border-emerald-500/50 text-emerald-500 hover:border-emerald-500 hover:bg-emerald-500/10')
+                            d.id === 1 ? (isActive ? 'bg-amber-500 border-amber-500 shadow-lg shadow-amber-500/40' : 'bg-zinc-900/50 border-amber-500/50 text-amber-500 hover:border-amber-500 hover:bg-amber-500/10') :
+                                d.id === 2 ? (isActive ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-600/40' : 'bg-zinc-900/50 border-blue-500/50 text-blue-500 hover:border-blue-600 hover:bg-blue-600/10') :
+                                    d.id === 3 ? (isActive ? 'bg-orange-500 border-orange-500 shadow-lg shadow-orange-500/40' : 'bg-zinc-900/50 border-orange-500/50 text-orange-500 hover:border-orange-500 hover:bg-orange-500/10') :
+                                        d.id === 4 ? (isActive ? 'bg-pink-500 border-pink-500 shadow-lg shadow-pink-500/40' : 'bg-zinc-900/50 border-pink-500/50 text-pink-500 hover:border-pink-500 hover:bg-pink-500/10') :
+                                            (isActive ? 'bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-500/40' : 'bg-zinc-900/50 border-emerald-500/50 text-emerald-500 hover:border-emerald-500 hover:bg-emerald-500/10')
 
                         return (
                             <button
                                 key={d.id}
                                 onClick={() => setActiveDisciplineId(d.id)}
                                 title={d.name} // Tooltip for accessibility since text is removed
-                                className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all duration-300 relative group ${colorClass} ${isActive ? 'scale-110 ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent' : 'hover:scale-105'}`}
+                                className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all duration-300 relative group ${colorClass} ${isActive ? 'scale-110 ring-2 ring-offset-2 ring-offset-zinc-900 ring-transparent' : 'hover:scale-105'}`}
                             >
                                 <Icon className={`w-8 h-8 ${isActive ? 'text-white' : ''}`} />
                                 {hasSchedule && (
-                                    <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-slate-900 bg-green-500 z-10 flex items-center justify-center`} />
+                                    <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-zinc-900 bg-green-500 z-10 flex items-center justify-center`} />
                                 )}
                             </button>
                         )
@@ -468,23 +468,23 @@ export default function CronogramaPage() {
                 <div className="max-w-3xl mx-auto space-y-8">
                     <div>
                         <h1 className="text-2xl font-bold text-white mb-2">Novo Cronograma</h1>
-                        <p className="text-slate-400">Configure sua rotação para gerarmos um plano de estudos personalizado.</p>
+                        <p className="text-zinc-400">Configure sua rotação para gerarmos um plano de estudos personalizado.</p>
                     </div>
 
                     {/* Steps Indicator */}
                     <div className="flex items-center gap-4 text-sm font-medium">
-                        <div className={`flex items-center gap-2 ${step >= 1 ? 'text-blue-400' : 'text-slate-600'}`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${step >= 1 ? 'bg-blue-500/20 border-blue-500' : 'border-slate-700'}`}>1</div>
+                        <div className={`flex items-center gap-2 ${step >= 1 ? 'text-blue-400' : 'text-zinc-600'}`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${step >= 1 ? 'bg-blue-500/20 border-blue-500' : 'border-zinc-700'}`}>1</div>
                             Rotação
                         </div>
-                        <div className="h-px bg-slate-700 w-12" />
-                        <div className={`flex items-center gap-2 ${step >= 2 ? 'text-blue-400' : 'text-slate-600'}`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${step >= 2 ? 'bg-blue-500/20 border-blue-500' : 'border-slate-700'}`}>2</div>
+                        <div className="h-px bg-zinc-700 w-12" />
+                        <div className={`flex items-center gap-2 ${step >= 2 ? 'text-blue-400' : 'text-zinc-600'}`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${step >= 2 ? 'bg-blue-500/20 border-blue-500' : 'border-zinc-700'}`}>2</div>
                             Configuração
                         </div>
                     </div>
 
-                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-8">
+                    <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-2xl p-8">
                         {step === 1 && (
                             <div className="space-y-6">
                                 <h2 className="text-xl font-semibold text-white">Qual rotação você vai iniciar?</h2>
@@ -495,11 +495,11 @@ export default function CronogramaPage() {
                                             onClick={() => setConfig({ ...config, disciplineId: d.id.toString() })}
                                             className={`p-4 rounded-xl border text-left transition-all ${config.disciplineId === d.id.toString()
                                                 ? 'bg-blue-500/20 border-blue-500 ring-1 ring-blue-500'
-                                                : 'bg-slate-900/50 border-slate-700 hover:border-slate-500'
+                                                : 'bg-zinc-900/50 border-zinc-700 hover:border-zinc-500'
                                                 }`}
                                         >
                                             <span className="font-medium text-white block mb-1">{d.name}</span>
-                                            <span className="text-sm text-slate-400">Selecionar rotação</span>
+                                            <span className="text-sm text-zinc-400">Selecionar rotação</span>
                                         </button>
                                     ))}
                                 </div>
@@ -524,15 +524,15 @@ export default function CronogramaPage() {
                                         <Clock className="w-4 h-4 text-blue-400" />
                                         Estimativa de Duração
                                     </h3>
-                                    <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-4 flex items-center justify-between">
+                                    <div className="bg-zinc-900/50 border border-zinc-700 rounded-xl p-4 flex items-center justify-between">
                                         <div>
-                                            <p className="text-slate-400 text-sm mb-1">Com base na sua disponibilidade:</p>
+                                            <p className="text-zinc-400 text-sm mb-1">Com base na sua disponibilidade:</p>
                                             <p className="text-2xl font-bold text-white">
-                                                {estimatedWeeks > 0 ? estimatedWeeks : '-'} <span className="text-sm font-normal text-slate-400">semanas</span>
+                                                {estimatedWeeks > 0 ? estimatedWeeks : '-'} <span className="text-sm font-normal text-zinc-400">semanas</span>
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-slate-400 text-sm mb-1">Total de tópicos:</p>
+                                            <p className="text-zinc-400 text-sm mb-1">Total de tópicos:</p>
                                             <p className="text-lg font-semibold text-white">{totalTopics}</p>
                                         </div>
                                     </div>
@@ -553,7 +553,7 @@ export default function CronogramaPage() {
                                                     onClick={() => toggleDay(day.id)}
                                                     className={`w-12 h-12 rounded-xl font-medium transition-all ${config.selectedDays.includes(day.id)
                                                         ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
-                                                        : 'bg-slate-900/50 text-slate-400 hover:bg-slate-700'
+                                                        : 'bg-zinc-900/50 text-zinc-400 hover:bg-zinc-700'
                                                         }`}
                                                 >
                                                     {day.label}
@@ -569,19 +569,19 @@ export default function CronogramaPage() {
                                                     const capacity = config.dailyCapacities[dayId] || 2
 
                                                     return (
-                                                        <div key={dayId} className="bg-slate-900/30 border border-slate-700/50 rounded-xl p-3 flex items-center justify-between">
-                                                            <span className="text-sm text-slate-300 font-medium">{day?.name}</span>
+                                                        <div key={dayId} className="bg-zinc-900/30 border border-zinc-700/50 rounded-xl p-3 flex items-center justify-between">
+                                                            <span className="text-sm text-zinc-300 font-medium">{day?.name}</span>
                                                             <div className="flex items-center gap-3">
                                                                 <button
                                                                     onClick={() => updateDayCapacity(dayId, -1)}
-                                                                    className="p-1 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors"
+                                                                    className="p-1 hover:bg-zinc-700 rounded-lg text-zinc-400 hover:text-white transition-colors"
                                                                 >
                                                                     <Minus className="w-4 h-4" />
                                                                 </button>
                                                                 <span className="w-4 text-center text-white font-bold">{capacity}</span>
                                                                 <button
                                                                     onClick={() => updateDayCapacity(dayId, 1)}
-                                                                    className="p-1 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors"
+                                                                    className="p-1 hover:bg-zinc-700 rounded-lg text-zinc-400 hover:text-white transition-colors"
                                                                 >
                                                                     <Plus className="w-4 h-4" />
                                                                 </button>
@@ -592,7 +592,7 @@ export default function CronogramaPage() {
                                             </div>
                                         )}
 
-                                        <p className="text-sm text-slate-500">Selecione os dias e defina quantos assuntos estudar em cada um.</p>
+                                        <p className="text-sm text-zinc-500">Selecione os dias e defina quantos assuntos estudar em cada um.</p>
                                     </div>
                                 </div>
 
@@ -606,14 +606,14 @@ export default function CronogramaPage() {
                                         type="date"
                                         value={config.startDate}
                                         onChange={(e) => setConfig({ ...config, startDate: e.target.value })}
-                                        className="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 text-white"
+                                        className="bg-zinc-900/50 border border-zinc-700 rounded-xl px-4 py-2 text-white"
                                     />
                                 </div>
 
-                                <div className="flex justify-between pt-6 border-t border-slate-700/50">
+                                <div className="flex justify-between pt-6 border-t border-zinc-700/50">
                                     <button
                                         onClick={() => setStep(1)}
-                                        className="px-6 py-3 text-slate-400 hover:text-white font-medium"
+                                        className="px-6 py-3 text-zinc-400 hover:text-white font-medium"
                                     >
                                         Voltar
                                     </button>
@@ -664,7 +664,7 @@ export default function CronogramaPage() {
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Discipline Header */}
-            <div className="flex items-center justify-center gap-6 mb-8 overflow-x-auto p-6 scrollbar-thin scrollbar-thumb-slate-700">
+            <div className="flex items-center justify-center gap-6 mb-8 overflow-x-auto p-6 scrollbar-thin scrollbar-thumb-zinc-700">
                 {disciplines.map(d => {
                     const Icon = iconMap[d.id] || LayoutDashboard
                     const isActive = activeDisciplineId === d.id
@@ -674,22 +674,22 @@ export default function CronogramaPage() {
                     // Inactive: Transparent/Dark BG, Colored Border, Colored Icon
                     // Active: Solid BG, Matching Border, Shadow
                     const colorClass =
-                        d.id === 1 ? (isActive ? 'bg-amber-500 border-amber-500 shadow-lg shadow-amber-500/40' : 'bg-slate-900/50 border-amber-500/50 text-amber-500 hover:border-amber-500 hover:bg-amber-500/10') :
-                            d.id === 2 ? (isActive ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-600/40' : 'bg-slate-900/50 border-blue-500/50 text-blue-500 hover:border-blue-600 hover:bg-blue-600/10') :
-                                d.id === 3 ? (isActive ? 'bg-orange-500 border-orange-500 shadow-lg shadow-orange-500/40' : 'bg-slate-900/50 border-orange-500/50 text-orange-500 hover:border-orange-500 hover:bg-orange-500/10') :
-                                    d.id === 4 ? (isActive ? 'bg-pink-500 border-pink-500 shadow-lg shadow-pink-500/40' : 'bg-slate-900/50 border-pink-500/50 text-pink-500 hover:border-pink-500 hover:bg-pink-500/10') :
-                                        (isActive ? 'bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-500/40' : 'bg-slate-900/50 border-emerald-500/50 text-emerald-500 hover:border-emerald-500 hover:bg-emerald-500/10')
+                        d.id === 1 ? (isActive ? 'bg-amber-500 border-amber-500 shadow-lg shadow-amber-500/40' : 'bg-zinc-900/50 border-amber-500/50 text-amber-500 hover:border-amber-500 hover:bg-amber-500/10') :
+                            d.id === 2 ? (isActive ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-600/40' : 'bg-zinc-900/50 border-blue-500/50 text-blue-500 hover:border-blue-600 hover:bg-blue-600/10') :
+                                d.id === 3 ? (isActive ? 'bg-orange-500 border-orange-500 shadow-lg shadow-orange-500/40' : 'bg-zinc-900/50 border-orange-500/50 text-orange-500 hover:border-orange-500 hover:bg-orange-500/10') :
+                                    d.id === 4 ? (isActive ? 'bg-pink-500 border-pink-500 shadow-lg shadow-pink-500/40' : 'bg-zinc-900/50 border-pink-500/50 text-pink-500 hover:border-pink-500 hover:bg-pink-500/10') :
+                                        (isActive ? 'bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-500/40' : 'bg-zinc-900/50 border-emerald-500/50 text-emerald-500 hover:border-emerald-500 hover:bg-emerald-500/10')
 
                     return (
                         <button
                             key={d.id}
                             onClick={() => setActiveDisciplineId(d.id)}
                             title={d.name}
-                            className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all duration-300 relative group ${colorClass} ${isActive ? 'scale-110 ring-2 ring-offset-2 ring-offset-slate-900 ring-transparent' : 'hover:scale-105'}`}
+                            className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all duration-300 relative group ${colorClass} ${isActive ? 'scale-110 ring-2 ring-offset-2 ring-offset-zinc-900 ring-transparent' : 'hover:scale-105'}`}
                         >
                             <Icon className={`w-8 h-8 ${isActive ? 'text-white' : ''}`} />
                             {hasSchedule && (
-                                <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-slate-900 bg-green-500 z-10`} />
+                                <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-zinc-900 bg-green-500 z-10`} />
                             )}
                         </button>
                     )
@@ -702,7 +702,7 @@ export default function CronogramaPage() {
                     <h1 className="text-2xl font-bold text-white mb-1">
                         Cronograma: {disciplines.find(d => d.id === schedule.rotation_discipline_id)?.name}
                     </h1>
-                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                    <div className="flex items-center gap-2 text-sm text-zinc-400">
                         <Calendar className="w-4 h-4" />
                         <span>{format(new Date(schedule.start_date + 'T12:00:00'), "dd 'de' MMM", { locale: ptBR })}</span>
                         <span>•</span>
@@ -727,7 +727,7 @@ export default function CronogramaPage() {
                                 setStep(2) // Jump to config step
                             }
                         }}
-                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium border border-slate-700 transition-colors flex items-center gap-2"
+                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-sm font-medium border border-zinc-700 transition-colors flex items-center gap-2"
                     >
                         <Settings className="w-4 h-4" />
                         Recalcular
@@ -746,19 +746,19 @@ export default function CronogramaPage() {
                                 setStep(1)
                             }
                         }}
-                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium border border-slate-700 transition-colors"
+                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-sm font-medium border border-zinc-700 transition-colors"
                     >
                         Novo
                     </button>
-                    <div className="w-px h-8 bg-slate-700 mx-1" />
+                    <div className="w-px h-8 bg-zinc-700 mx-1" />
                     <button
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${viewMode === 'timeline' ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'}`}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${viewMode === 'timeline' ? 'bg-blue-500 text-white' : 'bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700'}`}
                         onClick={() => setViewMode('timeline')}
                     >
                         <List className="w-4 h-4" />
                     </button>
                     <button
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${viewMode === 'calendar' ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'}`}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${viewMode === 'calendar' ? 'bg-blue-500 text-white' : 'bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700'}`}
                         onClick={() => setViewMode('calendar')}
                     >
                         <Grid className="w-4 h-4" />
@@ -767,18 +767,18 @@ export default function CronogramaPage() {
             </div>
 
             {/* Progress Card */}
-            <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-zinc-800/50 rounded-2xl p-6 border border-zinc-700/50">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="font-semibold text-white">Progresso da Rotação</h3>
                     <span className="text-2xl font-bold text-blue-400">{percentage}%</span>
                 </div>
-                <div className="h-4 bg-slate-700 rounded-full overflow-hidden">
+                <div className="h-4 bg-zinc-700 rounded-full overflow-hidden">
                     <div
                         className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-1000"
                         style={{ width: `${percentage}%` }}
                     />
                 </div>
-                <div className="mt-4 flex gap-4 text-sm text-slate-400">
+                <div className="mt-4 flex gap-4 text-sm text-zinc-400">
                     <div>
                         <span className="text-white font-medium">{scheduleItems.filter(i => i.status === 'completed').length}</span> concluídos
                     </div>
@@ -791,12 +791,12 @@ export default function CronogramaPage() {
             {/* Calendar View */}
             {viewMode === 'calendar' && (
                 <DndContext collisionDetection={closestCenter} onDragStart={(e) => setActiveId(e.active.id as string)} onDragEnd={handleDragEnd}>
-                    <div className="bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden">
+                    <div className="bg-zinc-800/50 rounded-2xl border border-zinc-700/50 overflow-hidden">
                         {/* Month Navigation */}
-                        <div className="flex items-center justify-between p-4 border-b border-slate-700/50 bg-slate-900/30">
+                        <div className="flex items-center justify-between p-4 border-b border-zinc-700/50 bg-zinc-900/30">
                             <button
                                 onClick={() => setCalendarMonth(subMonths(calendarMonth, 1))}
-                                className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white"
+                                className="p-2 hover:bg-zinc-700 rounded-lg transition-colors text-zinc-400 hover:text-white"
                             >
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
@@ -805,16 +805,16 @@ export default function CronogramaPage() {
                             </h3>
                             <button
                                 onClick={() => setCalendarMonth(addMonths(calendarMonth, 1))}
-                                className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white"
+                                className="p-2 hover:bg-zinc-700 rounded-lg transition-colors text-zinc-400 hover:text-white"
                             >
                                 <ChevronRight className="w-5 h-5" />
                             </button>
                         </div>
 
                         {/* Day Headers */}
-                        <div className="grid grid-cols-7 border-b border-slate-700/50">
+                        <div className="grid grid-cols-7 border-b border-zinc-700/50">
                             {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
-                                <div key={day} className="p-2 text-center text-xs font-semibold text-slate-500 uppercase">
+                                <div key={day} className="p-2 text-center text-xs font-semibold text-zinc-500 uppercase">
                                     {day}
                                 </div>
                             ))}
@@ -831,7 +831,7 @@ export default function CronogramaPage() {
 
                                 // Empty cells for days before month starts
                                 for (let i = 0; i < startDay; i++) {
-                                    cells.push(<div key={`empty-${i}`} className="min-h-[60px] sm:min-h-[100px] bg-slate-900/20 border-r border-b border-slate-700/30" />)
+                                    cells.push(<div key={`empty-${i}`} className="min-h-[60px] sm:min-h-[100px] bg-zinc-900/20 border-r border-b border-zinc-700/30" />)
                                 }
 
                                 // Days of the month
@@ -851,13 +851,13 @@ export default function CronogramaPage() {
                                     cells.push(
                                         <DroppableDay key={dateStr} id={dateStr}>
                                             <div
-                                                className={`min-h-[60px] sm:min-h-[100px] p-2 border-r border-b border-slate-700/30 transition-colors ${isTodayCheck ? 'bg-blue-500/10' :
+                                                className={`min-h-[60px] sm:min-h-[100px] p-2 border-r border-b border-zinc-700/30 transition-colors ${isTodayCheck ? 'bg-blue-500/10' :
                                                     isOverdue ? 'bg-red-500/5' :
-                                                        allComplete ? 'bg-green-500/5' : 'hover:bg-slate-800/50'
+                                                        allComplete ? 'bg-green-500/5' : 'hover:bg-zinc-800/50'
                                                     }`}
                                             >
                                                 <div className={`text-sm font-medium mb-1 ${isTodayCheck ? 'text-blue-400' :
-                                                    isOverdue ? 'text-red-400' : 'text-slate-400'
+                                                    isOverdue ? 'text-red-400' : 'text-zinc-400'
                                                     }`}>
                                                     {format(day, 'd')}
                                                 </div>
@@ -874,7 +874,7 @@ export default function CronogramaPage() {
                                                                                 ? 'bg-green-500/20 text-green-300 line-through'
                                                                                 : isOverdue
                                                                                     ? 'bg-red-500/20 text-red-300'
-                                                                                    : 'bg-slate-700 text-slate-300'
+                                                                                    : 'bg-zinc-700 text-zinc-300'
                                                                                 } ${isDragging ? 'opacity-50 z-50' : ''}`}
                                                                         >
                                                                             {item.data.topics?.name?.slice(0, 12)}...
@@ -893,7 +893,7 @@ export default function CronogramaPage() {
                                                         )
                                                     })}
                                                     {dayItems.length > 3 && (
-                                                        <div className="text-xs text-slate-500">+{dayItems.length - 3} mais</div>
+                                                        <div className="text-xs text-zinc-500">+{dayItems.length - 3} mais</div>
                                                     )}
                                                 </div>
                                             </div>
@@ -927,13 +927,13 @@ export default function CronogramaPage() {
                                 <DroppableDay key={date} id={date}>
                                     <div className={`relative pl-8 border-l-2 ${isToday ? 'border-blue-500' :
                                         isDayOverdue ? 'border-red-500/50' :
-                                            'border-slate-700'
+                                            'border-zinc-700'
                                         }`}>
                                         {/* Dot */}
                                         <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-2 ${isToday ? 'bg-blue-500 border-blue-500' :
                                             isDayOverdue ? 'bg-red-900 border-red-500' :
                                                 allCompleted ? 'bg-green-500 border-green-500' :
-                                                    'bg-slate-900 border-slate-700'
+                                                    'bg-zinc-900 border-zinc-700'
                                             }`} />
 
                                         <div className="mb-2">
@@ -955,7 +955,7 @@ export default function CronogramaPage() {
                                                             key={`review-${review.id}`}
                                                             className={`p-4 rounded-xl border border-dashed transition-all ${review.completed
                                                                 ? 'bg-purple-500/5 border-purple-500/20'
-                                                                : 'bg-slate-800/30 border-purple-500/40'
+                                                                : 'bg-zinc-800/30 border-purple-500/40'
                                                                 }`}
                                                         >
                                                             <div className="flex items-start gap-4">
@@ -972,7 +972,7 @@ export default function CronogramaPage() {
                                                                         </span>
                                                                         <Link
                                                                             href="/revisoes"
-                                                                            className="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition-colors"
+                                                                            className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
                                                                         >
                                                                             Ir para Revisões <ArrowRight className="w-3 h-3" />
                                                                         </Link>
@@ -996,7 +996,7 @@ export default function CronogramaPage() {
                                                                         ? 'bg-green-500/5 border-green-500/20 hover:bg-green-500/10'
                                                                         : isOverdue
                                                                             ? 'bg-red-500/5 border-red-500/30 hover:bg-red-500/10'
-                                                                            : 'bg-slate-800/50 border-slate-700/50 hover:border-blue-500/50'
+                                                                            : 'bg-zinc-800/50 border-zinc-700/50 hover:border-blue-500/50'
                                                                         } ${isDragging ? 'opacity-50 ring-2 ring-blue-500 z-50' : ''}`}
                                                                 >
                                                                     <div className="flex items-start gap-3">
@@ -1005,7 +1005,7 @@ export default function CronogramaPage() {
                                                                             {...listeners}
                                                                             {...attributes}
                                                                             onClick={(e) => e.stopPropagation()}
-                                                                            className="mt-0.5 p-1 -ml-1 text-slate-600 hover:text-slate-400 cursor-grab active:cursor-grabbing rounded"
+                                                                            className="mt-0.5 p-1 -ml-1 text-zinc-600 hover:text-zinc-400 cursor-grab active:cursor-grabbing rounded"
                                                                         >
                                                                             <GripVertical className="w-4 h-4" />
                                                                         </div>
@@ -1015,7 +1015,7 @@ export default function CronogramaPage() {
                                                                             ? 'bg-green-500 border-green-500'
                                                                             : isOverdue
                                                                                 ? 'border-red-500 text-red-500'
-                                                                                : 'border-slate-600 group-hover:border-blue-500'
+                                                                                : 'border-zinc-600 group-hover:border-blue-500'
                                                                             }`}>
                                                                             {studyItem.status === 'completed' && <CheckCircle2 className="w-4 h-4 text-white" />}
                                                                         </div>
@@ -1023,7 +1023,7 @@ export default function CronogramaPage() {
                                                                         {/* Content */}
                                                                         <div className="flex-1 min-w-0">
                                                                             <p className={`font-medium transition-colors text-sm break-words ${studyItem.status === 'completed'
-                                                                                ? 'text-slate-500 line-through'
+                                                                                ? 'text-zinc-500 line-through'
                                                                                 : isOverdue
                                                                                     ? 'text-red-400'
                                                                                     : 'text-white'
@@ -1033,7 +1033,7 @@ export default function CronogramaPage() {
                                                                             <div className="flex flex-wrap items-center gap-2 mt-2">
                                                                                 <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${isOverdue
                                                                                     ? 'bg-red-500/20 text-red-300'
-                                                                                    : 'bg-slate-700 text-slate-400'
+                                                                                    : 'bg-zinc-700 text-zinc-400'
                                                                                     }`}>
                                                                                     {isOverdue ? 'Atrasado' : 'Tópico'}
                                                                                 </span>
@@ -1091,7 +1091,7 @@ function DroppableDay({ id, children, isOver }: { id: string, children: React.Re
     return (
         <div
             ref={setNodeRef}
-            className={`transition-all ${dropIsOver ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-slate-900 rounded-xl' : ''}`}
+            className={`transition-all ${dropIsOver ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-zinc-900 rounded-xl' : ''}`}
         >
             {children}
         </div>

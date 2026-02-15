@@ -57,18 +57,24 @@ const XP_REWARDS = {
     session_complete: 50
 }
 
-// Spaced repetition intervals
-const REVIEW_INTERVALS = {
-    wrong: 1,  // review tomorrow
-    hard: 3,   // review in 3 days
-    easy: 7    // review in 7 days
-}
+import { calculateNextReview, ReviewResult } from '@/lib/srs'
+
+// ... existing imports ...
+
+// Spaced repetition intervals - REMOVED (No longer used)
+// const REVIEW_INTERVALS = { ... }
 
 export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }: StudyModeProps) {
     const supabase = createClient()
     const [currentIndex, setCurrentIndex] = useState(0)
     const [isFlipped, setIsFlipped] = useState(false)
     const [showRating, setShowRating] = useState(false)
+    const [streak, setStreak] = useState(0)
+    const [xpAnimation, setXpAnimation] = useState({ amount: 0, show: false })
+    const [showComplete, setShowComplete] = useState(false)
+    const [sessionId, setSessionId] = useState<string | null>(null)
+
+    // Stats state
     const [sessionStats, setSessionStats] = useState<SessionStats>({
         cardsStudied: 0,
         cardsEasy: 0,
@@ -77,95 +83,63 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
         xpEarned: 0,
         timeSpent: 0
     })
-    const [streak, setStreak] = useState(0)
-    const [showComplete, setShowComplete] = useState(false)
-    const [sessionId, setSessionId] = useState<string | null>(null)
-    const startTime = useRef(Date.now())
-    const [xpAnimation, setXpAnimation] = useState<{ amount: number; show: boolean }>({ amount: 0, show: false })
 
-    // Filter entries by discipline if needed
-    const filteredEntries = disciplineId === 'all'
-        ? entries
-        : entries.filter(e => e.discipline_id === disciplineId)
+    const startTime = useRef(Date.now())
+
+    const filteredEntries = disciplineId && disciplineId !== 'all'
+        ? entries.filter(e => e.discipline_id === disciplineId)
+        : entries
 
     const currentCard = filteredEntries[currentIndex]
 
-    // Create session on mount
+    // Initialize session
     useEffect(() => {
-        createSession()
-    }, [])
+        async function initSession() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (!user) return
 
-    // Keyboard navigation
-    useEffect(() => {
-        function handleKeyDown(e: KeyboardEvent) {
-            if (showComplete) return
+                const { data, error } = await supabase
+                    .from('study_sessions')
+                    .insert({
+                        user_id: user.id,
+                        discipline_id: disciplineId === 'all' ? null : disciplineId
+                    })
+                    .select()
+                    .single()
 
-            if (e.key === ' ' || e.key === 'Enter') {
-                e.preventDefault()
-                if (!showRating) {
-                    setIsFlipped(true)
-                    setShowRating(true)
-                }
-            } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
-                goToPrevious()
-            } else if (e.key === 'ArrowRight' && currentIndex < filteredEntries.length - 1 && !showRating) {
-                goToNext()
-            } else if (showRating) {
-                if (e.key === '1') handleRating('wrong')
-                else if (e.key === '2') handleRating('hard')
-                else if (e.key === '3') handleRating('easy')
+                if (data) setSessionId(data.id)
+            } catch (error) {
+                console.error('Error starting session:', error)
             }
         }
+        initSession()
+    }, [])
 
-        window.addEventListener('keydown', handleKeyDown)
-        return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [currentIndex, showRating, showComplete])
-
-    async function createSession() {
-        try {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-
-            const { data, error } = await supabase
-                .from('study_sessions')
-                .insert({
-                    user_id: user.id,
-                    discipline_id: disciplineId === 'all' ? null : disciplineId
-                })
-                .select('id')
-                .single()
-
-            if (error) throw error
-            if (data) setSessionId(data.id)
-        } catch (error) {
-            console.error('Error creating session:', error)
-        }
-    }
-
-    function goToNext() {
+    const goToNext = useCallback(() => {
         if (currentIndex < filteredEntries.length - 1) {
             setCurrentIndex(prev => prev + 1)
             setIsFlipped(false)
             setShowRating(false)
         }
-    }
+    }, [currentIndex, filteredEntries.length])
 
-    function goToPrevious() {
+    const goToPrevious = useCallback(() => {
         if (currentIndex > 0) {
             setCurrentIndex(prev => prev - 1)
             setIsFlipped(false)
             setShowRating(false)
         }
-    }
+    }, [currentIndex])
 
-    function getAccentColor(disciplineName?: string | null): string {
+    function getAccentColor(disciplineName?: string) {
         if (!disciplineName) return 'indigo'
-        const n = disciplineName.toLowerCase()
-        if (n.includes('clínica') || n.includes('clinica')) return 'amber'
-        if (n.includes('cirurgia')) return 'emerald'
-        if (n.includes('pediatria')) return 'cyan'
-        if (n.includes('ginecologia') || n.includes('obstetrícia')) return 'pink'
-        if (n.includes('preventiva') || n.includes('coletiva')) return 'violet'
+        const lower = disciplineName.toLowerCase()
+        if (lower.includes('cardio') || lower.includes('coracao')) return 'rose'
+        if (lower.includes('pediatria') || lower.includes('crianca')) return 'cyan'
+        if (lower.includes('gineco') || lower.includes('mulher')) return 'pink'
+        if (lower.includes('cirurgia')) return 'emerald'
+        if (lower.includes('preventiva') || lower.includes('sus')) return 'amber'
         return 'indigo'
     }
 
@@ -196,6 +170,20 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
             xpEarned: prev.xpEarned + xp
         }))
 
+        // Calculate SRS parameters
+        // Map UI difficulty to SM-2 Quality (0-5)
+        // wrong -> 0 (Fail)
+        // hard -> 3 (Pass, with difficulty)
+        // easy -> 5 (Pass, perfect)
+        const quality = difficulty === 'wrong' ? 0 : difficulty === 'hard' ? 3 : 5
+
+        const srsResult = calculateNextReview(
+            quality,
+            card.interval || 0,
+            card.ease_factor || 2.5
+            // defaults if null (new cards might be null if not covered by default constraint, but we added default in migration)
+        )
+
         // Save to database
         try {
             const { data: { user } } = await supabase.auth.getUser()
@@ -206,27 +194,31 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
                 user_id: user.id,
                 flashcard_id: card.id,
                 session_id: sessionId,
-                difficulty
+                difficulty,
+                xp_earned: xp
             })
 
-            // Update flashcard with next review date
-            const nextReviewDate = addDays(new Date(), REVIEW_INTERVALS[difficulty])
+            // Update flashcard with next review date and SRS params
             await supabase
                 .from('error_notebook')
                 .update({
                     last_reviewed_at: new Date().toISOString(),
-                    next_review_date: format(nextReviewDate, 'yyyy-MM-dd'),
+                    next_review_date: format(srsResult.nextReviewDate, 'yyyy-MM-dd'),
                     difficulty_level: difficulty === 'wrong' ? 0 : difficulty === 'hard' ? 1 : 2,
-                    review_count: (card.review_count || 0) + 1
+                    review_count: (card.review_count || 0) + 1,
+                    interval: srsResult.interval,
+                    ease_factor: srsResult.easeFactor
                 })
                 .eq('id', card.id)
 
-            // Spaced repetition is now handled via next_review_date in error_notebook
-            // No need to create scheduled_reviews entries
+            // Note: We are using error_notebook for scheduling now.
 
         } catch (error) {
             console.error('Error saving review:', error)
+            toast.error('Erro ao salvar progresso')
         }
+
+        // ... navigation ...
 
         // Move to next or complete
         if (currentIndex === filteredEntries.length - 1) {
@@ -336,13 +328,13 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
 
     if (filteredEntries.length === 0) {
         return (
-            <div className="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center">
+            <div className="fixed inset-0 bg-zinc-950 z-50 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-6">
-                        <Target className="w-12 h-12 text-slate-500" />
+                    <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center mx-auto mb-6">
+                        <Target className="w-12 h-12 text-zinc-500" />
                     </div>
                     <h2 className="text-2xl font-bold text-white mb-4">Nenhum card encontrado</h2>
-                    <p className="text-slate-400 mb-8">Adicione alguns flashcards primeiro!</p>
+                    <p className="text-zinc-400 mb-8">Adicione alguns flashcards primeiro!</p>
                     <button
                         onClick={onClose}
                         className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-medium transition-colors"
@@ -359,7 +351,7 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
         const accuracy = Math.round(((sessionStats.cardsEasy + sessionStats.cardsHard) / sessionStats.cardsStudied) * 100)
 
         return (
-            <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-indigo-950 to-zinc-950 z-50 flex items-center justify-center p-4">
                 <div className="max-w-lg w-full text-center">
                     {/* Celebration Icon */}
                     <div className="relative mb-8">
@@ -374,7 +366,7 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
                     <h1 className="text-4xl font-black text-white mb-2">
                         Sessão Completa!
                     </h1>
-                    <p className="text-xl text-slate-300 mb-8">
+                    <p className="text-xl text-zinc-300 mb-8">
                         Você está arrasando! 🔥
                     </p>
 
@@ -414,27 +406,27 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
                     </div>
 
                     {/* Rating Breakdown */}
-                    <div className="bg-slate-800/50 rounded-2xl p-4 mb-8 flex justify-around">
+                    <div className="bg-zinc-800/50 rounded-2xl p-4 mb-8 flex justify-around">
                         <div className="text-center">
                             <div className="flex items-center justify-center gap-1 text-emerald-400 mb-1">
                                 <CheckCircle2 className="w-4 h-4" />
                                 <span className="font-bold">{sessionStats.cardsEasy}</span>
                             </div>
-                            <span className="text-xs text-slate-500">Fácil</span>
+                            <span className="text-xs text-zinc-500">Fácil</span>
                         </div>
                         <div className="text-center">
                             <div className="flex items-center justify-center gap-1 text-amber-400 mb-1">
                                 <AlertTriangle className="w-4 h-4" />
                                 <span className="font-bold">{sessionStats.cardsHard}</span>
                             </div>
-                            <span className="text-xs text-slate-500">Difícil</span>
+                            <span className="text-xs text-zinc-500">Difícil</span>
                         </div>
                         <div className="text-center">
                             <div className="flex items-center justify-center gap-1 text-red-400 mb-1">
                                 <XCircle className="w-4 h-4" />
                                 <span className="font-bold">{sessionStats.cardsWrong}</span>
                             </div>
-                            <span className="text-xs text-slate-500">Errei</span>
+                            <span className="text-xs text-zinc-500">Errei</span>
                         </div>
                     </div>
 
@@ -450,25 +442,25 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
     }
 
     return (
-        <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 z-50 flex flex-col">
+        <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 z-50 flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-white/5">
                 <button
                     onClick={onClose}
                     className="p-2 hover:bg-white/10 rounded-xl transition-colors"
                 >
-                    <X className="w-6 h-6 text-slate-400" />
+                    <X className="w-6 h-6 text-zinc-400" />
                 </button>
 
                 {/* Progress Bar */}
                 <div className="flex-1 max-w-md mx-4">
-                    <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
                         <div
                             className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
                             style={{ width: `${((currentIndex + (showRating ? 1 : 0)) / filteredEntries.length) * 100}%` }}
                         />
                     </div>
-                    <p className="text-center text-xs text-slate-500 mt-1">
+                    <p className="text-center text-xs text-zinc-500 mt-1">
                         {currentIndex + 1} / {filteredEntries.length}
                     </p>
                 </div>
@@ -504,7 +496,7 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
                 <button
                     onClick={goToPrevious}
                     disabled={currentIndex === 0}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hidden md:block"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hidden md:block"
                 >
                     <ChevronLeft className="w-8 h-8" />
                 </button>
@@ -534,7 +526,7 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
                         if (!showRating) goToNext()
                     }}
                     disabled={currentIndex === filteredEntries.length - 1 || showRating}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hidden md:block"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hidden md:block"
                 >
                     <ChevronRight className="w-8 h-8" />
                 </button>
@@ -543,7 +535,7 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
             {/* Rating Buttons */}
             {showRating && (
                 <div className="p-6 border-t border-white/5 animate-in slide-in-from-bottom duration-300">
-                    <p className="text-center text-slate-400 text-sm mb-4">
+                    <p className="text-center text-zinc-400 text-sm mb-4">
                         Como você se saiu? (Teclas: 1, 2, 3)
                     </p>
                     <div className="flex gap-4 max-w-lg mx-auto">
@@ -578,7 +570,7 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
             )}
 
             {/* Keyboard Hints */}
-            <div className="text-center pb-4 text-xs text-slate-600">
+            <div className="text-center pb-4 text-xs text-zinc-600">
                 Espaço: revelar • ←→: navegar • 1,2,3: avaliar
             </div>
         </div>

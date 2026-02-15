@@ -51,7 +51,7 @@ export default function RedefinirSenhaPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4" style={{
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)'
+            background: 'linear-gradient(135deg, #09090b 0%, #1e1b4b 50%, #09090b 100%)'
         }}>
             <div className="w-full max-w-md">
                 {/* Logo */}
@@ -60,20 +60,20 @@ export default function RedefinirSenhaPage() {
                         <Lock className="w-8 h-8 text-white" />
                     </div>
                     <h1 className="text-2xl font-bold text-white">Redefinir Senha</h1>
-                    <p className="text-slate-400 mt-2">
+                    <p className="text-zinc-400 mt-2">
                         Escolha uma nova senha para sua conta
                     </p>
                 </div>
 
                 {/* Card */}
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/50">
+                <div className="bg-zinc-800/50 backdrop-blur-sm rounded-2xl p-8 border border-zinc-700/50">
                     {success ? (
                         <div className="text-center">
                             <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
                                 <CheckCircle2 className="w-8 h-8 text-green-500" />
                             </div>
                             <h2 className="text-xl font-semibold text-white mb-2">Senha redefinida!</h2>
-                            <p className="text-slate-400 mb-4">
+                            <p className="text-zinc-400 mb-4">
                                 Você será redirecionado para o login...
                             </p>
                             <Loader2 className="w-5 h-5 animate-spin mx-auto text-blue-400" />
@@ -87,16 +87,16 @@ export default function RedefinirSenhaPage() {
                             )}
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-zinc-300 mb-2">
                                     Nova Senha
                                 </label>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
                                     <input
                                         type="password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                                        className="w-full pl-11 pr-4 py-3 bg-zinc-900/50 border border-zinc-700 rounded-xl text-white placeholder-zinc-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                                         placeholder="Mínimo 6 caracteres"
                                         required
                                     />
@@ -104,18 +104,18 @@ export default function RedefinirSenhaPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-zinc-300 mb-2">
                                     Confirmar Senha
                                 </label>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
                                     <input
                                         type="password"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className={`w-full pl-11 pr-4 py-3 bg-slate-900/50 border rounded-xl text-white placeholder-slate-500 focus:ring-1 transition-colors ${confirmPassword && password !== confirmPassword
+                                        className={`w-full pl-11 pr-4 py-3 bg-zinc-900/50 border rounded-xl text-white placeholder-zinc-500 focus:ring-1 transition-colors ${confirmPassword && password !== confirmPassword
                                                 ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                                                : 'border-slate-700 focus:border-blue-500 focus:ring-blue-500'
+                                                : 'border-zinc-700 focus:border-blue-500 focus:ring-blue-500'
                                             }`}
                                         placeholder="Repita a senha"
                                         required

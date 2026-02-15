@@ -25,8 +25,9 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { getMonthName } from '@/lib/utils'
-import { format, subDays, startOfMonth, endOfMonth, addDays, isToday, isPast, startOfDay, endOfDay } from 'date-fns'
+import { format, subDays, startOfMonth, endOfMonth, addDays, isToday, isPast, startOfDay, endOfDay, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+
 import {
     LineChart,
     Line,
@@ -487,16 +488,33 @@ export default function DashboardPage() {
             setTimeData(timeArr)
 
             // Load pending reviews (kept same)
+            // Load pending reviews from error_notebook (SRS System)
+            const sevenDaysLater = format(addDays(today, 7), 'yyyy-MM-dd')
             const { data: reviews } = await supabase
-                .from('scheduled_reviews')
-                .select(`id, scheduled_date, review_type, disciplines(name), subdisciplines(name)`)
+                .from('error_notebook')
+                .select(`
+                    id, 
+                    next_review_date, 
+                    created_at,
+                    interval,
+                    disciplines(name), 
+                    topic_id
+                `)
                 .eq('user_id', user.id)
-                .eq('completed', false)
-                .lte('scheduled_date', format(addDays(today, 7), 'yyyy-MM-dd'))
-                .order('scheduled_date', { ascending: true })
+                .or(`next_review_date.is.null,next_review_date.lte.${sevenDaysLater}`)
+                .order('next_review_date', { ascending: true, nullsFirst: true })
                 .limit(5)
 
-            setPendingReviews((reviews as any) || [])
+            // Map to compatible format for UI
+            const mappedReviews = (reviews || []).map((r: any) => ({
+                id: r.id,
+                scheduled_date: r.next_review_date || format(new Date(), 'yyyy-MM-dd'),
+                review_type: (r.interval || 0) <= 1 ? '1d' : (r.interval || 0) <= 7 ? '7d' : '30d',
+                disciplines: r.disciplines,
+                subdisciplines: null // Removed dependency on subdisciplines for list
+            }))
+
+            setPendingReviews(mappedReviews)
 
         } catch (error) {
             console.error('Error loading dashboard:', error)
@@ -534,13 +552,13 @@ export default function DashboardPage() {
             <div className="h-full flex flex-col items-center justify-center p-8 animate-fade-in">
                 <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Card 1: Register First Questions */}
-                    <div className="bg-slate-800/50 rounded-3xl p-8 border border-slate-700/50 flex flex-col items-center text-center space-y-6 hover:bg-slate-800/80 transition-all group">
+                    <div className="bg-zinc-800/50 rounded-3xl p-8 border border-zinc-700/50 flex flex-col items-center text-center space-y-6 hover:bg-zinc-800/80 transition-all group">
                         <div className="w-20 h-20 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
                             <ClipboardList className="w-10 h-10 text-blue-400" />
                         </div>
                         <div>
                             <h2 className="text-2xl font-bold text-white mb-2">Primeiros Passos</h2>
-                            <p className="text-slate-400">Comece registrando suas primeiras questões para desbloquear as métricas.</p>
+                            <p className="text-zinc-400">Comece registrando suas primeiras questões para desbloquear as métricas.</p>
                         </div>
                         <Link
                             href="/registrar"
@@ -553,13 +571,13 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Card 2: Set Monthly Goal */}
-                    <div className="bg-slate-800/50 rounded-3xl p-8 border border-slate-700/50 flex flex-col items-center text-center space-y-6 hover:bg-slate-800/80 transition-all group">
+                    <div className="bg-zinc-800/50 rounded-3xl p-8 border border-zinc-700/50 flex flex-col items-center text-center space-y-6 hover:bg-zinc-800/80 transition-all group">
                         <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
                             <Target className="w-10 h-10 text-emerald-400" />
                         </div>
                         <div>
                             <h2 className="text-2xl font-bold text-white mb-2">Definir Meta Mensal</h2>
-                            <p className="text-slate-400">Quantas questões você quer fazer neste mês?</p>
+                            <p className="text-zinc-400">Quantas questões você quer fazer neste mês?</p>
                         </div>
 
                         <div className="flex items-center gap-3 w-full max-w-xs">
@@ -568,9 +586,9 @@ export default function DashboardPage() {
                                     type="number"
                                     value={goalInput}
                                     onChange={(e) => setGoalInput(e.target.value)}
-                                    className="w-full pl-4 pr-12 py-3 bg-slate-900/80 border border-slate-600 rounded-xl text-white font-bold text-center focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                                    className="w-full pl-4 pr-12 py-3 bg-zinc-900/80 border border-zinc-600 rounded-xl text-white font-bold text-center focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
                                 />
-                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-medium">Qts</span>
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-zinc-500 font-medium">Qts</span>
                             </div>
                             <button
                                 onClick={saveInitialGoal}
@@ -601,7 +619,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-white">Meu Dashboard</h1>
-                        <p className="text-slate-400">Acompanhe seu desempenho para a residência</p>
+                        <p className="text-zinc-400">Acompanhe seu desempenho para a residência</p>
                     </div>
 
                     {/* Desktop Actions */}
@@ -609,7 +627,7 @@ export default function DashboardPage() {
                         <select
                             value={periodFilter}
                             onChange={(e) => setPeriodFilter(e.target.value as typeof periodFilter)}
-                            className="px-3 py-2.5 bg-slate-800/80 border border-slate-700/50 rounded-xl text-sm text-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all cursor-pointer hover:bg-slate-800"
+                            className="px-3 py-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-xl text-sm text-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all cursor-pointer hover:bg-zinc-800"
                         >
                             <option value="7d">Últimos 7 dias</option>
                             <option value="30d">Últimos 30 dias</option>
@@ -621,7 +639,7 @@ export default function DashboardPage() {
                         <select
                             value={disciplineFilter}
                             onChange={(e) => setDisciplineFilter(e.target.value)}
-                            className="px-3 py-2.5 bg-slate-800/80 border border-slate-700/50 rounded-xl text-sm text-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all cursor-pointer hover:bg-slate-800"
+                            className="px-3 py-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-xl text-sm text-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all cursor-pointer hover:bg-zinc-800"
                         >
                             <option value="all">Todas disciplinas</option>
                             {allDisciplines.map(d => (
@@ -646,7 +664,7 @@ export default function DashboardPage() {
                         onClick={() => setShowFilters(!showFilters)}
                         className={`p-3 rounded-xl border transition-all flex items-center justify-center ${showFilters
                             ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
-                            : 'bg-slate-800/80 border-slate-700/50 text-slate-300 hover:bg-slate-800'
+                            : 'bg-zinc-800/80 border-zinc-700/50 text-zinc-300 hover:bg-zinc-800'
                             }`}
                     >
                         <Filter className="w-5 h-5" />
@@ -663,13 +681,13 @@ export default function DashboardPage() {
 
                 {/* Mobile Filters Panel */}
                 {showFilters && (
-                    <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-slate-800/50 rounded-2xl border border-slate-700/50 animate-in slide-in-from-top-2 fade-in duration-200">
+                    <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-zinc-800/50 rounded-2xl border border-zinc-700/50 animate-in slide-in-from-top-2 fade-in duration-200">
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-400 ml-1 uppercase tracking-wider">Período</label>
+                            <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Período</label>
                             <select
                                 value={periodFilter}
                                 onChange={(e) => setPeriodFilter(e.target.value as typeof periodFilter)}
-                                className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white text-sm outline-none focus:border-blue-500 transition-all"
+                                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white text-sm outline-none focus:border-blue-500 transition-all"
                             >
                                 <option value="7d">Últimos 7 dias</option>
                                 <option value="30d">Últimos 30 dias</option>
@@ -679,11 +697,11 @@ export default function DashboardPage() {
                             </select>
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-400 ml-1 uppercase tracking-wider">Disciplina</label>
+                            <label className="text-xs font-semibold text-zinc-400 ml-1 uppercase tracking-wider">Disciplina</label>
                             <select
                                 value={disciplineFilter}
                                 onChange={(e) => setDisciplineFilter(e.target.value)}
-                                className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white text-sm outline-none focus:border-blue-500 transition-all"
+                                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white text-sm outline-none focus:border-blue-500 transition-all"
                             >
                                 <option value="all">Todas disciplinas</option>
                                 {allDisciplines.map(d => (
@@ -700,16 +718,16 @@ export default function DashboardPage() {
                 {/* Current Streak */}
                 <div className={`rounded-2xl p-5 border flex items-center gap-4 ${streakData.current > 0
                     ? 'bg-gradient-to-br from-orange-500/20 to-red-500/10 border-orange-500/30'
-                    : 'bg-white/5 border-slate-700/50'
+                    : 'bg-white/5 border-zinc-700/50'
                     }`}>
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${streakData.current > 0 ? 'bg-orange-500/30' : 'bg-slate-700/50'
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${streakData.current > 0 ? 'bg-orange-500/30' : 'bg-zinc-700/50'
                         }`}>
-                        <Flame className={`w-6 h-6 ${streakData.current > 0 ? 'text-orange-400 animate-pulse' : 'text-slate-500'
+                        <Flame className={`w-6 h-6 ${streakData.current > 0 ? 'text-orange-400 animate-pulse' : 'text-zinc-500'
                             }`} />
                     </div>
                     <div>
-                        <p className="text-xs text-slate-400">Sequência</p>
-                        <p className={`text-2xl font-bold ${streakData.current > 0 ? 'text-orange-400' : 'text-slate-500'
+                        <p className="text-xs text-zinc-400">Sequência</p>
+                        <p className={`text-2xl font-bold ${streakData.current > 0 ? 'text-orange-400' : 'text-zinc-500'
                             }`}>
                             {streakData.current} <span className="text-sm font-normal">dias</span>
                         </p>
@@ -724,9 +742,9 @@ export default function DashboardPage() {
                         <Trophy className="w-6 h-6 text-yellow-400" />
                     </div>
                     <div>
-                        <p className="text-xs text-slate-400">Recorde</p>
+                        <p className="text-xs text-zinc-400">Recorde</p>
                         <p className="text-2xl font-bold text-yellow-400">
-                            {streakData.record} <span className="text-sm font-normal text-slate-400">dias</span>
+                            {streakData.record} <span className="text-sm font-normal text-zinc-400">dias</span>
                         </p>
                     </div>
                 </div>
@@ -737,7 +755,7 @@ export default function DashboardPage() {
                         <Target className="w-6 h-6 text-blue-400" />
                     </div>
                     <div>
-                        <p className="text-xs text-slate-400">Total Questões</p>
+                        <p className="text-xs text-zinc-400">Total Questões</p>
                         <p className="text-2xl font-bold text-blue-400">
                             {stats.totalQuestions.toLocaleString('pt-BR')}
                         </p>
@@ -760,7 +778,7 @@ export default function DashboardPage() {
                             }`} />
                     </div>
                     <div>
-                        <p className="text-xs text-slate-400">Taxa de Acerto</p>
+                        <p className="text-xs text-zinc-400">Taxa de Acerto</p>
                         <p className={`text-2xl font-bold ${stats.overallAccuracy >= 80 ? 'text-emerald-400' :
                             stats.overallAccuracy >= 65 ? 'text-green-400' :
                                 stats.overallAccuracy >= 50 ? 'text-yellow-400' : 'text-red-400'
@@ -771,12 +789,11 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* Daily Review Widget */}
-            <DailyReviewWidget />
+
 
             {/* Row 0.5: Reviews Card (Moved to top) */}
             {pendingReviews.length > 0 && (
-                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 mb-6">
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-zinc-700/50 mb-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                             <CalendarCheck className="w-5 h-5 text-purple-400" />
@@ -799,7 +816,7 @@ export default function DashboardPage() {
                                         ? 'bg-red-500/10 border-red-500/30'
                                         : isReviewToday
                                             ? 'bg-yellow-500/10 border-yellow-500/30'
-                                            : 'bg-slate-800/50 border-slate-700/50'
+                                            : 'bg-zinc-800/50 border-zinc-700/50'
                                         }`}
                                 >
                                     <p className={`text-xs font-medium mb-1 ${isOverdue ? 'text-red-400' : isReviewToday ? 'text-yellow-400' : 'text-blue-400'
@@ -825,12 +842,12 @@ export default function DashboardPage() {
             {/* Row 1: Performance Chart + Month Questions Card */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Performance Line Chart */}
-                <div className="lg:col-span-2 bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                <div className="lg:col-span-2 bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-zinc-700/50">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-2">
                             <h3 className="font-semibold text-white">Desempenho em questões</h3>
-                            <div className="w-4 h-4 rounded-full bg-slate-700 flex items-center justify-center">
-                                <span className="text-[10px] text-slate-400">i</span>
+                            <div className="w-4 h-4 rounded-full bg-zinc-700 flex items-center justify-center">
+                                <span className="text-[10px] text-zinc-400">i</span>
                             </div>
                         </div>
                     </div>
@@ -854,7 +871,7 @@ export default function DashboardPage() {
                                         <stop offset="100%" stopColor="#ef4444" stopOpacity={0.1} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={true} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={true} />
                                 <XAxis
                                     dataKey="name"
                                     stroke="#64748b"
@@ -877,8 +894,8 @@ export default function DashboardPage() {
                                 />
                                 <Tooltip
                                     contentStyle={{
-                                        background: '#1e293b',
-                                        border: '1px solid #334155',
+                                        background: '#18181b',
+                                        border: '1px solid #27272a',
                                         borderRadius: '12px',
                                     }}
                                     labelStyle={{ color: '#f1f5f9' }}
@@ -911,7 +928,7 @@ export default function DashboardPage() {
                                                 cy={cy}
                                                 r={5}
                                                 fill={dotColor}
-                                                stroke="#1e293b"
+                                                stroke="#18181b"
                                                 strokeWidth={2}
                                             />
                                         )
@@ -926,7 +943,7 @@ export default function DashboardPage() {
                                                 cy={cy}
                                                 r={7}
                                                 fill={dotColor}
-                                                stroke="#1e293b"
+                                                stroke="#18181b"
                                                 strokeWidth={3}
                                             />
                                         )
@@ -944,7 +961,7 @@ export default function DashboardPage() {
                         ? 'bg-emerald-900/10 border-emerald-500/20 shadow-[0_0_30px_-10px_rgba(16,185,129,0.3)]'
                         : (stats.monthGoal && stats.monthQuestions >= (stats.monthGoal / 2))
                             ? 'bg-amber-900/10 border-amber-500/20'
-                            : 'bg-white/5 border-slate-700/50'}
+                            : 'bg-white/5 border-zinc-700/50'}
                 `}>
                     <h3 className="font-semibold text-white text-center mb-4">Questões feitas este mês</h3>
 
@@ -962,8 +979,8 @@ export default function DashboardPage() {
                                         ? `Meta: +${stats.dailyGoalNeeded}/dia`
                                         : "Meta batida! 🎉"}
                                 </span>
-                                <span className="text-slate-500">•</span>
-                                <span className="text-slate-500">{stats.daysRemaining} dias restantes</span>
+                                <span className="text-zinc-500">•</span>
+                                <span className="text-zinc-500">{stats.daysRemaining} dias restantes</span>
                             </div>
 
                             {stats.dailyGoalNeeded > ((stats.monthGoal || 800) / 30) * 1.5 && (stats.monthQuestions < (stats.monthGoal || 800)) && (
@@ -980,15 +997,15 @@ export default function DashboardPage() {
             </div>
 
             {/* Row 2: Discipline Bars */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-zinc-700/50">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-white">Desempenho de questões por grande área</h3>
-                        <div className="w-4 h-4 rounded-full bg-slate-700 flex items-center justify-center">
-                            <span className="text-[10px] text-slate-400">i</span>
+                        <div className="w-4 h-4 rounded-full bg-zinc-700 flex items-center justify-center">
+                            <span className="text-[10px] text-zinc-400">i</span>
                         </div>
                     </div>
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 border border-slate-700 rounded-lg text-sm text-slate-300">
+                    <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/80 border border-zinc-700 rounded-lg text-sm text-zinc-300">
                         Último ano
                         <ChevronDown className="w-4 h-4" />
                     </button>
@@ -1007,7 +1024,7 @@ export default function DashboardPage() {
                                     <Icon className="w-4 h-4" style={{ color }} />
                                 </div>
                                 <div className="w-20 sm:w-36 text-xs sm:text-sm text-white truncate">{disc.name}</div>
-                                <div className="flex-1 h-6 bg-slate-800 rounded-full overflow-hidden relative">
+                                <div className="flex-1 h-6 bg-zinc-800 rounded-full overflow-hidden relative">
                                     <div
                                         className="h-full rounded-full transition-all duration-500"
                                         style={{
@@ -1016,8 +1033,8 @@ export default function DashboardPage() {
                                         }}
                                     />
                                 </div>
-                                <div className="w-12 text-right text-sm text-slate-300">{disc.accuracy.toFixed(0)}%</div>
-                                <div className="hidden sm:block w-24 text-right text-sm text-slate-500">{disc.questions} questões</div>
+                                <div className="w-12 text-right text-sm text-zinc-300">{disc.accuracy.toFixed(0)}%</div>
+                                <div className="hidden sm:block w-24 text-right text-sm text-zinc-500">{disc.questions} questões</div>
                             </div>
                         )
                     })}
@@ -1029,16 +1046,16 @@ export default function DashboardPage() {
             {/* Row 4: Time Chart + Subdiscipline Table */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Time Chart */}
-                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-zinc-700/50">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-2">
-                            <Clock className="w-5 h-5 text-slate-400" />
+                            <Clock className="w-5 h-5 text-zinc-400" />
                             <h3 className="font-semibold text-white">Tempo de estudo</h3>
-                            <div className="w-4 h-4 rounded-full bg-slate-700 flex items-center justify-center">
-                                <span className="text-[10px] text-slate-400">i</span>
+                            <div className="w-4 h-4 rounded-full bg-zinc-700 flex items-center justify-center">
+                                <span className="text-[10px] text-zinc-400">i</span>
                             </div>
                         </div>
-                        <button className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 border border-slate-700 rounded-lg text-sm text-slate-300">
+                        <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/80 border border-zinc-700 rounded-lg text-sm text-zinc-300">
                             Últimos 15 dias
                             <ChevronDown className="w-4 h-4" />
                         </button>
@@ -1048,7 +1065,7 @@ export default function DashboardPage() {
                         {timeData.some(d => d.hours > 0) ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={timeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                                     <XAxis
                                         dataKey="name"
                                         stroke="#64748b"
@@ -1065,8 +1082,8 @@ export default function DashboardPage() {
                                     />
                                     <Tooltip
                                         contentStyle={{
-                                            background: '#1e293b',
-                                            border: '1px solid #334155',
+                                            background: '#18181b',
+                                            border: '1px solid #27272a',
                                             borderRadius: '12px',
                                         }}
                                         formatter={(value) => [`${Number(value).toFixed(1)}h`, 'Tempo']}
@@ -1081,9 +1098,9 @@ export default function DashboardPage() {
                             </ResponsiveContainer>
                         ) : (
                             <div className="h-full flex items-center justify-center">
-                                <p className="text-slate-500 text-sm text-center">
+                                <p className="text-zinc-500 text-sm text-center">
                                     Registre o tempo de estudo para ver este gráfico.<br />
-                                    <span className="text-slate-600">Campo "Tempo (minutos)" no registro.</span>
+                                    <span className="text-zinc-600">Campo "Tempo (minutos)" no registro.</span>
                                 </p>
                             </div>
                         )}
@@ -1091,10 +1108,10 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Subdiscipline Table */}
-                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-zinc-700/50">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-semibold text-white">Desempenho de questões por especialidades</h3>
-                        <button className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 border border-slate-700 rounded-lg text-sm text-slate-300">
+                        <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/80 border border-zinc-700 rounded-lg text-sm text-zinc-300">
                             Último ano
                             <ChevronDown className="w-4 h-4" />
                         </button>
@@ -1102,7 +1119,7 @@ export default function DashboardPage() {
 
                     <table className="w-full">
                         <thead>
-                            <tr className="text-xs text-slate-500 border-b border-slate-700/50">
+                            <tr className="text-xs text-zinc-500 border-b border-zinc-700/50">
                                 <th className="text-left py-2 font-medium">Especialidade</th>
                                 <th className="text-center py-2 font-medium">Questões feitas</th>
                                 <th className="text-right py-2 font-medium">Desempenho</th>
@@ -1110,9 +1127,9 @@ export default function DashboardPage() {
                         </thead>
                         <tbody>
                             {subdisciplineStats.map((sub, i) => (
-                                <tr key={i} className="border-b border-slate-700/30">
+                                <tr key={i} className="border-b border-zinc-700/30">
                                     <td className="py-3 text-sm text-white">{sub.name}</td>
-                                    <td className="py-3 text-sm text-slate-400 text-center">{sub.questions}</td>
+                                    <td className="py-3 text-sm text-zinc-400 text-center">{sub.questions}</td>
                                     <td className="py-3 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <span className={`text-sm font-medium ${sub.accuracy >= 70 ? 'text-green-400' :
@@ -1127,7 +1144,7 @@ export default function DashboardPage() {
                                                 <TrendingDown className="w-4 h-4 text-red-400" />
                                             )}
                                             {sub.trend === 'neutral' && (
-                                                <Minus className="w-4 h-4 text-slate-500" />
+                                                <Minus className="w-4 h-4 text-zinc-500" />
                                             )}
                                         </div>
                                     </td>
@@ -1135,160 +1152,6 @@ export default function DashboardPage() {
                             ))}
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-    )
-}
-
-function DailyReviewWidget() {
-    const [reviewItem, setReviewItem] = useState<any>(null)
-    const [loading, setLoading] = useState(true)
-    const [showAnswer, setShowAnswer] = useState(false)
-    const [reviewed, setReviewed] = useState(false)
-    const [pendingCount, setPendingCount] = useState(0)
-    const supabase = createClient()
-
-    useEffect(() => {
-        loadDailyReview()
-    }, [])
-
-    async function loadDailyReview() {
-        try {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-
-            const today = new Date().toISOString().split('T')[0]
-
-            const { data, count } = await supabase
-                .from('error_notebook')
-                .select('*, disciplines(name)', { count: 'exact' })
-                .eq('user_id', user.id)
-                .or(`next_review_date.is.null,next_review_date.lte.${today}`)
-                .order('review_count', { ascending: true })
-                .limit(1)
-
-            if (data && data.length > 0) {
-                setReviewItem(data[0])
-                setPendingCount(count || 1)
-            }
-        } catch (error) {
-            console.error('Error loading daily review:', error)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    async function handleReview(difficulty: 'easy' | 'hard' | 'wrong') {
-        if (!reviewItem) return
-
-        try {
-            const now = new Date()
-            const daysToAdd = difficulty === 'easy' ? 7 : difficulty === 'hard' ? 3 : 1
-            const nextReview = new Date(now)
-            nextReview.setDate(nextReview.getDate() + daysToAdd)
-
-            await supabase.from('error_notebook')
-                .update({
-                    review_count: (reviewItem.review_count || 0) + 1,
-                    last_reviewed_at: now.toISOString(),
-                    next_review_date: nextReview.toISOString().split('T')[0]
-                })
-                .eq('id', reviewItem.id)
-
-            setReviewed(true)
-        } catch (error) {
-            console.error('Error marking as reviewed:', error)
-        }
-    }
-
-    if (loading) return <Skeleton className="h-20 rounded-2xl w-full" />
-    if (!reviewItem) return null
-
-    return (
-        <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-pink-500/10 rounded-2xl border border-indigo-500/20 p-4 hover:border-indigo-500/40 transition-all">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-                {/* Icon */}
-                <div className="relative shrink-0">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                        <BookOpen className="w-5 h-5 text-white" />
-                    </div>
-                    {pendingCount > 0 && (
-                        <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow animate-pulse">
-                            {pendingCount > 9 ? '9+' : pendingCount}
-                        </div>
-                    )}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold text-indigo-400">Revisão do Dia</span>
-                        {reviewItem.disciplines && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                                {reviewItem.disciplines.name}
-                            </span>
-                        )}
-                    </div>
-
-                    {!showAnswer ? (
-                        <p className="text-sm text-slate-200 line-clamp-1">
-                            {reviewItem.question_text}
-                        </p>
-                    ) : (
-                        <p className="text-sm text-emerald-300 line-clamp-1">
-                            {reviewItem.answer_text}
-                        </p>
-                    )}
-                </div>
-
-                {/* Actions */}
-                <div className="shrink-0 flex items-center gap-2 self-end sm:self-auto">
-                    {!showAnswer ? (
-                        <button
-                            onClick={() => setShowAnswer(true)}
-                            className="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 rounded-lg text-indigo-300 text-xs font-medium transition-all"
-                        >
-                            Revelar
-                        </button>
-                    ) : !reviewed ? (
-                        <>
-                            <button
-                                onClick={() => handleReview('wrong')}
-                                className="p-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg text-red-400 transition-all"
-                                title="Errei"
-                            >
-                                <TrendingDown className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                                onClick={() => handleReview('hard')}
-                                className="p-1.5 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 rounded-lg text-orange-400 transition-all"
-                                title="Difícil"
-                            >
-                                <Minus className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                                onClick={() => handleReview('easy')}
-                                className="p-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 rounded-lg text-emerald-400 transition-all"
-                                title="Fácil"
-                            >
-                                <TrendingUp className="w-3.5 h-3.5" />
-                            </button>
-                        </>
-                    ) : (
-                        <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-medium">
-                            <Trophy className="w-4 h-4 text-yellow-400" />
-                            +15 XP
-                        </span>
-                    )}
-
-                    <Link
-                        href="/caderno-de-erros"
-                        className="p-1.5 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 rounded-lg text-slate-400 hover:text-white transition-all"
-                        title="Ver todos"
-                    >
-                        <ChevronDown className="w-3.5 h-3.5 rotate-[-90deg]" />
-                    </Link>
                 </div>
             </div>
         </div>

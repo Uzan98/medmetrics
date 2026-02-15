@@ -222,7 +222,7 @@ export default function PerfilPage() {
             {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold text-white">Meu Perfil</h1>
-                <p className="text-slate-400">Gerencie sua conta e veja suas estatísticas</p>
+                <p className="text-zinc-400">Gerencie sua conta e veja suas estatísticas</p>
             </div>
 
             {/* User Info Card */}
@@ -248,7 +248,7 @@ export default function PerfilPage() {
                                 Pro
                             </span>
                         </div>
-                        <div className="flex flex-col gap-1 text-slate-400">
+                        <div className="flex flex-col gap-1 text-zinc-400">
                             <div className="flex items-center gap-2">
                                 <Mail className="w-4 h-4" />
                                 <span>{user?.email}</span>
@@ -266,9 +266,9 @@ export default function PerfilPage() {
                     <div className="flex flex-col sm:items-end gap-3">
                         <button
                             onClick={() => setShowPasswordForm(!showPasswordForm)}
-                            className="w-full sm:w-auto px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 text-slate-200 hover:text-white group"
+                            className="w-full sm:w-auto px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 text-zinc-200 hover:text-white group"
                         >
-                            <Lock className="w-4 h-4 text-slate-400 group-hover:text-indigo-400 transition-colors" />
+                            <Lock className="w-4 h-4 text-zinc-400 group-hover:text-indigo-400 transition-colors" />
                             Alterar Senha
                         </button>
                         <button
@@ -306,23 +306,23 @@ export default function PerfilPage() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-medium uppercase tracking-wider text-slate-500">Nova senha</label>
+                                <label className="text-xs font-medium uppercase tracking-wider text-zinc-500">Nova senha</label>
                                 <input
                                     type="password"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-slate-600"
+                                    className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-zinc-600"
                                     placeholder="Mínimo 6 caracteres"
                                     required
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-medium uppercase tracking-wider text-slate-500">Confirmar senha</label>
+                                <label className="text-xs font-medium uppercase tracking-wider text-zinc-500">Confirmar senha</label>
                                 <input
                                     type="password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-slate-600"
+                                    className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-zinc-600"
                                     placeholder="Repita a senha"
                                     required
                                 />
@@ -332,7 +332,7 @@ export default function PerfilPage() {
                             <button
                                 type="button"
                                 onClick={() => setShowPasswordForm(false)}
-                                className="px-5 py-2.5 text-slate-400 hover:text-white font-medium transition-colors"
+                                className="px-5 py-2.5 text-zinc-400 hover:text-white font-medium transition-colors"
                             >
                                 Cancelar
                             </button>
@@ -357,10 +357,10 @@ export default function PerfilPage() {
                             <div className="p-2.5 rounded-xl bg-blue-500/20 group-hover:scale-110 transition-transform duration-300">
                                 <Target className="w-5 h-5 text-blue-400" />
                             </div>
-                            <span className="text-sm font-medium text-slate-400">Total</span>
+                            <span className="text-sm font-medium text-zinc-400">Total</span>
                         </div>
                         <p className="text-3xl font-bold text-white tracking-tight">{stats.totalQuestions.toLocaleString('pt-BR')}</p>
-                        <p className="text-xs text-slate-500 mt-1">questões realizadas</p>
+                        <p className="text-xs text-zinc-500 mt-1">questões realizadas</p>
                     </div>
 
                     <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/5 hover:bg-white/10 transition-colors group">
@@ -368,14 +368,14 @@ export default function PerfilPage() {
                             <div className="p-2.5 rounded-xl bg-emerald-500/20 group-hover:scale-110 transition-transform duration-300">
                                 <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                             </div>
-                            <span className="text-sm font-medium text-slate-400">Acurácia</span>
+                            <span className="text-sm font-medium text-zinc-400">Acurácia</span>
                         </div>
                         <p className={`text-3xl font-bold tracking-tight ${(stats.totalQuestions > 0 ? (stats.totalCorrect / stats.totalQuestions) * 100 : 0) >= 70 ? 'text-emerald-400' : 'text-white'}`}>
                             {stats.totalQuestions > 0
                                 ? ((stats.totalCorrect / stats.totalQuestions) * 100).toFixed(1)
                                 : 0}%
                         </p>
-                        <p className="text-xs text-slate-500 mt-1">taxa de acerto global</p>
+                        <p className="text-xs text-zinc-500 mt-1">taxa de acerto global</p>
                     </div>
 
                     <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/5 hover:bg-white/10 transition-colors group">
@@ -383,10 +383,10 @@ export default function PerfilPage() {
                             <div className="p-2.5 rounded-xl bg-purple-500/20 group-hover:scale-110 transition-transform duration-300">
                                 <Calendar className="w-5 h-5 text-purple-400" />
                             </div>
-                            <span className="text-sm font-medium text-slate-400">Dias</span>
+                            <span className="text-sm font-medium text-zinc-400">Dias</span>
                         </div>
                         <p className="text-3xl font-bold text-white tracking-tight">{stats.totalDays}</p>
-                        <p className="text-xs text-slate-500 mt-1">dias estudados</p>
+                        <p className="text-xs text-zinc-500 mt-1">dias estudados</p>
                     </div>
 
                     <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/5 hover:bg-white/10 transition-colors group">
@@ -394,10 +394,10 @@ export default function PerfilPage() {
                             <div className="p-2.5 rounded-xl bg-amber-500/20 group-hover:scale-110 transition-transform duration-300">
                                 <TrendingUp className="w-5 h-5 text-amber-400" />
                             </div>
-                            <span className="text-sm font-medium text-slate-400">Ritmo</span>
+                            <span className="text-sm font-medium text-zinc-400">Ritmo</span>
                         </div>
                         <p className="text-3xl font-bold text-white tracking-tight">{stats.avgQuestionsPerDay}</p>
-                        <p className="text-xs text-slate-500 mt-1">questões / dia</p>
+                        <p className="text-xs text-zinc-500 mt-1">questões / dia</p>
                     </div>
                 </div>
             )}
@@ -443,7 +443,7 @@ export default function PerfilPage() {
                         <Clock className="w-6 h-6 text-cyan-400" />
                     </div>
                     <div>
-                        <p className="text-sm text-slate-400 font-medium uppercase tracking-wider">Dedicação Total</p>
+                        <p className="text-sm text-zinc-400 font-medium uppercase tracking-wider">Dedicação Total</p>
                         <p className="text-2xl font-bold text-white mt-0.5">
                             {Math.floor(stats.totalTime / 60)}h {stats.totalTime % 60}min
                         </p>
@@ -477,7 +477,7 @@ export default function PerfilPage() {
                             <div className="flex gap-2 w-full sm:w-auto">
                                 <button
                                     onClick={() => setShowResetConfirm(false)}
-                                    className="flex-1 sm:flex-none px-3 py-1.5 bg-slate-800 text-slate-400 rounded-lg text-xs hover:bg-slate-700 font-medium transition-colors"
+                                    className="flex-1 sm:flex-none px-3 py-1.5 bg-zinc-800 text-zinc-400 rounded-lg text-xs hover:bg-zinc-700 font-medium transition-colors"
                                 >
                                     Cancelar
                                 </button>

@@ -165,16 +165,16 @@ export default function SubdisciplinasPage() {
         <div className="space-y-6 animate-fade-in">
             <div>
                 <h1 className="text-2xl font-bold text-white">Desempenho por Subdisciplina</h1>
-                <p className="text-slate-400">Ordenado do pior para o melhor desempenho</p>
+                <p className="text-zinc-400">Ordenado do pior para o melhor desempenho</p>
             </div>
 
             {/* Filter */}
             <div className="flex items-center gap-3">
-                <Filter className="w-5 h-5 text-slate-400" />
+                <Filter className="w-5 h-5 text-zinc-400" />
                 <select
                     value={selectedDiscipline}
                     onChange={(e) => setSelectedDiscipline(e.target.value)}
-                    className="px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-xl text-white"
+                    className="px-4 py-2.5 bg-zinc-800/50 border border-zinc-700 rounded-xl text-white"
                 >
                     <option value="">Todas as disciplinas</option>
                     {disciplines.map((d) => (
@@ -203,23 +203,23 @@ export default function SubdisciplinasPage() {
                         >
                             <div className="flex-1 min-w-0">
                                 <h3 className="font-semibold text-white truncate">{stat.name}</h3>
-                                <p className="text-sm text-slate-400">{stat.disciplineName}</p>
+                                <p className="text-sm text-zinc-400">{stat.disciplineName}</p>
                             </div>
                             <div className="flex items-center gap-6 ml-4">
                                 <div className="text-right">
-                                    <p className="text-sm text-slate-400">Questões</p>
+                                    <p className="text-sm text-zinc-400">Questões</p>
                                     <p className="font-medium text-white">
                                         {stat.totalQuestions.toLocaleString('pt-BR')}
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-sm text-slate-400">Taxa</p>
+                                    <p className="text-sm text-zinc-400">Taxa</p>
                                     <AccuracyBadge accuracy={stat.accuracy} size="lg" />
                                 </div>
                             </div>
                         </div>
                         {/* Progress bar */}
-                        <div className="mt-3 h-2 bg-slate-700/30 rounded-full overflow-hidden">
+                        <div className="mt-3 h-2 bg-zinc-700/30 rounded-full overflow-hidden">
                             <div
                                 className={`h-full rounded-full ${stat.accuracy < 60
                                     ? 'bg-red-500'
@@ -233,20 +233,20 @@ export default function SubdisciplinasPage() {
 
                         {/* Topics Expansion */}
                         {expandedSubdiscipline === stat.id && stat.topics.length > 0 && (
-                            <div className="mt-6 pt-4 border-t border-slate-700/30 animate-fade-in pl-4 border-l-2 border-l-slate-700/30 ml-2">
-                                <h4 className="text-sm font-medium text-slate-400 mb-3">Desempenho por Assunto</h4>
+                            <div className="mt-6 pt-4 border-t border-zinc-700/30 animate-fade-in pl-4 border-l-2 border-l-zinc-700/30 ml-2">
+                                <h4 className="text-sm font-medium text-zinc-400 mb-3">Desempenho por Assunto</h4>
                                 <div className="space-y-4">
                                     {stat.topics.map(topic => (
                                         <div key={topic.id} className="group">
                                             <div className="flex justify-between text-sm mb-1">
-                                                <span className="text-slate-300">{topic.name}</span>
-                                                <span className="text-slate-500 text-xs">
+                                                <span className="text-zinc-300">{topic.name}</span>
+                                                <span className="text-zinc-500 text-xs">
                                                     {topic.totalQuestions} q · <span className={topic.accuracy >= 70 ? 'text-green-400' : topic.accuracy >= 50 ? 'text-yellow-400' : 'text-red-400'}>
                                                         {topic.accuracy.toFixed(0)}%
                                                     </span>
                                                 </span>
                                             </div>
-                                            <div className="w-full h-1.5 bg-slate-700/30 rounded-full overflow-hidden">
+                                            <div className="w-full h-1.5 bg-zinc-700/30 rounded-full overflow-hidden">
                                                 <div
                                                     className={`h-full rounded-full ${topic.accuracy < 60 ? 'bg-red-500' :
                                                         topic.accuracy < 75 ? 'bg-yellow-500' : 'bg-green-500'
@@ -261,7 +261,7 @@ export default function SubdisciplinasPage() {
                         )}
 
                         {expandedSubdiscipline === stat.id && stat.topics.length === 0 && (
-                            <div className="mt-4 pt-4 border-t border-slate-700/30 text-center text-sm text-slate-500">
+                            <div className="mt-4 pt-4 border-t border-zinc-700/30 text-center text-sm text-zinc-500">
                                 Nenhum assunto específico registrado ainda.
                             </div>
                         )}
@@ -269,7 +269,7 @@ export default function SubdisciplinasPage() {
                 ))}
 
                 {filteredStats.length === 0 && (
-                    <div className="text-center py-12 text-slate-400">
+                    <div className="text-center py-12 text-zinc-400">
                         Nenhuma subdisciplina encontrada para este filtro.
                     </div>
                 )}

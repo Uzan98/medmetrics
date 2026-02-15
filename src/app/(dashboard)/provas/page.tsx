@@ -166,7 +166,7 @@ export default function ExamsPage() {
                         <FileText className="w-6 h-6 text-blue-500" />
                         Minhas Provas
                     </h1>
-                    <p className="text-slate-400">Gerencie suas provas na íntegra e simulados</p>
+                    <p className="text-zinc-400">Gerencie suas provas na íntegra e simulados</p>
                 </div>
 
                 <Link
@@ -179,22 +179,22 @@ export default function ExamsPage() {
             </div>
 
             {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-zinc-800/50 p-4 rounded-xl border border-zinc-700/50">
                 <div className="md:col-span-2 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                     <input
                         type="text"
                         placeholder="Buscar prova..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-900/50 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                        className="w-full bg-zinc-900/50 border border-zinc-700 rounded-lg pl-10 pr-4 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
                     />
                 </div>
                 <div>
                     <select
                         value={selectedBoard}
                         onChange={(e) => setSelectedBoard(e.target.value)}
-                        className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                        className="w-full bg-zinc-900/50 border border-zinc-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
                     >
                         <option value="all">Todas as Bancas</option>
                         {boards.map(b => (
@@ -206,7 +206,7 @@ export default function ExamsPage() {
                     <select
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(e.target.value)}
-                        className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                        className="w-full bg-zinc-900/50 border border-zinc-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
                     >
                         <option value="all">Todos os Anos</option>
                         {uniqueYears.map(y => (
@@ -221,10 +221,10 @@ export default function ExamsPage() {
                     <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                 </div>
             ) : filteredExams.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-12 bg-slate-800/30 rounded-2xl border border-slate-700/50 border-dashed">
-                    <FileText className="w-12 h-12 text-slate-600 mb-4" />
-                    <h3 className="text-xl font-medium text-slate-300 mb-2">Nenhuma prova encontrada</h3>
-                    <p className="text-slate-500 text-center max-w-sm mb-6">
+                <div className="flex flex-col items-center justify-center p-12 bg-zinc-800/30 rounded-2xl border border-zinc-700/50 border-dashed">
+                    <FileText className="w-12 h-12 text-zinc-600 mb-4" />
+                    <h3 className="text-xl font-medium text-zinc-300 mb-2">Nenhuma prova encontrada</h3>
+                    <p className="text-zinc-500 text-center max-w-sm mb-6">
                         {searchTerm || selectedBoard !== 'all' || selectedYear !== 'all'
                             ? 'Tente ajustar os filtros para encontrar o que procura.'
                             : 'Registre sua primeira prova na íntegra para começar a acompanhar seu desempenho.'}
@@ -241,7 +241,7 @@ export default function ExamsPage() {
             ) : (
                 <div className="grid grid-cols-1 gap-4">
                     {filteredExams.map(exam => (
-                        <div key={exam.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 hover:border-slate-600 transition-colors group">
+                        <div key={exam.id} className="bg-zinc-800/50 border border-zinc-700/50 rounded-xl p-5 hover:border-zinc-600 transition-colors group">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div className="flex items-start gap-4">
                                     <div className={`
@@ -254,10 +254,10 @@ export default function ExamsPage() {
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                                            {exam.boardName} <span className="text-slate-500 font-normal">{exam.year}</span>
+                                            {exam.boardName} <span className="text-zinc-500 font-normal">{exam.year}</span>
                                         </h3>
-                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400 mt-1">
-                                            {exam.title && <span className="text-slate-300">{exam.title}</span>}
+                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-400 mt-1">
+                                            {exam.title && <span className="text-zinc-300">{exam.title}</span>}
                                             <span className="flex items-center gap-1">
                                                 <Calendar className="w-3 h-3" />
                                                 {format(new Date(exam.date), 'dd/MM/yyyy')}
@@ -274,7 +274,7 @@ export default function ExamsPage() {
                                     <button
                                         onClick={() => handleDelete(exam.id)}
                                         disabled={deleting === exam.id}
-                                        className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                        className="p-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
                                         title="Excluir"
                                     >
                                         {deleting === exam.id ? (

@@ -63,6 +63,14 @@ export type Database = {
                     review_count: number
                     created_at: string
                     image_urls: string[] | null
+                    // New/Missing fields
+                    interval: number
+                    ease_factor: number
+                    difficulty_level: number
+                    last_reviewed_at: string | null
+                    next_review_date: string | null
+                    error_type: string | null
+                    action_item: string | null
                 }
                 Insert: {
                     answer_text: string
@@ -75,6 +83,14 @@ export type Database = {
                     review_count?: number
                     topic_id?: number | null
                     user_id: string
+                    // New/Missing fields
+                    interval?: number
+                    ease_factor?: number
+                    difficulty_level?: number
+                    last_reviewed_at?: string | null
+                    next_review_date?: string | null
+                    error_type?: string | null
+                    action_item?: string | null
                 }
                 Update: {
                     answer_text?: string
@@ -87,6 +103,14 @@ export type Database = {
                     review_count?: number
                     topic_id?: number | null
                     user_id?: string
+                    // New/Missing fields
+                    interval?: number
+                    ease_factor?: number
+                    difficulty_level?: number
+                    last_reviewed_at?: string | null
+                    next_review_date?: string | null
+                    error_type?: string | null
+                    action_item?: string | null
                 }
                 Relationships: [
                     {

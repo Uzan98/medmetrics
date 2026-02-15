@@ -248,7 +248,7 @@ export default function HistoricoPage() {
             {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold text-white">Histórico de Registros</h1>
-                <p className="text-slate-400">Visualize, edite ou exclua seus registros</p>
+                <p className="text-zinc-400">Visualize, edite ou exclua seus registros</p>
             </div>
 
             {/* Error */}
@@ -273,16 +273,16 @@ export default function HistoricoPage() {
             )}
 
             {/* Filters */}
-            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+            <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50">
                 <div className="flex items-center gap-2 mb-4">
-                    <Filter className="w-5 h-5 text-slate-400" />
+                    <Filter className="w-5 h-5 text-zinc-400" />
                     <span className="font-medium text-white">Filtros</span>
                 </div>
                 <div className="flex flex-wrap gap-4">
                     <select
                         value={filterDiscipline}
                         onChange={(e) => { setFilterDiscipline(e.target.value); setPage(1) }}
-                        className="px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
+                        className="px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-xl text-white"
                     >
                         <option value="">Todas as disciplinas</option>
                         {disciplines.map(d => (
@@ -294,22 +294,22 @@ export default function HistoricoPage() {
                             type="date"
                             value={filterDateFrom}
                             onChange={(e) => { setFilterDateFrom(e.target.value); setPage(1) }}
-                            className="px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
+                            className="px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-xl text-white"
                             placeholder="De"
                         />
-                        <span className="text-slate-500">até</span>
+                        <span className="text-zinc-500">até</span>
                         <input
                             type="date"
                             value={filterDateTo}
                             onChange={(e) => { setFilterDateTo(e.target.value); setPage(1) }}
-                            className="px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-xl text-white"
+                            className="px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-xl text-white"
                             placeholder="Até"
                         />
                     </div>
                     {(filterDiscipline || filterDateFrom || filterDateTo) && (
                         <button
                             onClick={clearFilters}
-                            className="px-4 py-2 text-slate-400 hover:text-white transition-colors"
+                            className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
                         >
                             Limpar filtros
                         </button>
@@ -318,7 +318,7 @@ export default function HistoricoPage() {
             </div>
 
             {/* Summary */}
-            <div className="flex items-center justify-between text-sm text-slate-400">
+            <div className="flex items-center justify-between text-sm text-zinc-400">
                 <span>{logs.length} registro{logs.length !== 1 ? 's' : ''} encontrado{logs.length !== 1 ? 's' : ''}</span>
                 {totalPages > 1 && (
                     <span>Página {page} de {totalPages}</span>
@@ -337,28 +337,28 @@ export default function HistoricoPage() {
                     {paginatedLogs.map((log) => (
                         <div
                             key={log.id}
-                            className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50 hover:border-slate-600/50 transition-all"
+                            className="bg-zinc-800/50 rounded-xl p-5 border border-zinc-700/50 hover:border-zinc-600/50 transition-all"
                         >
                             {editingId === log.id ? (
                                 /* Edit Mode */
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Data</label>
+                                            <label className="block text-xs text-zinc-400 mb-1">Data</label>
                                             <input
                                                 type="date"
                                                 value={editForm.date}
                                                 max={new Date().toISOString().split('T')[0]}
                                                 onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
-                                                className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white text-sm"
+                                                className="w-full px-3 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white text-sm"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Disciplina</label>
+                                            <label className="block text-xs text-zinc-400 mb-1">Disciplina</label>
                                             <select
                                                 value={editForm.disciplineId}
                                                 onChange={(e) => setEditForm({ ...editForm, disciplineId: e.target.value, subdisciplineId: '' })}
-                                                className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white text-sm"
+                                                className="w-full px-3 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white text-sm"
                                             >
                                                 <option value="">Selecione</option>
                                                 {disciplines.map(d => (
@@ -367,11 +367,11 @@ export default function HistoricoPage() {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Subdisciplina</label>
+                                            <label className="block text-xs text-zinc-400 mb-1">Subdisciplina</label>
                                             <select
                                                 value={editForm.subdisciplineId}
                                                 onChange={(e) => setEditForm({ ...editForm, subdisciplineId: e.target.value })}
-                                                className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white text-sm"
+                                                className="w-full px-3 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white text-sm"
                                                 disabled={!editForm.disciplineId}
                                             >
                                                 <option value="">Selecione</option>
@@ -381,48 +381,48 @@ export default function HistoricoPage() {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Fonte</label>
+                                            <label className="block text-xs text-zinc-400 mb-1">Fonte</label>
                                             <input
                                                 type="text"
                                                 value={editForm.source}
                                                 onChange={(e) => setEditForm({ ...editForm, source: e.target.value })}
-                                                className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white text-sm"
+                                                className="w-full px-3 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white text-sm"
                                             />
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Questões</label>
+                                            <label className="block text-xs text-zinc-400 mb-1">Questões</label>
                                             <input
                                                 type="number"
                                                 min="1"
                                                 value={editForm.questionsDone}
                                                 onChange={(e) => setEditForm({ ...editForm, questionsDone: e.target.value })}
-                                                className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white text-sm"
+                                                className="w-full px-3 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white text-sm"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Acertos</label>
+                                            <label className="block text-xs text-zinc-400 mb-1">Acertos</label>
                                             <input
                                                 type="number"
                                                 min="0"
                                                 max={editForm.questionsDone}
                                                 value={editForm.correctAnswers}
                                                 onChange={(e) => setEditForm({ ...editForm, correctAnswers: e.target.value })}
-                                                className={`w-full px-3 py-2 bg-slate-900/50 border rounded-lg text-white text-sm ${Number(editForm.correctAnswers) > Number(editForm.questionsDone)
+                                                className={`w-full px-3 py-2 bg-zinc-900/50 border rounded-lg text-white text-sm ${Number(editForm.correctAnswers) > Number(editForm.questionsDone)
                                                     ? 'border-red-500'
-                                                    : 'border-slate-700'
+                                                    : 'border-zinc-700'
                                                     }`}
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Tempo (min)</label>
+                                            <label className="block text-xs text-zinc-400 mb-1">Tempo (min)</label>
                                             <input
                                                 type="number"
                                                 min="0"
                                                 value={editForm.timeMinutes}
                                                 onChange={(e) => setEditForm({ ...editForm, timeMinutes: e.target.value })}
-                                                className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white text-sm"
+                                                className="w-full px-3 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white text-sm"
                                             />
                                         </div>
                                         <div className="flex items-end gap-2">
@@ -436,7 +436,7 @@ export default function HistoricoPage() {
                                             </button>
                                             <button
                                                 onClick={cancelEdit}
-                                                className="py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm"
+                                                className="py-2 px-4 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg text-sm"
                                             >
                                                 Cancelar
                                             </button>
@@ -459,7 +459,7 @@ export default function HistoricoPage() {
                                         </button>
                                         <button
                                             onClick={() => setDeletingId(null)}
-                                            className="py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm"
+                                            className="py-2 px-4 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg text-sm"
                                         >
                                             Cancelar
                                         </button>
@@ -473,23 +473,23 @@ export default function HistoricoPage() {
                                             <span className="text-white font-medium">
                                                 {format(new Date(log.date + 'T12:00:00'), "dd 'de' MMMM, yyyy", { locale: ptBR })}
                                             </span>
-                                            <span className="text-slate-500">•</span>
-                                            <span className="text-slate-400">{log.disciplines?.name || 'Sem disciplina'}</span>
+                                            <span className="text-zinc-500">•</span>
+                                            <span className="text-zinc-400">{log.disciplines?.name || 'Sem disciplina'}</span>
                                             {log.subdisciplines?.name && (
                                                 <>
-                                                    <span className="text-slate-500">•</span>
-                                                    <span className="text-slate-500">{log.subdisciplines.name}</span>
+                                                    <span className="text-zinc-500">•</span>
+                                                    <span className="text-zinc-500">{log.subdisciplines.name}</span>
                                                 </>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-4 text-sm">
-                                            <span className="text-slate-300">
+                                            <span className="text-zinc-300">
                                                 <span className="text-blue-400 font-semibold">{log.questions_done}</span> questões
                                             </span>
-                                            <span className="text-slate-300">
+                                            <span className="text-zinc-300">
                                                 <span className="text-green-400 font-semibold">{log.correct_answers}</span> acertos
                                             </span>
-                                            <span className="text-slate-300">
+                                            <span className="text-zinc-300">
                                                 <span className="text-red-400 font-semibold">{log.questions_done - log.correct_answers}</span> erros
                                             </span>
                                             <AccuracyBadge
@@ -497,21 +497,21 @@ export default function HistoricoPage() {
                                                 size="sm"
                                             />
                                             {log.source && (
-                                                <span className="text-slate-500 italic">{log.source}</span>
+                                                <span className="text-zinc-500 italic">{log.source}</span>
                                             )}
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 ml-4">
                                         <button
                                             onClick={() => startEdit(log)}
-                                            className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                                            className="p-2 text-zinc-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
                                             title="Editar"
                                         >
                                             <Edit3 className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => setDeletingId(log.id)}
-                                            className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                            className="p-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                                             title="Excluir"
                                         >
                                             <Trash2 className="w-4 h-4" />
@@ -530,7 +530,7 @@ export default function HistoricoPage() {
                     <button
                         onClick={() => setPage(p => Math.max(1, p - 1))}
                         disabled={page === 1}
-                        className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-2 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <ChevronLeft className="w-5 h-5" />
                     </button>
@@ -543,7 +543,7 @@ export default function HistoricoPage() {
                                     onClick={() => setPage(pageNum)}
                                     className={`w-10 h-10 rounded-lg font-medium ${page === pageNum
                                         ? 'bg-blue-500 text-white'
-                                        : 'bg-slate-800 text-slate-400 hover:text-white'
+                                        : 'bg-zinc-800 text-zinc-400 hover:text-white'
                                         }`}
                                 >
                                     {pageNum}
@@ -554,7 +554,7 @@ export default function HistoricoPage() {
                     <button
                         onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                         disabled={page === totalPages}
-                        className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-2 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <ChevronRight className="w-5 h-5" />
                     </button>

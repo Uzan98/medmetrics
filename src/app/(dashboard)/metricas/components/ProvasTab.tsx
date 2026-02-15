@@ -154,10 +154,10 @@ export default function ProvasTab() {
 
     if (exams.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 bg-slate-800/50 rounded-2xl border border-slate-700/50">
-                <FileText className="w-12 h-12 text-slate-500 mb-4" />
+            <div className="flex flex-col items-center justify-center p-12 bg-zinc-800/50 rounded-2xl border border-zinc-700/50">
+                <FileText className="w-12 h-12 text-zinc-500 mb-4" />
                 <h3 className="text-xl font-semibold text-white mb-2">Nenhuma prova registrada</h3>
-                <p className="text-slate-400 text-center max-w-md">
+                <p className="text-zinc-400 text-center max-w-md">
                     Registre suas provas na íntegra para visualizar gráficos de evolução e desempenho por área.
                 </p>
             </div>
@@ -167,32 +167,32 @@ export default function ProvasTab() {
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Evolution Chart */}
-            <div className="bg-slate-800/50 rounded-2xl p-4 sm:p-6 border border-slate-700/50">
+            <div className="bg-zinc-800/50 rounded-2xl p-4 sm:p-6 border border-zinc-700/50">
                 <h3 className="text-lg font-semibold text-white mb-6">Evolução de Acertos (%)</h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={exams}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                             <XAxis
                                 dataKey="date"
-                                stroke="#94a3b8"
-                                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                                stroke="#a1a1aa"
+                                tick={{ fill: '#a1a1aa', fontSize: 12 }}
                                 tickLine={false}
                                 axisLine={false}
                             />
                             <YAxis
-                                stroke="#94a3b8"
-                                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                                stroke="#a1a1aa"
+                                tick={{ fill: '#a1a1aa', fontSize: 12 }}
                                 domain={[0, 100]}
                                 tickLine={false}
                                 axisLine={false}
                                 unit="%"
                             />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
+                                contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
                                 itemStyle={{ color: '#fff', fontSize: '0.875rem', fontWeight: 600 }}
                                 formatter={(value: any) => [`${Number(value)}%`, 'Acertos']}
-                                labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                                labelStyle={{ color: '#a1a1aa', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
                             />
                             <Line
                                 type="monotone"
@@ -208,7 +208,7 @@ export default function ProvasTab() {
             </div>
 
             {/* Board Performance Chart -- NEW */}
-            <div className="bg-slate-800/50 rounded-2xl p-4 sm:p-6 border border-slate-700/50">
+            <div className="bg-zinc-800/50 rounded-2xl p-4 sm:p-6 border border-zinc-700/50">
                 <h3 className="text-lg font-semibold text-white mb-6">Desempenho por Banca</h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -225,26 +225,26 @@ export default function ProvasTab() {
                             layout="vertical"
                             margin={{ top: 5, right: 50, left: 40, bottom: 5 }}
                         >
-                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
                             <XAxis type="number" domain={[0, 100]} hide />
                             <YAxis
                                 dataKey="name"
                                 type="category"
-                                stroke="#94a3b8"
-                                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                                stroke="#a1a1aa"
+                                tick={{ fill: '#a1a1aa', fontSize: 12 }}
                                 width={100}
                                 tickLine={false}
                                 axisLine={false}
                             />
                             <Tooltip
-                                cursor={{ fill: '#334155', opacity: 0.2 }}
-                                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
+                                cursor={{ fill: '#27272a', opacity: 0.2 }}
+                                contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
                                 itemStyle={{ color: '#e2e8f0', fontSize: '0.875rem' }}
                                 formatter={(value: any, name: any, props: any) => {
                                     const { total, correct } = props.payload
                                     return [`${value}% (${correct}/${total})`, 'Acurácia']
                                 }}
-                                labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                                labelStyle={{ color: '#a1a1aa', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
                             />
                             <Bar
                                 dataKey="accuracy"
@@ -270,7 +270,7 @@ export default function ProvasTab() {
                                 <LabelList
                                     dataKey="accuracy"
                                     position="right"
-                                    fill="#94a3b8"
+                                    fill="#a1a1aa"
                                     formatter={(val: any) => `${val}%`}
                                 />
                             </Bar>
@@ -280,7 +280,7 @@ export default function ProvasTab() {
             </div>
 
             {/* Performance by Area */}
-            <div className="bg-slate-800/50 rounded-2xl p-4 sm:p-6 border border-slate-700/50">
+            <div className="bg-zinc-800/50 rounded-2xl p-4 sm:p-6 border border-zinc-700/50">
                 <h3 className="text-lg font-semibold text-white mb-6">Desempenho por Grande Área</h3>
                 <div className="space-y-4">
                     {disciplineMetrics.map((disc) => (
@@ -291,10 +291,10 @@ export default function ProvasTab() {
                                     disc.accuracy >= 80 ? 'text-green-400' :
                                         disc.accuracy >= 60 ? 'text-yellow-400' : 'text-red-400'
                                 }>
-                                    {disc.accuracy}% <span className="text-slate-500">({disc.correct}/{disc.total})</span>
+                                    {disc.accuracy}% <span className="text-zinc-500">({disc.correct}/{disc.total})</span>
                                 </span>
                             </div>
-                            <div className="h-2 w-full bg-slate-700 rounded-full overflow-hidden">
+                            <div className="h-2 w-full bg-zinc-700 rounded-full overflow-hidden">
                                 <div
                                     className={`h-full rounded-full transition-all duration-1000 ${disc.accuracy >= 80 ? 'bg-green-500' :
                                         disc.accuracy >= 60 ? 'bg-yellow-500' : 'bg-red-500'
@@ -308,34 +308,34 @@ export default function ProvasTab() {
             </div>
 
             {/* Recent Exams List */}
-            <div className="bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden">
-                <div className="p-6 border-b border-slate-700/50">
+            <div className="bg-zinc-800/50 rounded-2xl border border-zinc-700/50 overflow-hidden">
+                <div className="p-6 border-b border-zinc-700/50">
                     <h3 className="text-lg font-semibold text-white">Histórico de Provas</h3>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-slate-700/50 bg-slate-900/20">
-                                <th className="text-left py-4 px-6 text-sm font-medium text-slate-400">Data</th>
-                                <th className="text-left py-4 px-6 text-sm font-medium text-slate-400">Banca/Prova</th>
-                                <th className="text-right py-4 px-6 text-sm font-medium text-slate-400">Questões</th>
-                                <th className="text-right py-4 px-6 text-sm font-medium text-slate-400">Acertos</th>
-                                <th className="text-right py-4 px-6 text-sm font-medium text-slate-400">Desempenho</th>
-                                <th className="text-right py-4 px-6 text-sm font-medium text-slate-400">Ações</th>
+                            <tr className="border-b border-zinc-700/50 bg-zinc-900/20">
+                                <th className="text-left py-4 px-6 text-sm font-medium text-zinc-400">Data</th>
+                                <th className="text-left py-4 px-6 text-sm font-medium text-zinc-400">Banca/Prova</th>
+                                <th className="text-right py-4 px-6 text-sm font-medium text-zinc-400">Questões</th>
+                                <th className="text-right py-4 px-6 text-sm font-medium text-zinc-400">Acertos</th>
+                                <th className="text-right py-4 px-6 text-sm font-medium text-zinc-400">Desempenho</th>
+                                <th className="text-right py-4 px-6 text-sm font-medium text-zinc-400">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             {exams.map((exam) => (
-                                <tr key={exam.id} className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors">
-                                    <td className="py-4 px-6 text-slate-300">{exam.date}</td>
+                                <tr key={exam.id} className="border-b border-zinc-700/30 hover:bg-zinc-700/20 transition-colors">
+                                    <td className="py-4 px-6 text-zinc-300">{exam.date}</td>
                                     <td className="py-4 px-6">
                                         <div>
                                             <div className="text-white font-medium">{exam.boardName} {exam.year}</div>
-                                            {exam.title && <div className="text-xs text-slate-500">{exam.title}</div>}
+                                            {exam.title && <div className="text-xs text-zinc-500">{exam.title}</div>}
                                         </div>
                                     </td>
-                                    <td className="py-4 px-6 text-right text-slate-300">{exam.totalQuestions}</td>
-                                    <td className="py-4 px-6 text-right text-slate-300">{exam.totalCorrect}</td>
+                                    <td className="py-4 px-6 text-right text-zinc-300">{exam.totalQuestions}</td>
+                                    <td className="py-4 px-6 text-right text-zinc-300">{exam.totalCorrect}</td>
                                     <td className="py-4 px-6 text-right">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${exam.accuracy >= 80 ? 'bg-green-500/10 text-green-400' :
                                             exam.accuracy >= 60 ? 'bg-yellow-500/10 text-yellow-400' :
@@ -348,7 +348,7 @@ export default function ProvasTab() {
                                         <button
                                             onClick={() => handleDelete(exam.id)}
                                             disabled={deleting === exam.id}
-                                            className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors disabled:opacity-50"
+                                            className="p-2 text-zinc-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors disabled:opacity-50"
                                             title="Excluir prova"
                                         >
                                             {deleting === exam.id ? (

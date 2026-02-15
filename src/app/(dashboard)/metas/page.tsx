@@ -253,11 +253,11 @@ export default function MetasPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-white mb-2">Metas {currentYear}</h1>
                     <div className="flex flex-wrap items-center gap-6 text-sm">
-                        <div className="flex items-center gap-2 text-slate-400">
+                        <div className="flex items-center gap-2 text-zinc-400">
                             <Target className="w-4 h-4 text-purple-400" />
                             <span>Total Geral: <strong className="text-white ml-1">{totalValidQuestions.toLocaleString()}</strong></span>
                         </div>
-                        <div className="flex items-center gap-2 text-slate-400">
+                        <div className="flex items-center gap-2 text-zinc-400">
                             <TrendingUp className="w-4 h-4 text-green-400" />
                             <span>Ritmo Anual: <strong className="text-white ml-1">~{globalPace}/dia</strong></span>
                         </div>
@@ -272,7 +272,7 @@ export default function MetasPage() {
                                 placeholder="Meta Padrão"
                                 value={globalTarget}
                                 onChange={(e) => setGlobalTarget(e.target.value)}
-                                className="w-32 px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-white focus:border-indigo-500 outline-none transition-all"
+                                className="w-32 px-3 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-sm text-white focus:border-indigo-500 outline-none transition-all"
                                 autoFocus
                             />
                             <button
@@ -284,7 +284,7 @@ export default function MetasPage() {
                             </button>
                             <button
                                 onClick={() => setShowGlobalInput(false)}
-                                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                                className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
                             >
                                 <AlertCircle className="w-4 h-4 rotate-45" />
                             </button>
@@ -298,12 +298,12 @@ export default function MetasPage() {
                         </button>
                     )}
 
-                    <div className="h-6 w-px bg-slate-800 mx-2" />
+                    <div className="h-6 w-px bg-zinc-800 mx-2" />
 
                     <button
                         onClick={exportCSV}
                         disabled={exporting}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-all text-sm font-medium disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 transition-all text-sm font-medium disabled:opacity-50"
                     >
                         {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                         <span className="hidden sm:inline">CSV</span>
@@ -361,12 +361,12 @@ export default function MetasPage() {
                             ringTrack: "rgba(234, 179, 8, 0.2)"
                         },
                         slate: {
-                            border: "border-slate-700 hover:border-slate-600",
-                            bg: "bg-slate-900/40 hover:bg-slate-800/60",
-                            glow: "bg-slate-500/10",
-                            text: "text-slate-400",
-                            bar: "bg-slate-600",
-                            ring: "#94a3b8",
+                            border: "border-zinc-700 hover:border-zinc-600",
+                            bg: "bg-zinc-900/40 hover:bg-zinc-800/60",
+                            glow: "bg-zinc-500/10",
+                            text: "text-zinc-400",
+                            bar: "bg-zinc-600",
+                            ring: "#a1a1aa",
                             ringTrack: "rgba(148, 163, 184, 0.1)"
                         }
                     }
@@ -375,7 +375,7 @@ export default function MetasPage() {
 
                     // Override for Current Month if it's not completed yet to make it stand out
                     const cardStyle = isCurrentMonth && percentage < 100
-                        ? { ...theme, ...colorClasses.indigo, bg: "bg-slate-900/80 ring-1 ring-indigo-500/30", glow: "bg-indigo-500/20" }
+                        ? { ...theme, ...colorClasses.indigo, bg: "bg-zinc-900/80 ring-1 ring-indigo-500/30", glow: "bg-indigo-500/20" }
                         : theme
 
                     return (
@@ -408,7 +408,7 @@ export default function MetasPage() {
                                         <div className="flex items-center gap-1 animate-in fade-in zoom-in duration-200">
                                             <input
                                                 type="number"
-                                                className="w-20 px-2 py-1 bg-slate-950 border border-slate-700 rounded text-sm text-white focus:border-indigo-500 outline-none"
+                                                className="w-20 px-2 py-1 bg-zinc-950 border border-zinc-700 rounded text-sm text-white focus:border-indigo-500 outline-none"
                                                 value={targets[month] || ''}
                                                 onChange={(e) => setTargets({ ...targets, [month]: e.target.value })}
                                                 autoFocus
@@ -430,7 +430,7 @@ export default function MetasPage() {
                                                 {current.toLocaleString()}
                                             </span>
                                             {target > 0 && (
-                                                <span className="text-xs text-slate-500 font-medium">
+                                                <span className="text-xs text-zinc-500 font-medium">
                                                     / {Number(target).toLocaleString()}
                                                 </span>
                                             )}
@@ -439,7 +439,7 @@ export default function MetasPage() {
                                                     setTargets({ ...targets, [month]: String(target || '') })
                                                     setEditing(month)
                                                 }}
-                                                className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1 text-slate-500 hover:text-white"
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1 text-zinc-500 hover:text-white"
                                             >
                                                 <Edit2 className="w-3.5 h-3.5" />
                                             </button>
@@ -470,7 +470,7 @@ export default function MetasPage() {
                                                 strokeLinecap="round"
                                             />
                                         </svg>
-                                        <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-300">
+                                        <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-zinc-300">
                                             {percentage >= 100 ? (
                                                 <CheckCircle2 className="w-5 h-5 text-green-500" />
                                             ) : (
@@ -483,7 +483,7 @@ export default function MetasPage() {
 
                             {/* Bottom Progress Bar - Only visible if target set */}
                             {target > 0 && (
-                                <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-auto">
+                                <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden mt-auto">
                                     <div
                                         className={cn(
                                             "h-full rounded-full transition-all duration-1000",
@@ -495,7 +495,7 @@ export default function MetasPage() {
                             )}
 
                             {target === 0 && !isEditing && (
-                                <div className="mt-auto text-xs text-slate-600 italic">
+                                <div className="mt-auto text-xs text-zinc-600 italic">
                                     Defina uma meta para acompanhar
                                 </div>
                             )}

@@ -155,10 +155,10 @@ export default function EvolucaoTab() {
     }
 
     const getTrendIcon = (current: number, previous: number | null) => {
-        if (previous === null) return <Minus className="w-4 h-4 text-slate-400" />
+        if (previous === null) return <Minus className="w-4 h-4 text-zinc-400" />
         if (current > previous) return <ArrowUp className="w-4 h-4 text-green-400" />
         if (current < previous) return <ArrowDown className="w-4 h-4 text-red-400" />
-        return <Minus className="w-4 h-4 text-slate-400" />
+        return <Minus className="w-4 h-4 text-zinc-400" />
     }
 
     if (loading) {
@@ -197,27 +197,27 @@ export default function EvolucaoTab() {
         <div className="space-y-6 animate-fade-in">
             <div className="flex flex-col gap-1">
                 <h3 className="text-lg font-semibold text-white">Evolução Mensal</h3>
-                <p className="text-sm text-slate-400">Progresso ao longo de {currentYear}</p>
+                <p className="text-sm text-zinc-400">Progresso ao longo de {currentYear}</p>
             </div>
 
             {/* Summary cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
-                    <p className="text-sm text-slate-400 mb-1">Total no Ano</p>
+                <div className="bg-zinc-800/50 rounded-xl p-5 border border-zinc-700/50">
+                    <p className="text-sm text-zinc-400 mb-1">Total no Ano</p>
                     <p className="text-2xl font-bold text-white">
                         {totalQuestions.toLocaleString('pt-BR')}
                     </p>
-                    <p className="text-sm text-slate-500">questões</p>
+                    <p className="text-sm text-zinc-500">questões</p>
                 </div>
-                <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
-                    <p className="text-sm text-slate-400 mb-1">Média Mensal</p>
+                <div className="bg-zinc-800/50 rounded-xl p-5 border border-zinc-700/50">
+                    <p className="text-sm text-zinc-400 mb-1">Média Mensal</p>
                     <p className="text-2xl font-bold text-white">
                         {Math.round(totalQuestions / stats.length).toLocaleString('pt-BR')}
                     </p>
-                    <p className="text-sm text-slate-500">questões/mês</p>
+                    <p className="text-sm text-zinc-500">questões/mês</p>
                 </div>
-                <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
-                    <p className="text-sm text-slate-400 mb-1">Aproveitamento Geral</p>
+                <div className="bg-zinc-800/50 rounded-xl p-5 border border-zinc-700/50">
+                    <p className="text-sm text-zinc-400 mb-1">Aproveitamento Geral</p>
                     <AccuracyBadge accuracy={overallAccuracy} size="lg" />
                 </div>
             </div>
@@ -225,13 +225,13 @@ export default function EvolucaoTab() {
             {/* Charts Grid */}
             <div className="grid grid-cols-1 gap-6">
                 {/* Evolution Chart */}
-                <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                <div className="bg-zinc-800/50 rounded-2xl p-6 border border-zinc-700/50">
                     <h3 className="font-semibold text-white mb-4">Evolução Mensal</h3>
                     <MonthlyEvolutionChart data={chartData} />
                 </div>
 
                 {/* Specialties List (Best & Worst) */}
-                <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                <div className="bg-zinc-800/50 rounded-2xl p-6 border border-zinc-700/50">
                     <h3 className="font-semibold text-white mb-6">Desempenho por Especialidade</h3>
 
                     {specialtyData.length > 0 ? (
@@ -242,15 +242,15 @@ export default function EvolucaoTab() {
                                 {specialtyData.slice(0, Math.ceil(specialtyData.length / 2)).map((item, index) => (
                                     <div key={item.name} className="group">
                                         <div className="flex justify-between text-sm mb-1">
-                                            <span className="text-slate-300 truncate group-hover:text-white transition-colors" title={item.name}>
+                                            <span className="text-zinc-300 truncate group-hover:text-white transition-colors" title={item.name}>
                                                 {index + 1}. {item.name}
                                             </span>
-                                            <span className="text-slate-400 text-xs text-right min-w-[3rem]">
+                                            <span className="text-zinc-400 text-xs text-right min-w-[3rem]">
                                                 {item.questions} q
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <div className="flex-1 h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                                            <div className="flex-1 h-2 bg-zinc-700/50 rounded-full overflow-hidden">
                                                 <div
                                                     className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-green-400"
                                                     style={{ width: `${item.accuracy}%` }}
@@ -270,26 +270,26 @@ export default function EvolucaoTab() {
                                 {specialtyData.slice(Math.ceil(specialtyData.length / 2)).map((item, index) => (
                                     <div key={item.name} className="group">
                                         <div className="flex justify-between text-sm mb-1">
-                                            <span className="text-slate-300 truncate group-hover:text-white transition-colors" title={item.name}>
+                                            <span className="text-zinc-300 truncate group-hover:text-white transition-colors" title={item.name}>
                                                 {Math.ceil(specialtyData.length / 2) + index + 1}. {item.name}
                                             </span>
-                                            <span className="text-slate-400 text-xs text-right min-w-[3rem]">
+                                            <span className="text-zinc-400 text-xs text-right min-w-[3rem]">
                                                 {item.questions} q
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <div className="flex-1 h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                                            <div className="flex-1 h-2 bg-zinc-700/50 rounded-full overflow-hidden">
                                                 <div
                                                     className={`h-full rounded-full ${item.accuracy < 50 ? 'bg-gradient-to-r from-red-600 to-red-500' :
                                                         item.accuracy < 70 ? 'bg-gradient-to-r from-amber-500 to-yellow-400' :
-                                                            'bg-slate-500'
+                                                            'bg-zinc-500'
                                                         }`}
                                                     style={{ width: `${item.accuracy}%` }}
                                                 />
                                             </div>
                                             <span className={`text-xs font-bold w-9 text-right ${item.accuracy < 50 ? 'text-red-400' :
                                                 item.accuracy < 70 ? 'text-amber-400' :
-                                                    'text-slate-400'
+                                                    'text-zinc-400'
                                                 }`}>
                                                 {item.accuracy.toFixed(0)}%
                                             </span>
@@ -299,7 +299,7 @@ export default function EvolucaoTab() {
                             </div>
                         </div>
                     ) : (
-                        <div className="h-[200px] flex items-center justify-center text-slate-500">
+                        <div className="h-[200px] flex items-center justify-center text-zinc-500">
                             Sem dados suficientes para gerar o ranking.
                         </div>
                     )}
@@ -307,17 +307,17 @@ export default function EvolucaoTab() {
             </div>
 
             {/* Table */}
-            <div className="bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden">
+            <div className="bg-zinc-800/50 rounded-2xl border border-zinc-700/50 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-slate-700/50">
-                                <th className="text-left py-4 px-6 text-sm font-medium text-slate-400">Mês</th>
-                                <th className="text-right py-4 px-6 text-sm font-medium text-slate-400">Questões</th>
-                                <th className="text-right py-4 px-6 text-sm font-medium text-slate-400">Acertos</th>
-                                <th className="text-right py-4 px-6 text-sm font-medium text-slate-400">Erros</th>
-                                <th className="text-right py-4 px-6 text-sm font-medium text-slate-400">Taxa</th>
-                                <th className="text-center py-4 px-6 text-sm font-medium text-slate-400">Tendência</th>
+                            <tr className="border-b border-zinc-700/50">
+                                <th className="text-left py-4 px-6 text-sm font-medium text-zinc-400">Mês</th>
+                                <th className="text-right py-4 px-6 text-sm font-medium text-zinc-400">Questões</th>
+                                <th className="text-right py-4 px-6 text-sm font-medium text-zinc-400">Acertos</th>
+                                <th className="text-right py-4 px-6 text-sm font-medium text-zinc-400">Erros</th>
+                                <th className="text-right py-4 px-6 text-sm font-medium text-zinc-400">Taxa</th>
+                                <th className="text-center py-4 px-6 text-sm font-medium text-zinc-400">Tendência</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -326,14 +326,14 @@ export default function EvolucaoTab() {
                                 return (
                                     <tr
                                         key={stat.month}
-                                        className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors"
+                                        className="border-b border-zinc-700/30 hover:bg-zinc-700/20 transition-colors"
                                     >
                                         <td className="py-4 px-6">
                                             <span className="font-medium text-white">
                                                 {getMonthName(stat.month)}
                                             </span>
                                         </td>
-                                        <td className="py-4 px-6 text-right text-slate-300">
+                                        <td className="py-4 px-6 text-right text-zinc-300">
                                             {stat.totalQuestions.toLocaleString('pt-BR')}
                                         </td>
                                         <td className="py-4 px-6 text-right text-green-400">

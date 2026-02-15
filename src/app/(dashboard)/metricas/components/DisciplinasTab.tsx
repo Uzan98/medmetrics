@@ -111,9 +111,9 @@ export default function DisciplinasTab() {
 
     const getRankIcon = (index: number) => {
         if (index === 0) return <Trophy className="w-5 h-5 text-yellow-400" />
-        if (index === 1) return <Medal className="w-5 h-5 text-slate-300" />
+        if (index === 1) return <Medal className="w-5 h-5 text-zinc-300" />
         if (index === 2) return <Medal className="w-5 h-5 text-amber-600" />
-        return <span className="w-5 h-5 flex items-center justify-center text-slate-500 text-sm font-medium">{index + 1}</span>
+        return <span className="w-5 h-5 flex items-center justify-center text-zinc-500 text-sm font-medium">{index + 1}</span>
     }
 
     if (loading) {
@@ -148,33 +148,33 @@ export default function DisciplinasTab() {
         <div className="space-y-6 animate-fade-in">
             <div className="flex flex-col gap-1">
                 <h3 className="text-lg font-semibold text-white">Ranking de Disciplinas</h3>
-                <p className="text-sm text-slate-400">Comparativo de desempenho entre matérias</p>
+                <p className="text-sm text-zinc-400">Comparativo de desempenho entre matérias</p>
             </div>
 
             {/* Chart */}
-            <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-zinc-800/50 rounded-2xl p-6 border border-zinc-700/50">
                 <h3 className="font-semibold text-white mb-4">Comparativo de Acertos</h3>
                 <DisciplineComparisonChart data={chartData} height={Math.max(300, stats.length * 50)} />
             </div>
 
             {/* Table */}
-            <div className="bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden">
+            <div className="bg-zinc-800/50 rounded-2xl border border-zinc-700/50 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-slate-700/50">
-                                <th className="text-left py-4 px-6 text-sm font-medium text-slate-400">Rank</th>
-                                <th className="text-left py-4 px-6 text-sm font-medium text-slate-400">Disciplina</th>
-                                <th className="text-right py-4 px-6 text-sm font-medium text-slate-400">Questões</th>
-                                <th className="text-right py-4 px-6 text-sm font-medium text-slate-400">Acertos</th>
-                                <th className="text-right py-4 px-6 text-sm font-medium text-slate-400">Taxa</th>
+                            <tr className="border-b border-zinc-700/50">
+                                <th className="text-left py-4 px-6 text-sm font-medium text-zinc-400">Rank</th>
+                                <th className="text-left py-4 px-6 text-sm font-medium text-zinc-400">Disciplina</th>
+                                <th className="text-right py-4 px-6 text-sm font-medium text-zinc-400">Questões</th>
+                                <th className="text-right py-4 px-6 text-sm font-medium text-zinc-400">Acertos</th>
+                                <th className="text-right py-4 px-6 text-sm font-medium text-zinc-400">Taxa</th>
                             </tr>
                         </thead>
                         <tbody>
                             {stats.map((stat, index) => (
                                 <tr
                                     key={stat.id}
-                                    className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors"
+                                    className="border-b border-zinc-700/30 hover:bg-zinc-700/20 transition-colors"
                                 >
                                     <td className="py-4 px-6">
                                         <div className="flex items-center justify-center w-8 h-8">
@@ -184,10 +184,10 @@ export default function DisciplinasTab() {
                                     <td className="py-4 px-6">
                                         <span className="font-medium text-white">{stat.name}</span>
                                     </td>
-                                    <td className="py-4 px-6 text-right text-slate-300">
+                                    <td className="py-4 px-6 text-right text-zinc-300">
                                         {stat.totalQuestions.toLocaleString('pt-BR')}
                                     </td>
-                                    <td className="py-4 px-6 text-right text-slate-300">
+                                    <td className="py-4 px-6 text-right text-zinc-300">
                                         {stat.totalCorrect.toLocaleString('pt-BR')}
                                     </td>
                                     <td className="py-4 px-6 text-right">

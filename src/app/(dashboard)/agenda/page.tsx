@@ -41,7 +41,7 @@ const CATEGORY_COLORS: Record<CategoryKey, { bg: string; border: string; text: s
     prova: { bg: 'bg-red-500/15', border: 'border-red-500/30', text: 'text-red-400', dot: 'bg-red-400' },
     estudo: { bg: 'bg-purple-500/15', border: 'border-purple-500/30', text: 'text-purple-400', dot: 'bg-purple-400' },
     pessoal: { bg: 'bg-orange-500/15', border: 'border-orange-500/30', text: 'text-orange-400', dot: 'bg-orange-400' },
-    outro: { bg: 'bg-slate-500/15', border: 'border-slate-500/30', text: 'text-slate-400', dot: 'bg-slate-400' },
+    outro: { bg: 'bg-zinc-500/15', border: 'border-zinc-500/30', text: 'text-zinc-400', dot: 'bg-zinc-400' },
 }
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -321,10 +321,10 @@ export default function AgendaPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-400">
+                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-400">
                         Agenda
                     </h1>
-                    <p className="text-slate-400 mt-1">Organize seus compromissos</p>
+                    <p className="text-zinc-400 mt-1">Organize seus compromissos</p>
                 </div>
                 <button
                     onClick={openNewAppointment}
@@ -339,19 +339,19 @@ export default function AgendaPage() {
             <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6">
 
                 {/* Calendar */}
-                <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 backdrop-blur-sm h-fit">
+                <div className="bg-zinc-900/50 border border-white/5 rounded-2xl p-5 backdrop-blur-sm h-fit">
                     {/* Month navigation */}
                     <div className="flex items-center justify-between mb-5">
-                        <button onClick={prevMonth} className="p-2 hover:bg-white/5 rounded-xl transition-colors text-slate-400 hover:text-white">
+                        <button onClick={prevMonth} className="p-2 hover:bg-white/5 rounded-xl transition-colors text-zinc-400 hover:text-white">
                             <ChevronLeft className="w-5 h-5" />
                         </button>
                         <div className="text-center">
                             <h2 className="text-lg font-semibold text-white">
                                 {MONTHS[currentMonth.getMonth()]}
                             </h2>
-                            <span className="text-xs text-slate-500">{currentMonth.getFullYear()}</span>
+                            <span className="text-xs text-zinc-500">{currentMonth.getFullYear()}</span>
                         </div>
-                        <button onClick={nextMonth} className="p-2 hover:bg-white/5 rounded-xl transition-colors text-slate-400 hover:text-white">
+                        <button onClick={nextMonth} className="p-2 hover:bg-white/5 rounded-xl transition-colors text-zinc-400 hover:text-white">
                             <ChevronRight className="w-5 h-5" />
                         </button>
                     </div>
@@ -367,7 +367,7 @@ export default function AgendaPage() {
                     {/* Weekday headers */}
                     <div className="grid grid-cols-7 mb-2">
                         {WEEKDAYS.map((day) => (
-                            <div key={day} className="text-center py-2 text-xs font-medium text-slate-500">
+                            <div key={day} className="text-center py-2 text-xs font-medium text-zinc-500">
                                 {day}
                             </div>
                         ))}
@@ -395,8 +395,8 @@ export default function AgendaPage() {
                                             : _isToday
                                                 ? 'bg-white/5 text-indigo-400 font-semibold'
                                                 : isCurrentMonth
-                                                    ? 'text-slate-300 hover:bg-white/5'
-                                                    : 'text-slate-600 hover:bg-white/5'
+                                                    ? 'text-zinc-300 hover:bg-white/5'
+                                                    : 'text-zinc-600 hover:bg-white/5'
                                         }`}
                                 >
                                     <span className={`${_isToday && !_isSelected ? 'underline underline-offset-2 decoration-indigo-500' : ''}`}>
@@ -420,12 +420,12 @@ export default function AgendaPage() {
 
                     {/* Legend */}
                     <div className="mt-5 pt-4 border-t border-white/5">
-                        <p className="text-xs text-slate-500 mb-3 font-medium">Categorias</p>
+                        <p className="text-xs text-zinc-500 mb-3 font-medium">Categorias</p>
                         <div className="grid grid-cols-2 gap-2">
                             {(Object.keys(CATEGORIES) as CategoryKey[]).map((key) => (
                                 <div key={key} className="flex items-center gap-2">
                                     <div className={`w-2 h-2 rounded-full ${CATEGORY_COLORS[key].dot}`} />
-                                    <span className="text-xs text-slate-400">{CATEGORIES[key].emoji} {CATEGORIES[key].label}</span>
+                                    <span className="text-xs text-zinc-400">{CATEGORIES[key].emoji} {CATEGORIES[key].label}</span>
                                 </div>
                             ))}
                         </div>
@@ -440,7 +440,7 @@ export default function AgendaPage() {
                             <h3 className="text-xl font-semibold text-white capitalize">
                                 {selectedDateStr}
                             </h3>
-                            <p className="text-sm text-slate-500">
+                            <p className="text-sm text-zinc-500">
                                 {appointments.length === 0
                                     ? 'Nenhum compromisso'
                                     : `${appointments.length} compromisso${appointments.length > 1 ? 's' : ''}`}
@@ -458,19 +458,19 @@ export default function AgendaPage() {
                     {loading ? (
                         <div className="space-y-3">
                             {[1, 2, 3].map((i) => (
-                                <div key={i} className="h-20 bg-slate-800/50 rounded-2xl animate-pulse" />
+                                <div key={i} className="h-20 bg-zinc-800/50 rounded-2xl animate-pulse" />
                             ))}
                         </div>
                     ) : appointments.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
-                            <div className="w-20 h-20 rounded-2xl bg-slate-800/50 flex items-center justify-center mb-4">
-                                <CalendarIcon className="w-10 h-10 text-slate-600" />
+                            <div className="w-20 h-20 rounded-2xl bg-zinc-800/50 flex items-center justify-center mb-4">
+                                <CalendarIcon className="w-10 h-10 text-zinc-600" />
                             </div>
-                            <h4 className="text-lg font-medium text-slate-400 mb-1">Dia livre!</h4>
-                            <p className="text-sm text-slate-600 mb-6">Nenhum compromisso nesta data</p>
+                            <h4 className="text-lg font-medium text-zinc-400 mb-1">Dia livre!</h4>
+                            <p className="text-sm text-zinc-600 mb-6">Nenhum compromisso nesta data</p>
                             <button
                                 onClick={openNewAppointment}
-                                className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-slate-300 text-sm font-medium transition-all flex items-center gap-2"
+                                className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-zinc-300 text-sm font-medium transition-all flex items-center gap-2"
                             >
                                 <Plus className="w-4 h-4" />
                                 Adicionar compromisso
@@ -494,7 +494,7 @@ export default function AgendaPage() {
                                                 onClick={() => toggleComplete(apt)}
                                                 className={`mt-0.5 shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${apt.completed
                                                         ? `${colors.dot} border-transparent`
-                                                        : `border-slate-600 hover:${colors.border}`
+                                                        : `border-zinc-600 hover:${colors.border}`
                                                     }`}
                                             >
                                                 {apt.completed && <Check className="w-3 h-3 text-white" />}
@@ -507,18 +507,18 @@ export default function AgendaPage() {
                                                         {catInfo.emoji} {catInfo.label}
                                                     </span>
                                                     {(apt.start_time || apt.end_time) && (
-                                                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                                                        <span className="text-xs text-zinc-500 flex items-center gap-1">
                                                             <Clock className="w-3 h-3" />
                                                             {formatTimeDisplay(apt.start_time)}
                                                             {apt.end_time && ` - ${formatTimeDisplay(apt.end_time)}`}
                                                         </span>
                                                     )}
                                                 </div>
-                                                <h4 className={`font-medium ${apt.completed ? 'line-through text-slate-500' : 'text-white'}`}>
+                                                <h4 className={`font-medium ${apt.completed ? 'line-through text-zinc-500' : 'text-white'}`}>
                                                     {apt.title}
                                                 </h4>
                                                 {apt.description && (
-                                                    <p className="text-sm text-slate-400 mt-1 line-clamp-2">
+                                                    <p className="text-sm text-zinc-400 mt-1 line-clamp-2">
                                                         {apt.description}
                                                     </p>
                                                 )}
@@ -528,14 +528,14 @@ export default function AgendaPage() {
                                             <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button
                                                     onClick={() => openEditAppointment(apt)}
-                                                    className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all"
+                                                    className="p-1.5 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-all"
                                                     title="Editar"
                                                 >
                                                     <Edit3 className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => deleteAppointment(apt.id)}
-                                                    className="p-1.5 hover:bg-red-500/10 rounded-lg text-slate-400 hover:text-red-400 transition-all"
+                                                    className="p-1.5 hover:bg-red-500/10 rounded-lg text-zinc-400 hover:text-red-400 transition-all"
                                                     title="Excluir"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
@@ -554,7 +554,7 @@ export default function AgendaPage() {
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-                    <div className="relative bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
+                    <div className="relative bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
                         {/* Modal Header */}
                         <div className="flex items-center justify-between p-5 border-b border-white/5">
                             <h3 className="text-lg font-semibold text-white">
@@ -562,7 +562,7 @@ export default function AgendaPage() {
                             </h3>
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all"
+                                className="p-1.5 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-all"
                             >
                                 <X className="w-5 h-5" />
                             </button>
@@ -572,65 +572,65 @@ export default function AgendaPage() {
                         <div className="p-5 space-y-4">
                             {/* Title */}
                             <div>
-                                <label className="text-sm font-medium text-slate-300 mb-1.5 block">Título *</label>
+                                <label className="text-sm font-medium text-zinc-300 mb-1.5 block">Título *</label>
                                 <input
                                     type="text"
                                     value={formData.title}
                                     onChange={(e) => setFormData(p => ({ ...p, title: e.target.value }))}
                                     placeholder="Ex: Aula de Cardiologia"
-                                    className="w-full px-4 py-2.5 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                                    className="w-full px-4 py-2.5 bg-zinc-800/50 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
                                     autoFocus
                                 />
                             </div>
 
                             {/* Description */}
                             <div>
-                                <label className="text-sm font-medium text-slate-300 mb-1.5 block">Descrição</label>
+                                <label className="text-sm font-medium text-zinc-300 mb-1.5 block">Descrição</label>
                                 <textarea
                                     value={formData.description}
                                     onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))}
                                     placeholder="Detalhes opcionais..."
                                     rows={2}
-                                    className="w-full px-4 py-2.5 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all resize-none"
+                                    className="w-full px-4 py-2.5 bg-zinc-800/50 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all resize-none"
                                 />
                             </div>
 
                             {/* Date */}
                             <div>
-                                <label className="text-sm font-medium text-slate-300 mb-1.5 block">Data</label>
+                                <label className="text-sm font-medium text-zinc-300 mb-1.5 block">Data</label>
                                 <input
                                     type="date"
                                     value={formData.date}
                                     onChange={(e) => setFormData(p => ({ ...p, date: e.target.value }))}
-                                    className="w-full px-4 py-2.5 bg-slate-800/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                                    className="w-full px-4 py-2.5 bg-zinc-800/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
                                 />
                             </div>
 
                             {/* Time row */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">Início</label>
+                                    <label className="text-sm font-medium text-zinc-300 mb-1.5 block">Início</label>
                                     <input
                                         type="time"
                                         value={formData.start_time}
                                         onChange={(e) => setFormData(p => ({ ...p, start_time: e.target.value }))}
-                                        className="w-full px-4 py-2.5 bg-slate-800/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                                        className="w-full px-4 py-2.5 bg-zinc-800/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-slate-300 mb-1.5 block">Fim</label>
+                                    <label className="text-sm font-medium text-zinc-300 mb-1.5 block">Fim</label>
                                     <input
                                         type="time"
                                         value={formData.end_time}
                                         onChange={(e) => setFormData(p => ({ ...p, end_time: e.target.value }))}
-                                        className="w-full px-4 py-2.5 bg-slate-800/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                                        className="w-full px-4 py-2.5 bg-zinc-800/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
                                     />
                                 </div>
                             </div>
 
                             {/* Category */}
                             <div>
-                                <label className="text-sm font-medium text-slate-300 mb-2 block">Categoria</label>
+                                <label className="text-sm font-medium text-zinc-300 mb-2 block">Categoria</label>
                                 <div className="grid grid-cols-3 gap-2">
                                     {(Object.keys(CATEGORIES) as CategoryKey[]).map((key) => {
                                         const cat = CATEGORIES[key]
@@ -643,7 +643,7 @@ export default function AgendaPage() {
                                                 onClick={() => setFormData(p => ({ ...p, category: key }))}
                                                 className={`py-2 px-3 rounded-xl text-xs font-medium border transition-all flex items-center justify-center gap-1.5 ${isActive
                                                         ? `${colors.bg} ${colors.border} ${colors.text} ring-1 ${colors.border}`
-                                                        : 'bg-slate-800/50 border-white/5 text-slate-400 hover:bg-white/5'
+                                                        : 'bg-zinc-800/50 border-white/5 text-zinc-400 hover:bg-white/5'
                                                     }`}
                                             >
                                                 <span>{cat.emoji}</span>
@@ -659,7 +659,7 @@ export default function AgendaPage() {
                         <div className="flex gap-3 p-5 border-t border-white/5">
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 border border-white/5 text-slate-300 rounded-xl font-medium transition-all"
+                                className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-white/5 text-zinc-300 rounded-xl font-medium transition-all"
                             >
                                 Cancelar
                             </button>

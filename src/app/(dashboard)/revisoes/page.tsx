@@ -162,43 +162,43 @@ export default function RevisoesPage() {
             {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold text-white">Revisões Agendadas</h1>
-                <p className="text-slate-400">Acompanhe suas revisões espaçadas</p>
+                <p className="text-zinc-400">Acompanhe suas revisões espaçadas</p>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
+                <div className="bg-zinc-800/50 rounded-xl p-5 border border-zinc-700/50">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
                             <Clock className="w-5 h-5 text-yellow-400" />
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-white">{todayCount}</p>
-                            <p className="text-sm text-slate-400">Para hoje</p>
+                            <p className="text-sm text-zinc-400">Para hoje</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
+                <div className="bg-zinc-800/50 rounded-xl p-5 border border-zinc-700/50">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
                             <AlertCircle className="w-5 h-5 text-red-400" />
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-white">{overdueCount}</p>
-                            <p className="text-sm text-slate-400">Atrasadas</p>
+                            <p className="text-sm text-zinc-400">Atrasadas</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50">
+                <div className="bg-zinc-800/50 rounded-xl p-5 border border-zinc-700/50">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
                             <Calendar className="w-5 h-5 text-blue-400" />
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-white">{pendingCount}</p>
-                            <p className="text-sm text-slate-400">Pendentes</p>
+                            <p className="text-sm text-zinc-400">Pendentes</p>
                         </div>
                     </div>
                 </div>
@@ -210,7 +210,7 @@ export default function RevisoesPage() {
                     onClick={() => setFilter('pending')}
                     className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${filter === 'pending'
                         ? 'bg-blue-500 text-white'
-                        : 'bg-slate-800/50 text-slate-400 hover:text-white'
+                        : 'bg-zinc-800/50 text-zinc-400 hover:text-white'
                         }`}
                 >
                     Pendentes
@@ -219,7 +219,7 @@ export default function RevisoesPage() {
                     onClick={() => setFilter('completed')}
                     className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${filter === 'completed'
                         ? 'bg-green-500 text-white'
-                        : 'bg-slate-800/50 text-slate-400 hover:text-white'
+                        : 'bg-zinc-800/50 text-zinc-400 hover:text-white'
                         }`}
                 >
                     Concluídas
@@ -227,8 +227,8 @@ export default function RevisoesPage() {
                 <button
                     onClick={() => setFilter('all')}
                     className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${filter === 'all'
-                        ? 'bg-slate-600 text-white'
-                        : 'bg-slate-800/50 text-slate-400 hover:text-white'
+                        ? 'bg-zinc-600 text-white'
+                        : 'bg-zinc-800/50 text-zinc-400 hover:text-white'
                         }`}
                 >
                     Todas
@@ -260,7 +260,7 @@ export default function RevisoesPage() {
                         <div key={date}>
                             <h3 className={`text-sm font-medium mb-3 ${getDateColor(date, false)}`}>
                                 {getDateLabel(date)}
-                                <span className="text-slate-500 ml-2">
+                                <span className="text-zinc-500 ml-2">
                                     ({format(new Date(date + 'T12:00:00'), 'dd/MM/yyyy')})
                                 </span>
                             </h3>
@@ -268,9 +268,9 @@ export default function RevisoesPage() {
                                 {dateReviews.map((review) => (
                                     <div
                                         key={review.id}
-                                        className={`bg-slate-800/50 rounded-xl p-4 border transition-all ${review.completed
+                                        className={`bg-zinc-800/50 rounded-xl p-4 border transition-all ${review.completed
                                             ? 'border-green-500/30 opacity-60'
-                                            : 'border-slate-700/50 hover:border-slate-600'
+                                            : 'border-zinc-700/50 hover:border-zinc-600'
                                             }`}
                                     >
                                         <div className="flex items-center justify-between">
@@ -280,8 +280,8 @@ export default function RevisoesPage() {
                                                         <CheckCircle2 className="w-5 h-5 text-green-400" />
                                                     </div>
                                                 ) : (
-                                                    <div className="w-10 h-10 rounded-xl bg-slate-700/50 flex items-center justify-center">
-                                                        <Calendar className="w-5 h-5 text-slate-400" />
+                                                    <div className="w-10 h-10 rounded-xl bg-zinc-700/50 flex items-center justify-center">
+                                                        <Calendar className="w-5 h-5 text-zinc-400" />
                                                     </div>
                                                 )}
                                                 <div>
@@ -289,7 +289,7 @@ export default function RevisoesPage() {
                                                         {review.question_logs?.topics?.name || review.disciplines?.name || 'Sem tópico'}
                                                     </p>
                                                     {(review.subdisciplines?.name || review.disciplines?.name) && (
-                                                        <p className="text-sm text-slate-400">
+                                                        <p className="text-sm text-zinc-400">
                                                             {review.disciplines?.name} {review.subdisciplines?.name ? `• ${review.subdisciplines.name}` : ''}
                                                         </p>
                                                     )}

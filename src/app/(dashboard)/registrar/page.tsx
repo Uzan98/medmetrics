@@ -486,7 +486,7 @@ function RegistrarContent() {
     if (showReviewOptions) {
         return (
             <div className="max-w-2xl mx-auto animate-fade-in">
-                <div className="bg-slate-800/50 rounded-2xl p-8 border border-slate-700/50">
+                <div className="bg-zinc-800/50 rounded-2xl p-8 border border-zinc-700/50">
                     {/* Success Header */}
                     <div className="flex items-center gap-4 mb-6">
                         <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
@@ -494,18 +494,18 @@ function RegistrarContent() {
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-white">Registro salvo!</h2>
-                            <p className="text-slate-400">Deseja agendar revisões para este tema?</p>
+                            <p className="text-zinc-400">Deseja agendar revisões para este tema?</p>
                         </div>
                     </div>
 
                     {/* Review Mode Toggle */}
                     <div className="mb-6">
-                        <div className="flex gap-2 p-1 bg-slate-900/50 rounded-xl">
+                        <div className="flex gap-2 p-1 bg-zinc-900/50 rounded-xl">
                             <button
                                 onClick={() => setReviewMode('auto')}
                                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${reviewMode === 'auto'
                                     ? 'bg-blue-500 text-white'
-                                    : 'text-slate-400 hover:text-white'
+                                    : 'text-zinc-400 hover:text-white'
                                     }`}
                             >
                                 <Zap className="w-4 h-4" />
@@ -515,7 +515,7 @@ function RegistrarContent() {
                                 onClick={() => setReviewMode('manual')}
                                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${reviewMode === 'manual'
                                     ? 'bg-blue-500 text-white'
-                                    : 'text-slate-400 hover:text-white'
+                                    : 'text-zinc-400 hover:text-white'
                                     }`}
                             >
                                 <Calendar className="w-4 h-4" />
@@ -523,7 +523,7 @@ function RegistrarContent() {
                             </button>
                         </div>
                         {reviewMode === 'auto' && accuracy && (
-                            <p className="text-xs text-slate-500 mt-2 text-center">
+                            <p className="text-xs text-zinc-500 mt-2 text-center">
                                 Com {accuracy}% de acerto, selecionamos: {
                                     Number(accuracy) < 60 ? 'todas as revisões' :
                                         Number(accuracy) < 80 ? '7 e 30 dias' : 'apenas 30 dias'
@@ -536,7 +536,7 @@ function RegistrarContent() {
                     <div className="space-y-3 mb-6">
                         <label className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${selectedReviews.day1
                             ? 'bg-blue-500/10 border-blue-500/50'
-                            : 'bg-slate-900/30 border-slate-700/50 hover:border-slate-600'
+                            : 'bg-zinc-900/30 border-zinc-700/50 hover:border-zinc-600'
                             }`}>
                             <div className="flex items-center gap-3">
                                 <input
@@ -544,21 +544,21 @@ function RegistrarContent() {
                                     checked={selectedReviews.day1}
                                     onChange={(e) => setSelectedReviews(prev => ({ ...prev, day1: e.target.checked }))}
                                     disabled={reviewMode === 'auto'}
-                                    className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500"
+                                    className="w-5 h-5 rounded border-zinc-600 bg-zinc-800 text-blue-500 focus:ring-blue-500"
                                 />
                                 <div>
                                     <p className="font-medium text-white">Revisão em 1 dia</p>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-zinc-500">
                                         {format(addDays(new Date(form.date), 1), 'dd/MM/yyyy')}
                                     </p>
                                 </div>
                             </div>
-                            <span className="text-xs text-slate-500">Fixação inicial</span>
+                            <span className="text-xs text-zinc-500">Fixação inicial</span>
                         </label>
 
                         <label className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${selectedReviews.day7
                             ? 'bg-purple-500/10 border-purple-500/50'
-                            : 'bg-slate-900/30 border-slate-700/50 hover:border-slate-600'
+                            : 'bg-zinc-900/30 border-zinc-700/50 hover:border-zinc-600'
                             }`}>
                             <div className="flex items-center gap-3">
                                 <input
@@ -566,21 +566,21 @@ function RegistrarContent() {
                                     checked={selectedReviews.day7}
                                     onChange={(e) => setSelectedReviews(prev => ({ ...prev, day7: e.target.checked }))}
                                     disabled={reviewMode === 'auto'}
-                                    className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500"
+                                    className="w-5 h-5 rounded border-zinc-600 bg-zinc-800 text-purple-500 focus:ring-purple-500"
                                 />
                                 <div>
                                     <p className="font-medium text-white">Revisão em 7 dias</p>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-zinc-500">
                                         {format(addDays(new Date(form.date), 7), 'dd/MM/yyyy')}
                                     </p>
                                 </div>
                             </div>
-                            <span className="text-xs text-slate-500">Consolidação</span>
+                            <span className="text-xs text-zinc-500">Consolidação</span>
                         </label>
 
                         <label className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${selectedReviews.day30
                             ? 'bg-green-500/10 border-green-500/50'
-                            : 'bg-slate-900/30 border-slate-700/50 hover:border-slate-600'
+                            : 'bg-zinc-900/30 border-zinc-700/50 hover:border-zinc-600'
                             }`}>
                             <div className="flex items-center gap-3">
                                 <input
@@ -588,16 +588,16 @@ function RegistrarContent() {
                                     checked={selectedReviews.day30}
                                     onChange={(e) => setSelectedReviews(prev => ({ ...prev, day30: e.target.checked }))}
                                     disabled={reviewMode === 'auto'}
-                                    className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-green-500 focus:ring-green-500"
+                                    className="w-5 h-5 rounded border-zinc-600 bg-zinc-800 text-green-500 focus:ring-green-500"
                                 />
                                 <div>
                                     <p className="font-medium text-white">Revisão em 30 dias</p>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-zinc-500">
                                         {format(addDays(new Date(form.date), 30), 'dd/MM/yyyy')}
                                     </p>
                                 </div>
                             </div>
-                            <span className="text-xs text-slate-500">Memória longo prazo</span>
+                            <span className="text-xs text-zinc-500">Memória longo prazo</span>
                         </label>
                     </div>
 
@@ -605,7 +605,7 @@ function RegistrarContent() {
                     <div className="flex gap-3">
                         <button
                             onClick={skipReviews}
-                            className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-400 bg-slate-900/50 hover:bg-slate-800 transition-colors"
+                            className="flex-1 py-3 px-4 rounded-xl font-medium text-zinc-400 bg-zinc-900/50 hover:bg-zinc-800 transition-colors"
                         >
                             Pular
                         </button>
@@ -640,15 +640,15 @@ function RegistrarContent() {
             <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Registrar</h1>
-                    <p className="text-slate-400">Adicione suas questões ou provas completas</p>
+                    <p className="text-zinc-400">Adicione suas questões ou provas completas</p>
                 </div >
 
-                <div className="bg-slate-800/50 p-1 rounded-xl flex gap-1 border border-slate-700/50">
+                <div className="bg-zinc-800/50 p-1 rounded-xl flex gap-1 border border-zinc-700/50">
                     <button
                         onClick={() => setRegistrationMode('single')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${registrationMode === 'single'
                             ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20'
-                            : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                            : 'text-zinc-400 hover:text-white hover:bg-zinc-700/50'
                             }`}
                     >
                         Questões Avulsas
@@ -657,7 +657,7 @@ function RegistrarContent() {
                         onClick={() => setRegistrationMode('exam')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${registrationMode === 'exam'
                             ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20'
-                            : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                            : 'text-zinc-400 hover:text-white hover:bg-zinc-700/50'
                             }`}
                     >
                         Prova na Íntegra
@@ -684,16 +684,16 @@ function RegistrarContent() {
 
             {
                 registrationMode === 'exam' ? (
-                    <form onSubmit={handleExamSubmit} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 space-y-6 animate-fade-in shadow-xl shadow-black/10">
+                    <form onSubmit={handleExamSubmit} className="bg-zinc-800/50 rounded-2xl p-6 border border-zinc-700/50 space-y-6 animate-fade-in shadow-xl shadow-black/10">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Banca</label>
+                                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Banca</label>
                                 <div className="flex gap-2">
                                     <div className="relative flex-1">
                                         <select
                                             value={examForm.boardId}
                                             onChange={(e) => setExamForm({ ...examForm, boardId: e.target.value })}
-                                            className="w-full pl-4 pr-10 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none"
+                                            className="w-full pl-4 pr-10 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none"
                                             required
                                         >
                                             <option value="">Selecione a banca...</option>
@@ -701,7 +701,7 @@ function RegistrarContent() {
                                                 <option key={b.id} value={b.id}>{b.name}</option>
                                             ))}
                                         </select>
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
                                             <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
                                         </div>
                                     </div>
@@ -710,7 +710,7 @@ function RegistrarContent() {
                                         onClick={() => setShowAddBoard(!showAddBoard)}
                                         className={`px-3 py-3 rounded-xl border transition-all ${showAddBoard
                                             ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400'
-                                            : 'bg-slate-900 border-slate-700/50 text-slate-400 hover:text-white hover:border-slate-600'
+                                            : 'bg-zinc-900 border-zinc-700/50 text-zinc-400 hover:text-white hover:border-zinc-600'
                                             }`}
                                     >
                                         <Plus className="w-5 h-5" />
@@ -724,7 +724,7 @@ function RegistrarContent() {
                                             value={newBoardName}
                                             onChange={(e) => setNewBoardName(e.target.value)}
                                             placeholder="Nome da nova banca..."
-                                            className="flex-1 px-4 py-2 bg-slate-900 border border-slate-700/50 rounded-lg text-sm text-white focus:border-indigo-500 outline-none"
+                                            className="flex-1 px-4 py-2 bg-zinc-900 border border-zinc-700/50 rounded-lg text-sm text-white focus:border-indigo-500 outline-none"
                                             autoFocus
                                         />
                                         <button
@@ -740,14 +740,14 @@ function RegistrarContent() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ano</label>
+                                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Ano</label>
                                 <input
                                     type="number"
                                     min="2000"
                                     max={new Date().getFullYear() + 1}
                                     value={examForm.year}
                                     onChange={(e) => setExamForm({ ...examForm, year: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-slate-600"
+                                    className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-zinc-600"
                                     required
                                 />
                             </div>
@@ -755,28 +755,28 @@ function RegistrarContent() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Data Realizada</label>
+                                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Data Realizada</label>
                                 <input
                                     type="date"
                                     value={examForm.date}
                                     onChange={(e) => setExamForm({ ...examForm, date: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-slate-400 focus:text-white"
+                                    className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-zinc-400 focus:text-white"
                                     required
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Título (Opcional)</label>
+                                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Título (Opcional)</label>
                                 <input
                                     type="text"
                                     value={examForm.title}
                                     onChange={(e) => setExamForm({ ...examForm, title: e.target.value })}
                                     placeholder="Ex: Simulado Nacional 1"
-                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-slate-600"
+                                    className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-zinc-600"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-5 pt-6 border-t border-slate-700/50">
+                        <div className="space-y-5 pt-6 border-t border-zinc-700/50">
                             <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                                 <CheckCircle2 className="w-5 h-5 text-indigo-400" />
                                 Notas por Grande Área
@@ -785,7 +785,7 @@ function RegistrarContent() {
                                 {Object.keys(examForm.scores).map((discName) => (
                                     <div key={discName} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/5">
                                         <div className="w-full sm:w-48">
-                                            <span className="text-sm font-medium text-slate-300">{discName}</span>
+                                            <span className="text-sm font-medium text-zinc-300">{discName}</span>
                                         </div>
                                         <div className="flex-1 grid grid-cols-2 gap-4">
                                             <div className="relative group">
@@ -798,9 +798,9 @@ function RegistrarContent() {
                                                         newScores[discName as keyof typeof examForm.scores].total = e.target.value
                                                         setExamForm({ ...examForm, scores: newScores })
                                                     }}
-                                                    className="w-full pl-4 pr-12 py-2.5 bg-slate-900 border border-slate-700/50 rounded-lg text-white text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder-slate-600"
+                                                    className="w-full pl-4 pr-12 py-2.5 bg-zinc-900 border border-zinc-700/50 rounded-lg text-white text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder-zinc-600"
                                                 />
-                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500 group-focus-within:text-indigo-400 transition-colors">Total</span>
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-zinc-500 group-focus-within:text-indigo-400 transition-colors">Total</span>
                                             </div>
                                             <div className="relative group">
                                                 <input
@@ -812,9 +812,9 @@ function RegistrarContent() {
                                                         newScores[discName as keyof typeof examForm.scores].correct = e.target.value
                                                         setExamForm({ ...examForm, scores: newScores })
                                                     }}
-                                                    className="w-full pl-4 pr-12 py-2.5 bg-slate-900 border border-slate-700/50 rounded-lg text-white text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all placeholder-slate-600"
+                                                    className="w-full pl-4 pr-12 py-2.5 bg-zinc-900 border border-zinc-700/50 rounded-lg text-white text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all placeholder-zinc-600"
                                                 />
-                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500 group-focus-within:text-emerald-400 transition-colors">Acertos</span>
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-zinc-500 group-focus-within:text-emerald-400 transition-colors">Acertos</span>
                                             </div>
                                         </div>
                                     </div>
@@ -839,23 +839,23 @@ function RegistrarContent() {
                         </button>
                     </form>
                 ) : (
-                    <form onSubmit={handleSubmit} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 shadow-xl shadow-black/10">
+                    <form onSubmit={handleSubmit} className="bg-zinc-800/50 rounded-2xl p-6 border border-zinc-700/50 shadow-xl shadow-black/10">
                         <div className="space-y-6">
                             {/* Date */}
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Data</label>
+                                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Data</label>
                                 <input
                                     type="date"
                                     value={form.date}
                                     onChange={(e) => setForm({ ...form, date: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-slate-400 focus:text-white"
+                                    className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-zinc-400 focus:text-white"
                                     required
                                 />
                             </div>
 
                             {/* Discipline */}
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Disciplina</label>
+                                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Disciplina</label>
                                 <div className="relative">
                                     <select
                                         value={form.disciplineId}
@@ -865,7 +865,7 @@ function RegistrarContent() {
                                             subdisciplineId: '',
                                             topicId: ''
                                         })}
-                                        className="w-full pl-4 pr-10 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none"
+                                        className="w-full pl-4 pr-10 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none"
                                         required
                                     >
                                         <option value="">Selecione a disciplina...</option>
@@ -875,7 +875,7 @@ function RegistrarContent() {
                                             </option>
                                         ))}
                                     </select>
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
                                         <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
                                     </div>
                                 </div>
@@ -883,7 +883,7 @@ function RegistrarContent() {
 
                             {/* Subdiscipline */}
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Subdisciplina</label>
+                                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Subdisciplina</label>
                                 <div className="flex gap-2">
                                     <div className="relative flex-1">
                                         <select
@@ -893,7 +893,7 @@ function RegistrarContent() {
                                                 subdisciplineId: e.target.value,
                                                 topicId: ''
                                             })}
-                                            className="w-full pl-4 pr-10 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white disabled:opacity-50 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none"
+                                            className="w-full pl-4 pr-10 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white disabled:opacity-50 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none"
                                             disabled={!form.disciplineId}
                                         >
                                             <option value="">Selecione...</option>
@@ -903,7 +903,7 @@ function RegistrarContent() {
                                                 </option>
                                             ))}
                                         </select>
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
                                             <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
                                         </div>
                                     </div>
@@ -927,13 +927,13 @@ function RegistrarContent() {
 
                             {/* Topic (Assunto) */}
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Assunto (Opcional)</label>
+                                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Assunto (Opcional)</label>
                                 <div className="flex gap-2">
                                     <div className="relative flex-1">
                                         <select
                                             value={form.topicId}
                                             onChange={(e) => setForm({ ...form, topicId: e.target.value })}
-                                            className="w-full pl-4 pr-10 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white disabled:opacity-50 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none"
+                                            className="w-full pl-4 pr-10 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white disabled:opacity-50 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none"
                                             disabled={!form.subdisciplineId}
                                         >
                                             <option value="">Selecione...</option>
@@ -943,7 +943,7 @@ function RegistrarContent() {
                                                 </option>
                                             ))}
                                         </select>
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
                                             <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
                                         </div>
                                     </div>
@@ -961,14 +961,14 @@ function RegistrarContent() {
 
                             {/* Source */}
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                                     Fonte (banco, curso, etc.)
                                 </label>
                                 <input
                                     type="text"
                                     value={form.source}
                                     onChange={(e) => setForm({ ...form, source: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white placeholder-slate-600 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                                    className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white placeholder-zinc-600 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                                     placeholder="Ex: Medcel, Estratégia, USP..."
                                 />
                             </div>
@@ -976,29 +976,29 @@ function RegistrarContent() {
                             {/* Questions and Answers */}
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Questões feitas</label>
+                                    <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Questões feitas</label>
                                     <input
                                         type="number"
                                         min="1"
                                         value={form.questionsDone}
                                         onChange={(e) => setForm({ ...form, questionsDone: e.target.value })}
-                                        className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-slate-600"
+                                        className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-zinc-600"
                                         required
                                         placeholder="0"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Acertos</label>
+                                    <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Acertos</label>
                                     <input
                                         type="number"
                                         min="0"
                                         max={form.questionsDone || undefined}
                                         value={form.correctAnswers}
                                         onChange={(e) => setForm({ ...form, correctAnswers: e.target.value })}
-                                        className={`w-full px-4 py-3 bg-slate-900 border rounded-xl text-white outline-none focus:ring-1 transition-all placeholder-slate-600 ${form.correctAnswers && form.questionsDone &&
+                                        className={`w-full px-4 py-3 bg-zinc-900 border rounded-xl text-white outline-none focus:ring-1 transition-all placeholder-zinc-600 ${form.correctAnswers && form.questionsDone &&
                                             Number(form.correctAnswers) > Number(form.questionsDone)
                                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                                            : 'border-slate-700/50 focus:border-emerald-500 focus:ring-emerald-500'
+                                            : 'border-zinc-700/50 focus:border-emerald-500 focus:ring-emerald-500'
                                             }`}
                                         required
                                         placeholder="0"
@@ -1029,7 +1029,7 @@ function RegistrarContent() {
 
                             {/* Time */}
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                                     Tempo (minutos) - opcional
                                 </label>
                                 <input
@@ -1037,21 +1037,21 @@ function RegistrarContent() {
                                     min="1"
                                     value={form.timeMinutes}
                                     onChange={(e) => setForm({ ...form, timeMinutes: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-slate-600"
+                                    className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-zinc-600"
                                     placeholder="Ex: 60"
                                 />
                             </div>
 
                             {/* Notes */}
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                                     Observações - opcional
                                 </label>
                                 <textarea
                                     value={form.notes}
                                     onChange={(e) => setForm({ ...form, notes: e.target.value })}
                                     rows={3}
-                                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700/50 rounded-xl text-white placeholder-slate-600 resize-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                                    className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700/50 rounded-xl text-white placeholder-zinc-600 resize-none outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                                     placeholder="Anotações sobre este bloco de estudo..."
                                 />
                             </div>

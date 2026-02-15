@@ -64,18 +64,18 @@ export function AddSubdisciplineModal({
             />
 
             {/* Modal */}
-            <div className="relative bg-slate-800 rounded-2xl p-6 w-full max-w-md mx-4 border border-slate-700 shadow-2xl animate-fade-in">
+            <div className="relative bg-zinc-800 rounded-2xl p-6 w-full max-w-md mx-4 border border-zinc-700 shadow-2xl animate-fade-in">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h2 className="text-xl font-bold text-white">Nova Subdisciplina</h2>
-                        <p className="text-sm text-slate-400 mt-1">
+                        <p className="text-sm text-zinc-400 mt-1">
                             Será adicionada em <span className="text-blue-400 font-medium">{disciplineName}</span>
                         </p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                        className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded-lg transition-colors"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -84,7 +84,7 @@ export function AddSubdisciplineModal({
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block text-sm font-medium text-zinc-300 mb-2">
                             Nome da Subdisciplina
                         </label>
                         <input
@@ -92,7 +92,7 @@ export function AddSubdisciplineModal({
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Ex: Cardiologia, Nefrologia..."
-                            className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                            className="w-full px-4 py-3 bg-zinc-900/50 border border-zinc-700 rounded-xl text-white placeholder-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                             autoFocus
                         />
                     </div>
@@ -107,7 +107,7 @@ export function AddSubdisciplineModal({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-3 px-4 rounded-xl font-medium text-slate-300 bg-slate-700/50 hover:bg-slate-700 transition-colors"
+                            className="flex-1 py-3 px-4 rounded-xl font-medium text-zinc-300 bg-zinc-700/50 hover:bg-zinc-700 transition-colors"
                         >
                             Cancelar
                         </button>

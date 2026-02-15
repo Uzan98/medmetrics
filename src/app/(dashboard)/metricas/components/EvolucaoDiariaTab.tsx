@@ -140,13 +140,13 @@ export default function EvolucaoDiariaTab() {
             <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-1">
                     <h3 className="text-lg font-semibold text-white">Evolução Diária</h3>
-                    <p className="text-sm text-slate-400">Desempenho dia a dia</p>
+                    <p className="text-sm text-zinc-400">Desempenho dia a dia</p>
                 </div>
 
                 <select
                     value={daysRange}
                     onChange={(e) => setDaysRange(Number(e.target.value))}
-                    className="bg-slate-800 border border-slate-700 text-slate-300 text-sm rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
+                    className="bg-zinc-800 border border-zinc-700 text-zinc-300 text-sm rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
                 >
                     <option value={7}>Últimos 7 dias</option>
                     <option value={15}>Últimos 15 dias</option>
@@ -156,7 +156,7 @@ export default function EvolucaoDiariaTab() {
             </div>
 
             {/* Questions Volume Chart */}
-            <div className="bg-slate-800/50 rounded-2xl p-4 sm:p-6 border border-slate-700/50">
+            <div className="bg-zinc-800/50 rounded-2xl p-4 sm:p-6 border border-zinc-700/50">
                 <h3 className="font-semibold text-white mb-6 flex items-center gap-2">
                     <CalendarIcon className="w-5 h-5 text-blue-400" />
                     Volume de Questões
@@ -164,26 +164,26 @@ export default function EvolucaoDiariaTab() {
                 <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={stats}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" opacity={0.5} vertical={false} />
                             <XAxis
                                 dataKey="displayDate"
-                                stroke="#94a3b8"
+                                stroke="#a1a1aa"
                                 fontSize={12}
                                 tickLine={false}
                                 axisLine={false}
                             />
                             <YAxis
-                                stroke="#94a3b8"
+                                stroke="#a1a1aa"
                                 fontSize={12}
                                 tickLine={false}
                                 axisLine={false}
                             />
                             <Tooltip
-                                cursor={{ fill: '#334155', opacity: 0.2 }}
-                                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
+                                cursor={{ fill: '#27272a', opacity: 0.2 }}
+                                contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
                                 itemStyle={{ color: '#e2e8f0', fontSize: '0.875rem' }}
                                 formatter={(value: any) => [value, 'Questões']}
-                                labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                                labelStyle={{ color: '#a1a1aa', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
                             />
                             <Bar
                                 dataKey="questions"
@@ -197,7 +197,7 @@ export default function EvolucaoDiariaTab() {
             </div>
 
             {/* Accuracy Trend Chart */}
-            <div className="bg-slate-800/50 rounded-2xl p-4 sm:p-6 border border-slate-700/50">
+            <div className="bg-zinc-800/50 rounded-2xl p-4 sm:p-6 border border-zinc-700/50">
                 <h3 className="font-semibold text-white mb-6 flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-emerald-400" />
                     Tendência de Acertos
@@ -211,16 +211,16 @@ export default function EvolucaoDiariaTab() {
                                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" opacity={0.5} vertical={false} />
                             <XAxis
                                 dataKey="displayDate"
-                                stroke="#94a3b8"
+                                stroke="#a1a1aa"
                                 fontSize={12}
                                 tickLine={false}
                                 axisLine={false}
                             />
                             <YAxis
-                                stroke="#94a3b8"
+                                stroke="#a1a1aa"
                                 fontSize={12}
                                 tickLine={false}
                                 axisLine={false}
@@ -228,10 +228,10 @@ export default function EvolucaoDiariaTab() {
                                 unit="%"
                             />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
+                                contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
                                 itemStyle={{ color: '#10b981', fontSize: '0.875rem', fontWeight: 600 }}
                                 formatter={(value: any) => [`${value.toFixed(1)}%`, 'Acurácia']}
-                                labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                                labelStyle={{ color: '#a1a1aa', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
                             />
                             <Area
                                 type="monotone"

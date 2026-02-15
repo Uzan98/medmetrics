@@ -153,21 +153,21 @@ export default function AssuntosTab() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h3 className="text-lg font-semibold text-white">Desempenho por Assunto</h3>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-zinc-400">
                         Ordenado do {sortOrder === 'worst' ? 'pior para o melhor' : 'melhor para o pior'}
                     </p>
                 </div>
 
                 {/* Filters */}
                 <div className="flex items-center gap-3 flex-wrap">
-                    <Filter className="w-4 h-4 text-slate-400" />
+                    <Filter className="w-4 h-4 text-zinc-400" />
                     <select
                         value={selectedDiscipline}
                         onChange={(e) => {
                             setSelectedDiscipline(e.target.value)
                             setSelectedSubdiscipline('')
                         }}
-                        className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                        className="px-4 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                     >
                         <option value="">Todas disciplinas</option>
                         {disciplines.map((d) => (
@@ -179,7 +179,7 @@ export default function AssuntosTab() {
                     <select
                         value={selectedSubdiscipline}
                         onChange={(e) => setSelectedSubdiscipline(e.target.value)}
-                        className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                        className="px-4 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                     >
                         <option value="">Todas subdisciplinas</option>
                         {filteredSubdisciplines.map((s) => (
@@ -190,7 +190,7 @@ export default function AssuntosTab() {
                     </select>
                     <button
                         onClick={() => setSortOrder(sortOrder === 'worst' ? 'best' : 'worst')}
-                        className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-400 hover:text-white text-sm flex items-center gap-1.5 transition-colors"
+                        className="px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-lg text-zinc-400 hover:text-white text-sm flex items-center gap-1.5 transition-colors"
                     >
                         {sortOrder === 'worst' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         {sortOrder === 'worst' ? 'Pior → Melhor' : 'Melhor → Pior'}
@@ -200,12 +200,12 @@ export default function AssuntosTab() {
 
             {/* Summary */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/30">
-                    <p className="text-xs text-slate-400 mb-1">Total de Assuntos</p>
+                <div className="bg-zinc-800/30 rounded-xl p-4 border border-zinc-700/30">
+                    <p className="text-xs text-zinc-400 mb-1">Total de Assuntos</p>
                     <p className="text-2xl font-bold text-white">{filteredStats.length}</p>
                 </div>
-                <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/30">
-                    <p className="text-xs text-slate-400 mb-1">Questões</p>
+                <div className="bg-zinc-800/30 rounded-xl p-4 border border-zinc-700/30">
+                    <p className="text-xs text-zinc-400 mb-1">Questões</p>
                     <p className="text-2xl font-bold text-white">
                         {filteredStats.reduce((acc, s) => acc + s.totalQuestions, 0).toLocaleString('pt-BR')}
                     </p>
@@ -239,13 +239,13 @@ export default function AssuntosTab() {
                         <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
                                 <h3 className="font-semibold text-white truncate">{stat.name}</h3>
-                                <p className="text-xs text-slate-400">
+                                <p className="text-xs text-zinc-400">
                                     {stat.subdisciplineName} • {stat.disciplineName}
                                 </p>
                             </div>
                             <div className="flex items-center gap-4 ml-4">
                                 <div className="text-right hidden sm:block">
-                                    <p className="text-xs text-slate-400">Questões</p>
+                                    <p className="text-xs text-zinc-400">Questões</p>
                                     <p className="font-medium text-white">
                                         {stat.totalQuestions.toLocaleString('pt-BR')}
                                     </p>
@@ -256,7 +256,7 @@ export default function AssuntosTab() {
                             </div>
                         </div>
                         {/* Progress bar */}
-                        <div className="mt-2 h-1.5 bg-slate-700/30 rounded-full overflow-hidden">
+                        <div className="mt-2 h-1.5 bg-zinc-700/30 rounded-full overflow-hidden">
                             <div
                                 className={`h-full rounded-full ${stat.accuracy < 60
                                     ? 'bg-red-500'
@@ -271,7 +271,7 @@ export default function AssuntosTab() {
                 ))}
 
                 {filteredStats.length === 0 && (
-                    <div className="text-center py-12 text-slate-400">
+                    <div className="text-center py-12 text-zinc-400">
                         Nenhum assunto encontrado para estes filtros.
                     </div>
                 )}

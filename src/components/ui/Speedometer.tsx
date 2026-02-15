@@ -94,7 +94,7 @@ export function Speedometer({ value, max, label, sublabel, size = 200, color = "
                 <path
                     d={backgroundPath}
                     fill="none"
-                    stroke="#1e293b"
+                    stroke="#18181b"
                     strokeWidth={strokeWidth}
                     strokeLinecap="round"
                 />
@@ -128,11 +128,11 @@ export function Speedometer({ value, max, label, sublabel, size = 200, color = "
                 <span className="font-bold text-white tabular-nums drop-shadow-lg" style={{ fontSize: `${size * 0.2}px`, lineHeight: 1 }}>
                     {value.toLocaleString()}
                 </span>
-                <span className="text-slate-400 font-medium uppercase tracking-wider" style={{ fontSize: `${size * 0.06}px` }}>
+                <span className="text-zinc-400 font-medium uppercase tracking-wider" style={{ fontSize: `${size * 0.06}px` }}>
                     {sublabel || 'Questões'}
                 </span>
                 <span
-                    className="text-slate-500 mt-1 font-medium bg-slate-800/50 rounded-full border border-slate-700/50"
+                    className="text-zinc-500 mt-1 font-medium bg-zinc-800/50 rounded-full border border-zinc-700/50"
                     style={{ fontSize: `${size * 0.05}px`, padding: `${size * 0.01}px ${size * 0.04}px` }}
                 >
                     Meta: {max.toLocaleString()}
