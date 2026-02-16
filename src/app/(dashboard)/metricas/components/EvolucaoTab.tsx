@@ -45,23 +45,12 @@ export default function EvolucaoTab() {
                 .gte('date', `${currentYear}-01-01`)
                 .lte('date', `${currentYear}-12-31`)
 
-            // 2. Fetch Exam Scores
-            const examsPromise = supabase
-                .from('exam_scores')
-                .select(`
-                    questions_total,
-                    questions_correct,
-                    disciplines(name),
-                    exams!inner(date, user_id)
-                `)
-                .eq('exams.user_id', user.id)
-                .gte('exams.date', `${currentYear}-01-01`)
-                .lte('exams.date', `${currentYear}-12-31`)
+            // NOTE: question_logs already contains all exam questions (inserted by ExamWizard).
+            // No need to also fetch exam_scores — that would double-count.
 
-            const [logsRes, examsRes] = await Promise.all([logsPromise, examsPromise])
+            const logsRes = await logsPromise
 
             const logs = logsRes.data || []
-            const examScores = examsRes.data || []
 
             // Aggregate data
             const statsMap: { [key: number]: MonthlyStats } = {}
@@ -96,32 +85,7 @@ export default function EvolucaoTab() {
                 specialtyMap[specialtyName].correct += log.correct_answers
             })
 
-            // Helper to process exams
-            examScores.forEach((score) => {
-                const examData = score.exams as any
-                const [y, m, d] = examData.date.split('-').map(Number)
-                const month = m
 
-                if (!statsMap[month]) {
-                    statsMap[month] = {
-                        month,
-                        year: currentYear,
-                        totalQuestions: 0,
-                        totalCorrect: 0,
-                        accuracy: 0,
-                    }
-                }
-                statsMap[month].totalQuestions += score.questions_total
-                statsMap[month].totalCorrect += score.questions_correct
-
-                // Specialty Stats (Using Discipline Name as Specialty)
-                const specialtyName = (score.disciplines as any)?.name || 'Prova Geral'
-                if (!specialtyMap[specialtyName]) {
-                    specialtyMap[specialtyName] = { questions: 0, correct: 0 }
-                }
-                specialtyMap[specialtyName].questions += score.questions_total
-                specialtyMap[specialtyName].correct += score.questions_correct
-            })
 
             // Calculate monthly accuracy and sort
             const result = Object.values(statsMap)

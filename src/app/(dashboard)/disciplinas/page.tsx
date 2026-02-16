@@ -30,17 +30,14 @@ export default function DisciplinasPage() {
 
             const [
                 { data: logs },
-                { data: exams },
                 { data: disciplines }
             ] = await Promise.all([
                 supabase
                     .from('question_logs')
                     .select('questions_done, correct_answers, discipline_id')
                     .eq('user_id', user.id),
-                supabase
-                    .from('exam_scores')
-                    .select('questions_total, questions_correct, discipline_id, exams!inner(user_id)')
-                    .eq('exams.user_id', user.id),
+                // NOTE: question_logs already contains all exam questions (inserted by ExamWizard).
+                // No need to also fetch exam_scores — that would double-count.
                 supabase
                     .from('disciplines')
                     .select('id, name')
@@ -71,23 +68,7 @@ export default function DisciplinasPage() {
                 statsMap[log.discipline_id].totalCorrect += log.correct_answers
             })
 
-            // Process Exam Scores
-            exams?.forEach((score) => {
-                const discId = score.discipline_id
 
-                if (!statsMap[discId]) {
-                    statsMap[discId] = {
-                        id: discId,
-                        name: getDisciplineName(discId),
-                        totalQuestions: 0,
-                        totalCorrect: 0,
-                        accuracy: 0,
-                    }
-                }
-
-                statsMap[discId].totalQuestions += score.questions_total
-                statsMap[discId].totalCorrect += score.questions_correct
-            })
 
             // Calculate accuracy and sort
             const result = Object.values(statsMap)

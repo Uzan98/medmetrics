@@ -55,22 +55,12 @@ export default function EvolucaoDiariaTab() {
                 .gte('date', startDateStr)
                 .lte('date', format(today, 'yyyy-MM-dd'))
 
-            // 2. Fetch Exam Scores
-            const examsPromise = supabase
-                .from('exam_scores')
-                .select(`
-                    questions_total,
-                    questions_correct,
-                    exams!inner(date, user_id)
-                `)
-                .eq('exams.user_id', user.id)
-                .gte('exams.date', startDateStr)
-                .lte('exams.date', format(today, 'yyyy-MM-dd'))
+            // NOTE: question_logs already contains all exam questions (inserted by ExamWizard).
+            // No need to also fetch exam_scores — that would double-count.
 
-            const [logsRes, examsRes] = await Promise.all([logsPromise, examsPromise])
+            const logsRes = await logsPromise
 
             const logs = logsRes.data || []
-            const examScores = examsRes.data || []
 
             // Generate all days in interval to ensure separate data points (even empty ones)
             const interval = eachDayOfInterval({ start: startDate, end: today })
@@ -86,11 +76,7 @@ export default function EvolucaoDiariaTab() {
                     correct += l.correct_answers
                 })
 
-                // Sum exams for this day
-                examScores.filter(s => (s.exams as any).date === dayStr).forEach(s => {
-                    questions += s.questions_total
-                    correct += s.questions_correct
-                })
+
 
                 return {
                     date: dayStr,

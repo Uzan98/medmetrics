@@ -222,27 +222,12 @@ export default function DashboardPage() {
                 queryLogs = queryLogs.eq('discipline_id', Number(disciplineFilter))
             }
 
-            // 2. Fetch Exams (flattened scores)
-            let queryExams = supabase
-                .from('exam_scores')
-                .select(`
-                    questions_total,
-                    questions_correct,
-                    discipline_id,
-                    disciplines(id, name),
-                    exams!inner(date, user_id)
-                `)
-                .eq('exams.user_id', user.id)
-                .gte('exams.date', format(startDate, 'yyyy-MM-dd'))
+            // NOTE: question_logs already contains all exam questions (inserted by ExamWizard).
+            // No need to also fetch exam_scores — that would double-count.
 
-            if (disciplineFilter !== 'all') {
-                queryExams = queryExams.eq('discipline_id', Number(disciplineFilter))
-            }
-
-            const [logsRes, examsRes] = await Promise.all([queryLogs, queryExams])
+            const logsRes = await queryLogs
 
             const logs = logsRes.data || []
-            const titleExams = examsRes.data || []
 
             // 3. Unify Data
             // We convert everything to a standard format for calculation
@@ -254,26 +239,15 @@ export default function DashboardPage() {
                 return new Date(y, m - 1, d, 12, 0, 0) // Midday to be safe
             }
 
-            const unifiedData = [
-                ...logs.map(l => ({
-                    date: l.date,
-                    parsedDate: safeParseDate(l.date),
-                    questions: l.questions_done,
-                    correct: l.correct_answers,
-                    discipline: l.disciplines,
-                    subdiscipline: l.subdisciplines,
-                    type: 'log'
-                })),
-                ...titleExams.map(e => ({
-                    date: (e.exams as any).date,
-                    parsedDate: safeParseDate((e.exams as any).date),
-                    questions: e.questions_total,
-                    correct: e.questions_correct,
-                    discipline: e.disciplines,
-                    subdiscipline: null, // Exams don't track subdiscipline granularity in scores usually
-                    type: 'exam'
-                }))
-            ].sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime())
+            const unifiedData = logs.map(l => ({
+                date: l.date,
+                parsedDate: safeParseDate(l.date),
+                questions: l.questions_done,
+                correct: l.correct_answers,
+                discipline: l.disciplines,
+                subdiscipline: l.subdisciplines,
+                type: 'log'
+            })).sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime())
 
 
             // Get current month goal

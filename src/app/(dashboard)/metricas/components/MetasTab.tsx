@@ -44,7 +44,7 @@ export default function MetasTab() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            const [goalsRes, logsRes, allLogsRes, examsRes] = await Promise.all([
+            const [goalsRes, logsRes, allLogsRes] = await Promise.all([
                 supabase
                     .from('user_goals')
                     .select('*')
@@ -52,20 +52,14 @@ export default function MetasTab() {
                     .eq('year', currentYear),
                 supabase
                     .from('question_logs')
-                    .select('date, questions_done')
+                    .select('date, questions_done, correct_answers')
                     .eq('user_id', user.id)
                     .gte('date', `${currentYear}-01-01`)
                     .lte('date', `${currentYear}-12-31`),
                 supabase
                     .from('question_logs')
                     .select('questions_done, date')
-                    .eq('user_id', user.id),
-                supabase
-                    .from('exam_scores')
-                    .select('questions_total, questions_correct, exams!inner(date, user_id)')
-                    .eq('exams.user_id', user.id)
-                    .gte('exams.date', `${currentYear}-01-01`)
-                    .lte('exams.date', `${currentYear}-12-31`)
+                    .eq('user_id', user.id)
             ])
 
             if (goalsRes.data) {
@@ -116,66 +110,33 @@ export default function MetasTab() {
             setHeatmapData(heatmap)
 
 
-            // --- Process Exam Scores ---
-            const weeklyScores: { [key: string]: { total: number, correct: number } } = {}
+            // NOTE: exam_scores processing removed — question_logs already contains
+            // all exam questions (inserted by ExamWizard). Adding exam_scores would double-count.
 
-            if (examsRes.data) {
-                examsRes.data.forEach((score) => {
-                    const examData = score.exams as unknown as { date: string }
-                    const dateStr = examData.date
-                    let dateObj = new Date(dateStr)
-
-                    // Fix timezone offset for simplified parsing if needed, but date-fns handles it well usually
-                    // If dateStr is YYYY-MM-DD, parseISO works best
-                    if (dateStr.length === 10) dateObj = parseISO(dateStr)
-
-                    const month = dateObj.getMonth() + 1
-                    if (month >= 1 && month <= 12) {
-                        stats[month] = (stats[month] || 0) + score.questions_total
-                        yearTotal += score.questions_total
-                    }
-
-                    // For Scatter: Group by Week
-                    const weekStart = format(startOfWeek(dateObj), 'yyyy-MM-dd')
-                    if (!weeklyScores[weekStart]) {
-                        weeklyScores[weekStart] = { total: 0, correct: 0 }
-                    }
-                    weeklyScores[weekStart].total += score.questions_total
-                    weeklyScores[weekStart].correct += score.questions_correct
-                })
-            }
 
             setMonthlyStats(stats)
 
-            // --- Process Scatter Data (Correlate Weekly Study Volume vs Weekly Exam Performance) ---
-            // 1. Group Study Volume by Week
-            const weeklyStudyVolume: { [key: string]: number } = {}
+            // --- Process Scatter Data (Weekly Volume vs Weekly Accuracy from question_logs) ---
+            const weeklyData: { [key: string]: { total: number, correct: number } } = {}
             if (logsRes.data) {
                 logsRes.data.forEach(log => {
                     const dateObj = parseISO(log.date)
                     const weekStart = format(startOfWeek(dateObj), 'yyyy-MM-dd')
-                    weeklyStudyVolume[weekStart] = (weeklyStudyVolume[weekStart] || 0) + log.questions_done
+                    if (!weeklyData[weekStart]) {
+                        weeklyData[weekStart] = { total: 0, correct: 0 }
+                    }
+                    weeklyData[weekStart].total += log.questions_done
+                    weeklyData[weekStart].correct += log.correct_answers
                 })
             }
 
-            // 2. Combine for Scatter Plot
             const scatter: { questionsDone: number; score: number; week: string }[] = []
-
-            // Iterate over all weeks that have EITHER study data OR exam data
-            const allWeeks = new Set([...Object.keys(weeklyScores), ...Object.keys(weeklyStudyVolume)])
-
-            allWeeks.forEach(week => {
-                const studyVol = weeklyStudyVolume[week] || 0
-                const examData = weeklyScores[week]
-
-                // Only include points where we have BOTH data to show meaningful correlation
-                // Or maybe show even if one is missing? For correlation, we need both.
-                if (studyVol > 0 && examData && examData.total > 0) {
-                    const score = (examData.correct / examData.total) * 100
+            Object.entries(weeklyData).forEach(([week, data]) => {
+                if (data.total > 0) {
                     scatter.push({
                         week: format(parseISO(week), 'dd/MM'),
-                        questionsDone: studyVol,
-                        score: score
+                        questionsDone: data.total,
+                        score: data.total > 0 ? (data.correct / data.total) * 100 : 0
                     })
                 }
             })
@@ -187,19 +148,10 @@ export default function MetasTab() {
             const dayOfYear = Math.floor((new Date().getTime() - new Date(currentYear, 0, 0).getTime()) / 1000 / 60 / 60 / 24)
             setGlobalPace(dayOfYear > 0 ? Math.round(yearTotal / dayOfYear) : 0)
 
-            // Calculate total valid questions (including exams)
+            // Calculate total valid questions (question_logs only — includes exam questions)
             let totalAll = 0
             if (allLogsRes.data) {
                 totalAll += allLogsRes.data.reduce((acc, curr) => acc + curr.questions_done, 0)
-            }
-
-            const { data: allExamsRes } = await supabase
-                .from('exam_scores')
-                .select('questions_total, exams!inner(user_id)')
-                .eq('exams.user_id', user.id)
-
-            if (allExamsRes) {
-                totalAll += allExamsRes.reduce((acc, curr) => acc + curr.questions_total, 0)
             }
 
             setTotalValidQuestions(totalAll)
