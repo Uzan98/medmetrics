@@ -43,6 +43,7 @@ import {
     AreaChart,
 } from 'recharts'
 import { toast } from 'sonner'
+import StudyHeatmap from '@/components/charts/StudyHeatmap'
 
 
 
@@ -119,6 +120,7 @@ export default function DashboardPage() {
     const [timeData, setTimeData] = useState<TimeData[]>([])
     const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([])
     const [streakData, setStreakData] = useState<StreakData>({ current: 0, record: 0, lastStudyDate: null })
+    const [heatmapData, setHeatmapData] = useState<{ date: string; count: number; level: number }[]>([])
     const [loading, setLoading] = useState(true)
     const [periodFilter, setPeriodFilter] = useState<'7d' | '30d' | '3m' | '6m' | 'year'>('year')
     const [disciplineFilter, setDisciplineFilter] = useState<string>('all')
@@ -487,6 +489,29 @@ export default function DashboardPage() {
             }
             setTimeData(timeArr)
 
+            // Build heatmap data from ALL logs (current year, unfiltered)
+            const { data: heatmapLogs } = await supabase
+                .from('question_logs')
+                .select('date, questions_done')
+                .eq('user_id', user.id)
+                .gte('date', `${currentYear}-01-01`)
+                .lte('date', `${currentYear}-12-31`)
+
+            const dailyCounts: { [date: string]: number } = {}
+            heatmapLogs?.forEach(log => {
+                dailyCounts[log.date] = (dailyCounts[log.date] || 0) + log.questions_done
+            })
+
+            const heatmap = Object.entries(dailyCounts).map(([date, count]) => {
+                let level = 0
+                if (count > 0) level = 1
+                if (count >= 20) level = 2
+                if (count >= 50) level = 3
+                if (count >= 100) level = 4
+                return { date, count, level }
+            })
+            setHeatmapData(heatmap)
+
             // Load pending reviews (kept same)
             // Load pending reviews from error_notebook (SRS System)
             const sevenDaysLater = format(addDays(today, 7), 'yyyy-MM-dd')
@@ -787,6 +812,21 @@ export default function DashboardPage() {
                         </p>
                     </div>
                 </div>
+            </div>
+
+            {/* Heatmap Card */}
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-zinc-700/50 relative">
+                <div className="flex items-center gap-2 mb-4">
+                    <CalendarCheck className="w-5 h-5 text-indigo-400" />
+                    <h3 className="font-semibold text-white">Consistência de Estudos</h3>
+                </div>
+                {heatmapData.length > 0 ? (
+                    <StudyHeatmap data={heatmapData} />
+                ) : (
+                    <div className="h-24 flex items-center justify-center text-zinc-500 text-sm">
+                        Realize questões para gerar seu mapa de calor.
+                    </div>
+                )}
             </div>
 
 

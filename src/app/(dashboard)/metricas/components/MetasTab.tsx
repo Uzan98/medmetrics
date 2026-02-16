@@ -3,9 +3,12 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Skeleton } from '@/components/ui'
-import { Target, Save, Loader2, CheckCircle2, Download, TrendingUp, AlertCircle, Edit2 } from 'lucide-react'
+import { Target, Save, Loader2, CheckCircle2, Download, TrendingUp, AlertCircle, Edit2, Calendar as CalendarIcon, BarChart2, Database, Trash2 } from 'lucide-react'
 import { getMonthName, cn } from '@/lib/utils'
 import type { UserGoal } from '@/types/database'
+import StudyHeatmap from '@/components/charts/StudyHeatmap'
+import StudyPerformanceScatter from '@/components/charts/StudyPerformanceScatter'
+import { format, startOfWeek, endOfWeek, isSameWeek, parseISO } from 'date-fns'
 
 export default function MetasTab() {
     const [goals, setGoals] = useState<UserGoal[]>([])
@@ -24,6 +27,10 @@ export default function MetasTab() {
 
     // Pace stats
     const [globalPace, setGlobalPace] = useState(0)
+
+    // New Visualization States
+    const [heatmapData, setHeatmapData] = useState<{ date: string; count: number; level: number }[]>([])
+    const [scatterData, setScatterData] = useState<{ questionsDone: number; score: number; week: string }[]>([])
 
     const supabase = createClient()
     const currentYear = new Date().getFullYear()
@@ -51,11 +58,11 @@ export default function MetasTab() {
                     .lte('date', `${currentYear}-12-31`),
                 supabase
                     .from('question_logs')
-                    .select('questions_done')
+                    .select('questions_done, date')
                     .eq('user_id', user.id),
                 supabase
                     .from('exam_scores')
-                    .select('questions_total, exams!inner(date, user_id)')
+                    .select('questions_total, questions_correct, exams!inner(date, user_id)')
                     .eq('exams.user_id', user.id)
                     .gte('exams.date', `${currentYear}-01-01`)
                     .lte('exams.date', `${currentYear}-12-31`)
@@ -73,43 +80,108 @@ export default function MetasTab() {
             const stats: { [key: number]: number } = {}
             let yearTotal = 0
 
-            // Process Individual Logs
+            // --- Process Heatmap Data & Monthly Stats from Logs ---
+            const dailyCounts: { [key: string]: number } = {}
+
             if (logsRes.data) {
                 logsRes.data.forEach((log) => {
-                    const month = new Date(log.date).getMonth() + 1
+                    const date = log.date
+                    const month = new Date(date).getMonth() + 1
+
+                    // Monthly Stats
                     stats[month] = (stats[month] || 0) + log.questions_done
                     yearTotal += log.questions_done
+
+                    // Daily Counts for Heatmap
+                    dailyCounts[date] = (dailyCounts[date] || 0) + log.questions_done
                 })
             }
 
-            // Process Exam Scores
+            // Transform dailyCounts to Heatmap format (continuous date range required)
+            const yearStart = new Date(currentYear, 0, 1)
+            const today = new Date()
+            const heatmap: { date: string; count: number; level: number }[] = []
+
+            for (let d = new Date(yearStart); d <= today; d.setDate(d.getDate() + 1)) {
+                const dateStr = format(d, 'yyyy-MM-dd')
+                const count = dailyCounts[dateStr] || 0
+                let level = 0
+                if (count > 0) level = 1
+                if (count >= 20) level = 2
+                if (count >= 50) level = 3
+                if (count >= 100) level = 4
+                heatmap.push({ date: dateStr, count, level })
+            }
+
+            setHeatmapData(heatmap)
+
+
+            // --- Process Exam Scores ---
+            const weeklyScores: { [key: string]: { total: number, correct: number } } = {}
+
             if (examsRes.data) {
                 examsRes.data.forEach((score) => {
-                    // Type assertion since we know the structure due to the query
                     const examData = score.exams as unknown as { date: string }
-                    // Safer parsing: split YYYY-MM-DD. formatted dates are usually ISO strings or YYYY-MM-DD
                     const dateStr = examData.date
-                    let month = 0
+                    let dateObj = new Date(dateStr)
 
-                    if (dateStr.includes('T')) {
-                        // timestamp string?
-                        month = new Date(dateStr).getMonth() + 1
-                    } else if (dateStr.includes('-')) {
-                        // YYYY-MM-DD
-                        month = parseInt(dateStr.split('-')[1], 10)
-                    } else {
-                        // Fallback
-                        month = new Date(dateStr).getMonth() + 1
-                    }
+                    // Fix timezone offset for simplified parsing if needed, but date-fns handles it well usually
+                    // If dateStr is YYYY-MM-DD, parseISO works best
+                    if (dateStr.length === 10) dateObj = parseISO(dateStr)
 
+                    const month = dateObj.getMonth() + 1
                     if (month >= 1 && month <= 12) {
                         stats[month] = (stats[month] || 0) + score.questions_total
                         yearTotal += score.questions_total
                     }
+
+                    // For Scatter: Group by Week
+                    const weekStart = format(startOfWeek(dateObj), 'yyyy-MM-dd')
+                    if (!weeklyScores[weekStart]) {
+                        weeklyScores[weekStart] = { total: 0, correct: 0 }
+                    }
+                    weeklyScores[weekStart].total += score.questions_total
+                    weeklyScores[weekStart].correct += score.questions_correct
                 })
             }
 
             setMonthlyStats(stats)
+
+            // --- Process Scatter Data (Correlate Weekly Study Volume vs Weekly Exam Performance) ---
+            // 1. Group Study Volume by Week
+            const weeklyStudyVolume: { [key: string]: number } = {}
+            if (logsRes.data) {
+                logsRes.data.forEach(log => {
+                    const dateObj = parseISO(log.date)
+                    const weekStart = format(startOfWeek(dateObj), 'yyyy-MM-dd')
+                    weeklyStudyVolume[weekStart] = (weeklyStudyVolume[weekStart] || 0) + log.questions_done
+                })
+            }
+
+            // 2. Combine for Scatter Plot
+            const scatter: { questionsDone: number; score: number; week: string }[] = []
+
+            // Iterate over all weeks that have EITHER study data OR exam data
+            const allWeeks = new Set([...Object.keys(weeklyScores), ...Object.keys(weeklyStudyVolume)])
+
+            allWeeks.forEach(week => {
+                const studyVol = weeklyStudyVolume[week] || 0
+                const examData = weeklyScores[week]
+
+                // Only include points where we have BOTH data to show meaningful correlation
+                // Or maybe show even if one is missing? For correlation, we need both.
+                if (studyVol > 0 && examData && examData.total > 0) {
+                    const score = (examData.correct / examData.total) * 100
+                    scatter.push({
+                        week: format(parseISO(week), 'dd/MM'),
+                        questionsDone: studyVol,
+                        score: score
+                    })
+                }
+            })
+
+            setScatterData(scatter)
+
 
             // Calculate rough daily pace for year (simplified)
             const dayOfYear = Math.floor((new Date().getTime() - new Date(currentYear, 0, 0).getTime()) / 1000 / 60 / 60 / 24)
@@ -121,10 +193,6 @@ export default function MetasTab() {
                 totalAll += allLogsRes.data.reduce((acc, curr) => acc + curr.questions_done, 0)
             }
 
-            // For total valid questions, we should fetch ALL exams, not just this year if we want "Total Geral" to be accurate
-            // Or we can just use the yearTotal if "Total Geral" refers to the year
-            // Looking at the UI, it says "Total Geral", implying lifetime.
-            // Let's make a quick separate fetch for All Exams total to be accurate
             const { data: allExamsRes } = await supabase
                 .from('exam_scores')
                 .select('questions_total, exams!inner(user_id)')
@@ -299,8 +367,8 @@ export default function MetasTab() {
     const currentMonth = new Date().getMonth() + 1
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            {/* Minimal Header */}
+        <div className="space-y-8 animate-fade-in">
+            {/* Header / Actions */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-white/5">
                 <div>
                     <h3 className="text-lg font-semibold text-white mb-1">Metas {currentYear}</h3>
@@ -360,200 +428,274 @@ export default function MetasTab() {
                         {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                         <span className="hidden sm:inline">CSV</span>
                     </button>
+
+                    <button
+                        onClick={async () => {
+                            if (!confirm('Isso irá gerar dados de teste. Deseja continuar?')) return
+                            try {
+                                const res = await fetch('/api/seed-metrics', { method: 'POST' })
+                                if (!res.ok) throw new Error('Falha ao gerar dados')
+                                alert('Dados gerados com sucesso! Recarregando...')
+                                window.location.reload()
+                            } catch (e) {
+                                alert('Erro ao gerar dados.')
+                                console.error(e)
+                            }
+                        }}
+                        className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
+                        title="Gerar Dados de Teste"
+                    >
+                        <Database className="w-4 h-4" />
+                    </button>
+
+                    <button
+                        onClick={async () => {
+                            if (!confirm('Isso irá APAGAR todos os dados gerados pelo script de teste. Deseja continuar?')) return
+                            try {
+                                const res = await fetch('/api/seed-metrics', { method: 'DELETE' })
+                                if (!res.ok) throw new Error('Falha ao limpar dados')
+                                alert('Dados limpos com sucesso! Recarregando...')
+                                window.location.reload()
+                            } catch (e) {
+                                alert('Erro ao limpar dados.')
+                                console.error(e)
+                            }
+                        }}
+                        className="p-2 rounded-lg text-red-500 hover:text-white hover:bg-red-500/20 transition-colors"
+                        title="Limpar Dados de Teste"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
                 </div>
             </div>
 
-            {/* Compact Grid with Dynamic Colors */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {months.map((month) => {
-                    const goal = goals.find((g) => g.month === month)
-                    const current = monthlyStats[month] || 0
-                    const target = goal?.target_questions || 0
-                    const percentage = target > 0 ? Math.min((current / target) * 100, 100) : 0
+            {/* NEW: Data Visualization Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Heatmap Card */}
+                <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-6 backdrop-blur-sm relative lg:col-span-2">
+                    <div className="flex items-center gap-2 mb-6">
+                        <CalendarIcon className="w-5 h-5 text-indigo-400" />
+                        <h4 className="font-semibold text-white">Consistência de Estudos</h4>
+                    </div>
+                    {heatmapData.length > 0 ? (
+                        <StudyHeatmap data={heatmapData} />
+                    ) : (
+                        <div className="h-32 flex items-center justify-center text-zinc-500 text-sm">
+                            Realize questões para gerar seu mapa de calor.
+                        </div>
+                    )}
+                </div>
 
-                    const isEditing = editing === month
-                    const isCurrentMonth = month === currentMonth
+                {/* Scatter Plot Card */}
+                <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-6 backdrop-blur-sm">
+                    <div className="flex items-center gap-2 mb-6">
+                        <BarChart2 className="w-5 h-5 text-indigo-400" />
+                        <h4 className="font-semibold text-white">Volume vs. Performance (Semanal)</h4>
+                    </div>
+                    {scatterData.length > 0 ? (
+                        <StudyPerformanceScatter data={scatterData} />
+                    ) : (
+                        <div className="h-[300px] flex items-center justify-center text-zinc-500 text-sm">
+                            Dados insuficientes para correlação.
+                        </div>
+                    )}
+                </div>
+            </div>
 
-                    // Dynamic Colors based on Progress
-                    let accentColor = "indigo" // Default
-                    if (target > 0) {
-                        if (percentage >= 100) accentColor = "green"
-                        else if (percentage >= 70) accentColor = "indigo"
-                        else if (percentage >= 40) accentColor = "yellow"
-                        else accentColor = "slate" // Low progress
-                    }
+            {/* Goals Grid */}
+            <div>
+                <h4 className="text-md font-medium text-zinc-400 mb-4">Progresso Mensal</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {months.map((month) => {
+                        const goal = goals.find((g) => g.month === month)
+                        const current = monthlyStats[month] || 0
+                        const target = goal?.target_questions || 0
+                        const percentage = target > 0 ? Math.min((current / target) * 100, 100) : 0
 
-                    // Pre-compute classes to avoid messy template literals
-                    const colorClasses: Record<string, any> = {
-                        green: {
-                            border: "border-green-500/30 hover:border-green-500/50",
-                            bg: "bg-green-950/20 hover:bg-green-900/30",
-                            glow: "bg-green-500/20",
-                            text: "text-green-300",
-                            bar: "bg-gradient-to-r from-green-500 to-emerald-400",
-                            ring: "#22c55e",
-                            ringTrack: "rgba(34, 197, 94, 0.2)"
-                        },
-                        indigo: {
-                            border: "border-indigo-500/30 hover:border-indigo-500/50",
-                            bg: "bg-indigo-950/20 hover:bg-indigo-900/30",
-                            glow: "bg-indigo-500/20",
-                            text: "text-indigo-300",
-                            bar: "bg-gradient-to-r from-indigo-500 to-purple-500",
-                            ring: "#6366f1",
-                            ringTrack: "rgba(99, 102, 241, 0.2)"
-                        },
-                        yellow: {
-                            border: "border-yellow-500/30 hover:border-yellow-500/50",
-                            bg: "bg-yellow-950/20 hover:bg-yellow-900/30",
-                            glow: "bg-yellow-500/20",
-                            text: "text-yellow-300",
-                            bar: "bg-gradient-to-r from-yellow-500 to-orange-500",
-                            ring: "#eab308",
-                            ringTrack: "rgba(234, 179, 8, 0.2)"
-                        },
-                        slate: {
-                            border: "border-zinc-700 hover:border-zinc-600",
-                            bg: "bg-zinc-900/40 hover:bg-zinc-800/60",
-                            glow: "bg-zinc-500/10",
-                            text: "text-zinc-400",
-                            bar: "bg-zinc-600",
-                            ring: "#a1a1aa",
-                            ringTrack: "rgba(148, 163, 184, 0.1)"
+                        const isEditing = editing === month
+                        const isCurrentMonth = month === currentMonth
+
+                        // Dynamic Colors based on Progress
+                        let accentColor = "indigo" // Default
+                        if (target > 0) {
+                            if (percentage >= 100) accentColor = "green"
+                            else if (percentage >= 70) accentColor = "indigo"
+                            else if (percentage >= 40) accentColor = "yellow"
+                            else accentColor = "slate" // Low progress
                         }
-                    }
 
-                    const theme = colorClasses[accentColor]
+                        // Pre-compute classes to avoid messy template literals
+                        const colorClasses: Record<string, any> = {
+                            green: {
+                                border: "border-green-500/30 hover:border-green-500/50",
+                                bg: "bg-green-950/20 hover:bg-green-900/30",
+                                glow: "bg-green-500/20",
+                                text: "text-green-300",
+                                bar: "bg-gradient-to-r from-green-500 to-emerald-400",
+                                ring: "#22c55e",
+                                ringTrack: "rgba(34, 197, 94, 0.2)"
+                            },
+                            indigo: {
+                                border: "border-indigo-500/30 hover:border-indigo-500/50",
+                                bg: "bg-indigo-950/20 hover:bg-indigo-900/30",
+                                glow: "bg-indigo-500/20",
+                                text: "text-indigo-300",
+                                bar: "bg-gradient-to-r from-indigo-500 to-purple-500",
+                                ring: "#6366f1",
+                                ringTrack: "rgba(99, 102, 241, 0.2)"
+                            },
+                            yellow: {
+                                border: "border-yellow-500/30 hover:border-yellow-500/50",
+                                bg: "bg-yellow-950/20 hover:bg-yellow-900/30",
+                                glow: "bg-yellow-500/20",
+                                text: "text-yellow-300",
+                                bar: "bg-gradient-to-r from-yellow-500 to-orange-500",
+                                ring: "#eab308",
+                                ringTrack: "rgba(234, 179, 8, 0.2)"
+                            },
+                            slate: {
+                                border: "border-zinc-700 hover:border-zinc-600",
+                                bg: "bg-zinc-900/40 hover:bg-zinc-800/60",
+                                glow: "bg-zinc-500/10",
+                                text: "text-zinc-400",
+                                bar: "bg-zinc-600",
+                                ring: "#a1a1aa",
+                                ringTrack: "rgba(148, 163, 184, 0.1)"
+                            }
+                        }
 
-                    // Override for Current Month if it's not completed yet to make it stand out
-                    const cardStyle = isCurrentMonth && percentage < 100
-                        ? { ...theme, ...colorClasses.indigo, bg: "bg-zinc-900/80 ring-1 ring-indigo-500/30", glow: "bg-indigo-500/20" }
-                        : theme
+                        const theme = colorClasses[accentColor]
 
-                    return (
-                        <div
-                            key={month}
-                            className={cn(
-                                "group relative overflow-hidden rounded-xl border p-5 transition-all duration-300 flex flex-col justify-between h-32 backdrop-blur-sm",
-                                cardStyle.border,
-                                cardStyle.bg
-                            )}
-                        >
-                            {/* Background Glow */}
-                            {(isCurrentMonth || percentage >= 40) && (
-                                <div className={cn(
-                                    "absolute -top-10 -right-10 w-32 h-32 blur-3xl rounded-full pointer-events-none transition-all duration-500",
-                                    cardStyle.glow
-                                )} />
-                            )}
+                        // Override for Current Month if it's not completed yet to make it stand out
+                        const cardStyle = isCurrentMonth && percentage < 100
+                            ? { ...theme, ...colorClasses.indigo, bg: "bg-zinc-900/80 ring-1 ring-indigo-500/30", glow: "bg-indigo-500/20" }
+                            : theme
 
-                            <div className="flex justify-between items-start z-10">
-                                <div>
-                                    <h3 className={cn(
-                                        "font-medium mb-1 transition-colors",
-                                        isCurrentMonth ? "text-white font-bold" : cardStyle.text
-                                    )}>
-                                        {getMonthName(month)}
-                                    </h3>
+                        return (
+                            <div
+                                key={month}
+                                className={cn(
+                                    "group relative overflow-hidden rounded-xl border p-5 transition-all duration-300 flex flex-col justify-between h-32 backdrop-blur-sm",
+                                    cardStyle.border,
+                                    cardStyle.bg
+                                )}
+                            >
+                                {/* Background Glow */}
+                                {(isCurrentMonth || percentage >= 40) && (
+                                    <div className={cn(
+                                        "absolute -top-10 -right-10 w-32 h-32 blur-3xl rounded-full pointer-events-none transition-all duration-500",
+                                        cardStyle.glow
+                                    )} />
+                                )}
 
-                                    {isEditing ? (
-                                        <div className="flex items-center gap-1 animate-in fade-in zoom-in duration-200">
-                                            <input
-                                                type="number"
-                                                className="w-20 px-2 py-1 bg-zinc-950 border border-zinc-700 rounded text-sm text-white focus:border-indigo-500 outline-none"
-                                                value={targets[month] || ''}
-                                                onChange={(e) => setTargets({ ...targets, [month]: e.target.value })}
-                                                autoFocus
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') saveGoal(month)
-                                                    if (e.key === 'Escape') setEditing(null)
-                                                }}
-                                            />
-                                            <button
-                                                onClick={() => saveGoal(month)}
-                                                className="p-1.5 bg-green-500/20 hover:bg-green-500/30 rounded text-green-400"
-                                            >
-                                                <Save className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-baseline gap-1 group/edit">
-                                            <span className="text-2xl font-bold text-white tracking-tight">
-                                                {current.toLocaleString()}
-                                            </span>
-                                            {target > 0 && (
-                                                <span className="text-xs text-zinc-500 font-medium">
-                                                    / {Number(target).toLocaleString()}
+                                <div className="flex justify-between items-start z-10">
+                                    <div>
+                                        <h3 className={cn(
+                                            "font-medium mb-1 transition-colors",
+                                            isCurrentMonth ? "text-white font-bold" : cardStyle.text
+                                        )}>
+                                            {getMonthName(month)}
+                                        </h3>
+
+                                        {isEditing ? (
+                                            <div className="flex items-center gap-1 animate-in fade-in zoom-in duration-200">
+                                                <input
+                                                    type="number"
+                                                    className="w-20 px-2 py-1 bg-zinc-950 border border-zinc-700 rounded text-sm text-white focus:border-indigo-500 outline-none"
+                                                    value={targets[month] || ''}
+                                                    onChange={(e) => setTargets({ ...targets, [month]: e.target.value })}
+                                                    autoFocus
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') saveGoal(month)
+                                                        if (e.key === 'Escape') setEditing(null)
+                                                    }}
+                                                />
+                                                <button
+                                                    onClick={() => saveGoal(month)}
+                                                    className="p-1.5 bg-green-500/20 hover:bg-green-500/30 rounded text-green-400"
+                                                >
+                                                    <Save className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-baseline gap-1 group/edit">
+                                                <span className="text-2xl font-bold text-white tracking-tight">
+                                                    {current.toLocaleString()}
                                                 </span>
-                                            )}
-                                            <button
-                                                onClick={() => {
-                                                    setTargets({ ...targets, [month]: String(target || '') })
-                                                    setEditing(month)
-                                                }}
-                                                className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1 text-zinc-500 hover:text-white"
-                                            >
-                                                <Edit2 className="w-3.5 h-3.5" />
-                                            </button>
+                                                {target > 0 && (
+                                                    <span className="text-xs text-zinc-500 font-medium">
+                                                        / {Number(target).toLocaleString()}
+                                                    </span>
+                                                )}
+                                                <button
+                                                    onClick={() => {
+                                                        setTargets({ ...targets, [month]: String(target || '') })
+                                                        setEditing(month)
+                                                    }}
+                                                    className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1 text-zinc-500 hover:text-white"
+                                                >
+                                                    <Edit2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Modern SVG Circular Progress */}
+                                    {target > 0 && (
+                                        <div className="relative w-12 h-12 flex-shrink-0">
+                                            <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                                                {/* Track */}
+                                                <path
+                                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                    fill="none"
+                                                    stroke={theme.ringTrack}
+                                                    strokeWidth="3"
+                                                    strokeLinecap="round"
+                                                />
+                                                {/* Progress */}
+                                                <path
+                                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                    fill="none"
+                                                    stroke={theme.ring}
+                                                    strokeWidth="3"
+                                                    strokeDasharray={`${Math.min(percentage, 100)}, 100`}
+                                                    className="transition-all duration-1000 ease-out"
+                                                    strokeLinecap="round"
+                                                />
+                                            </svg>
+                                            <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-zinc-300">
+                                                {percentage >= 100 ? (
+                                                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                                ) : (
+                                                    `${percentage.toFixed(0)}%`
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Modern SVG Circular Progress */}
+                                {/* Bottom Progress Bar - Only visible if target set */}
                                 {target > 0 && (
-                                    <div className="relative w-12 h-12 flex-shrink-0">
-                                        <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                                            {/* Track */}
-                                            <path
-                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                fill="none"
-                                                stroke={theme.ringTrack}
-                                                strokeWidth="3"
-                                                strokeLinecap="round"
-                                            />
-                                            {/* Progress */}
-                                            <path
-                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                fill="none"
-                                                stroke={theme.ring}
-                                                strokeWidth="3"
-                                                strokeDasharray={`${Math.min(percentage, 100)}, 100`}
-                                                className="transition-all duration-1000 ease-out"
-                                                strokeLinecap="round"
-                                            />
-                                        </svg>
-                                        <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-zinc-300">
-                                            {percentage >= 100 ? (
-                                                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                                            ) : (
-                                                `${percentage.toFixed(0)}%`
+                                    <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden mt-auto">
+                                        <div
+                                            className={cn(
+                                                "h-full rounded-full transition-all duration-1000",
+                                                theme.bar
                                             )}
-                                        </div>
+                                            style={{ width: `${percentage}%` }}
+                                        />
+                                    </div>
+                                )}
+
+                                {target === 0 && !isEditing && (
+                                    <div className="mt-auto text-xs text-zinc-600 italic">
+                                        Defina uma meta para acompanhar
                                     </div>
                                 )}
                             </div>
-
-                            {/* Bottom Progress Bar - Only visible if target set */}
-                            {target > 0 && (
-                                <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden mt-auto">
-                                    <div
-                                        className={cn(
-                                            "h-full rounded-full transition-all duration-1000",
-                                            theme.bar
-                                        )}
-                                        style={{ width: `${percentage}%` }}
-                                    />
-                                </div>
-                            )}
-
-                            {target === 0 && !isEditing && (
-                                <div className="mt-auto text-xs text-zinc-600 italic">
-                                    Defina uma meta para acompanhar
-                                </div>
-                            )}
-                        </div>
-                    )
-                })}
+                        )
+                    })}
+                </div>
             </div>
         </div>
     )

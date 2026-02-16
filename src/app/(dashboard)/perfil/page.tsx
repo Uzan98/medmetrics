@@ -174,12 +174,35 @@ export default function PerfilPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            // Delete from all tables related to user progress
+            // Delete in FK-safe order (children before parents)
+            // Phase 1: Leaf tables (no other table references them)
+            await Promise.all([
+                supabase.from('flashcard_reviews').delete().eq('user_id', user.id),
+                supabase.from('scheduled_reviews').delete().eq('user_id', user.id),
+                supabase.from('exam_scores').delete().in('exam_id',
+                    (await supabase.from('exams').select('id').eq('user_id', user.id)).data?.map(e => e.id) || []
+                ),
+                supabase.from('schedule_items').delete().in('schedule_id',
+                    (await supabase.from('study_schedules').select('id').eq('user_id', user.id)).data?.map(s => s.id) || []
+                ),
+                supabase.from('user_goals').delete().eq('user_id', user.id),
+                supabase.from('user_study_stats').delete().eq('user_id', user.id),
+                supabase.from('appointments').delete().eq('user_id', user.id),
+            ])
+
+            // Phase 2: Parent tables (now safe to delete)
             await Promise.all([
                 supabase.from('question_logs').delete().eq('user_id', user.id),
-                supabase.from('user_goals').delete().eq('user_id', user.id),
-                supabase.from('study_schedules').delete().eq('user_id', user.id)
+                supabase.from('error_notebook').delete().eq('user_id', user.id),
+                supabase.from('exams').delete().eq('user_id', user.id),
+                supabase.from('study_sessions').delete().eq('user_id', user.id),
+                supabase.from('study_schedules').delete().eq('user_id', user.id),
             ])
+
+            // Phase 3: Clean global taxonomy tables (FK order: topics → subdisciplines → disciplines)
+            await supabase.from('topics').delete().gte('id', 0)
+            await supabase.from('subdisciplines').delete().gte('id', 0)
+            await supabase.from('disciplines').delete().gte('id', 0)
 
             // Clear local stats
             setStats({
@@ -194,7 +217,7 @@ export default function PerfilPage() {
             })
 
             setShowResetConfirm(false)
-            toast.success('Sua conta foi resetada com sucesso.')
+            toast.success('Todos os dados foram resetados com sucesso.')
         } catch (error) {
             console.error('Error resetting data:', error)
             toast.error('Erro ao resetar dados. Tente novamente.')

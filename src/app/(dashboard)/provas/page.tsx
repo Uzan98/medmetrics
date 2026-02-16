@@ -10,13 +10,15 @@ import {
     Filter,
     Plus,
     Calendar,
-    GraduationCap
+    GraduationCap,
+    FileJson
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { ExamBoard } from '@/types/database'
+import ExamWizard from '@/components/exams/ExamWizard'
 
 interface ExamMetric {
     id: string
@@ -137,16 +139,34 @@ export default function ExamsPage() {
     }
 
     async function handleDelete(id: string) {
-        if (!confirm('Tem certeza que deseja excluir esta prova? Todos os dados associados serão perdidos.')) return
+        if (!confirm('Tem certeza que deseja excluir esta prova? Todos os dados associados (questões e notas) serão perdidos.')) return
 
         setDeleting(id)
         try {
+            // 1. Get exam title to find associated question_logs
+            const { data: exam } = await supabase
+                .from('exams')
+                .select('title')
+                .eq('id', id)
+                .single()
+
+            // 2. Delete question_logs linked to this exam via source field
+            if (exam?.title) {
+                await supabase
+                    .from('question_logs')
+                    .delete()
+                    .eq('source', `Simulado: ${exam.title}`)
+            }
+
+            // 3. Delete exam_scores
             await supabase.from('exam_scores').delete().eq('exam_id', id)
+
+            // 4. Delete the exam itself
             const { error } = await supabase.from('exams').delete().eq('id', id)
             if (error) throw error
 
-            toast.success('Prova excluída com sucesso')
-            loadData() // Reload to refresh list
+            toast.success('Prova e dados associados excluídos com sucesso')
+            loadData()
         } catch (err) {
             console.error('Error deleting exam:', err)
             toast.error('Erro ao excluir prova')
@@ -169,13 +189,16 @@ export default function ExamsPage() {
                     <p className="text-zinc-400">Gerencie suas provas na íntegra e simulados</p>
                 </div>
 
-                <Link
-                    href="/registrar?mode=exam"
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20"
-                >
-                    <Plus className="w-4 h-4" />
-                    Nova Prova
-                </Link>
+                <div className="flex gap-4">
+                    <ExamWizard />
+                    <Link
+                        href="/registrar?mode=exam"
+                        className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2.5 rounded-xl font-medium transition-all border border-zinc-700 hover:border-zinc-600"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Manual
+                    </Link>
+                </div>
             </div>
 
             {/* Filters */}
