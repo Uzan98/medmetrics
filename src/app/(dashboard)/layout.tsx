@@ -29,7 +29,7 @@ const navItems = [
     { href: '/provas', label: 'Provas', icon: FileText },
     { href: '/revisoes', label: 'Revisões', icon: CalendarCheck },
     { href: '/historico', label: 'Histórico', icon: History },
-    { href: '/caderno-de-erros', label: 'Caderno de Erros', icon: BookOpen },
+    { href: '/caderno-de-erros', label: 'Flashcards', icon: Layers },
     { href: '/agenda', label: 'Agenda', icon: CalendarDays },
     { href: '/perfil', label: 'Meu Perfil', icon: User },
 ]

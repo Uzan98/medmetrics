@@ -2,34 +2,26 @@
 
 import { useState } from 'react'
 import {
-    BookOpen,
-    Layers,
+    BarChart3,
     TrendingUp,
     Target,
-    Tags,
     FileText,
-    Calendar
 } from 'lucide-react'
-import DisciplinasTab from './components/DisciplinasTab'
-import SubdisciplinasTab from './components/SubdisciplinasTab'
-import EvolucaoTab from './components/EvolucaoTab'
-import MetasTab from './components/MetasTab'
-import AssuntosTab from './components/AssuntosTab'
+import DesempenhoTab from './components/DesempenhoTab'
+import EvolucaoUnifiedTab from './components/EvolucaoUnifiedTab'
 import ProvasTab from './components/ProvasTab'
-import EvolucaoDiariaTab from './components/EvolucaoDiariaTab'
+import MetasTab from './components/MetasTab'
+import FocoSugerido from './components/FocoSugerido'
 
-type Tab = 'disciplinas' | 'subdisciplinas' | 'assuntos' | 'evolucao' | 'evolucao-diaria' | 'metas' | 'provas'
+type Tab = 'desempenho' | 'evolucao' | 'provas' | 'metas'
 
 export default function MetricasPage() {
-    const [activeTab, setActiveTab] = useState<Tab>('disciplinas')
+    const [activeTab, setActiveTab] = useState<Tab>('desempenho')
 
     const tabs = [
-        { id: 'disciplinas', label: 'Disciplinas', icon: BookOpen },
-        { id: 'subdisciplinas', label: 'Subdisciplinas', icon: Layers },
-        { id: 'assuntos', label: 'Assuntos', icon: Tags },
-        { id: 'provas', label: 'Provas na Íntegra', icon: FileText },
-        { id: 'evolucao', label: 'Evolução Mensal', icon: TrendingUp },
-        { id: 'evolucao-diaria', label: 'Evolução Diária', icon: Calendar },
+        { id: 'desempenho', label: 'Desempenho', icon: BarChart3 },
+        { id: 'evolucao', label: 'Evolução', icon: TrendingUp },
+        { id: 'provas', label: 'Provas', icon: FileText },
         { id: 'metas', label: 'Metas', icon: Target },
     ]
 
@@ -39,6 +31,9 @@ export default function MetricasPage() {
                 <h1 className="text-2xl font-bold text-white">Métricas</h1>
                 <p className="text-zinc-400">Analise seu desempenho detalhado em todas as áreas</p>
             </div>
+
+            {/* Focus Suggestions */}
+            <FocoSugerido />
 
             {/* Tabs Navigation */}
             <div className="flex space-x-1 rounded-full bg-zinc-900/30 backdrop-blur-md p-1.5 border border-white/5 overflow-x-auto scrollbar-none snap-x sticky top-0 z-20">
@@ -66,12 +61,9 @@ export default function MetricasPage() {
 
             {/* Tab Content */}
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                {activeTab === 'disciplinas' && <DisciplinasTab />}
-                {activeTab === 'subdisciplinas' && <SubdisciplinasTab />}
-                {activeTab === 'assuntos' && <AssuntosTab />}
+                {activeTab === 'desempenho' && <DesempenhoTab />}
+                {activeTab === 'evolucao' && <EvolucaoUnifiedTab />}
                 {activeTab === 'provas' && <ProvasTab />}
-                {activeTab === 'evolucao' && <EvolucaoTab />}
-                {activeTab === 'evolucao-diaria' && <EvolucaoDiariaTab />}
                 {activeTab === 'metas' && <MetasTab />}
             </div>
         </div>

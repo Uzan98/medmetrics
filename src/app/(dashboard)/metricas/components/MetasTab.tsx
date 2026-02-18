@@ -7,8 +7,18 @@ import { Target, Save, Loader2, CheckCircle2, Download, TrendingUp, AlertCircle,
 import { getMonthName, cn } from '@/lib/utils'
 import type { UserGoal } from '@/types/database'
 import StudyHeatmap from '@/components/charts/StudyHeatmap'
-import StudyPerformanceScatter from '@/components/charts/StudyPerformanceScatter'
-import { format, startOfWeek, endOfWeek, isSameWeek, parseISO } from 'date-fns'
+import { format } from 'date-fns'
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    Legend,
+    ReferenceLine
+} from 'recharts'
 
 export default function MetasTab() {
     const [goals, setGoals] = useState<UserGoal[]>([])
@@ -30,7 +40,7 @@ export default function MetasTab() {
 
     // New Visualization States
     const [heatmapData, setHeatmapData] = useState<{ date: string; count: number; level: number }[]>([])
-    const [scatterData, setScatterData] = useState<{ questionsDone: number; score: number; week: string }[]>([])
+    const [paceData, setPaceData] = useState<{ label: string; actual: number; ideal: number | null }[]>([])
 
     const supabase = createClient()
     const currentYear = new Date().getFullYear()
@@ -116,32 +126,44 @@ export default function MetasTab() {
 
             setMonthlyStats(stats)
 
-            // --- Process Scatter Data (Weekly Volume vs Weekly Accuracy from question_logs) ---
-            const weeklyData: { [key: string]: { total: number, correct: number } } = {}
-            if (logsRes.data) {
-                logsRes.data.forEach(log => {
-                    const dateObj = parseISO(log.date)
-                    const weekStart = format(startOfWeek(dateObj), 'yyyy-MM-dd')
-                    if (!weeklyData[weekStart]) {
-                        weeklyData[weekStart] = { total: 0, correct: 0 }
-                    }
-                    weeklyData[weekStart].total += log.questions_done
-                    weeklyData[weekStart].correct += log.correct_answers
-                })
-            }
+            // --- Process Pace Tracker Data (Cumulative actual vs ideal) ---
+            const annualGoal = goalsRes.data
+                ? goalsRes.data.reduce((sum, g) => sum + (g.target_questions || 0), 0)
+                : 0
 
-            const scatter: { questionsDone: number; score: number; week: string }[] = []
-            Object.entries(weeklyData).forEach(([week, data]) => {
-                if (data.total > 0) {
-                    scatter.push({
-                        week: format(parseISO(week), 'dd/MM'),
-                        questionsDone: data.total,
-                        score: data.total > 0 ? (data.correct / data.total) * 100 : 0
+            if (annualGoal > 0 && logsRes.data) {
+                // Build cumulative daily data
+                const cumulativeByMonth: { [key: number]: number } = {}
+                let cumulative = 0
+
+                // Sort logs by date
+                const sortedLogs = [...logsRes.data].sort((a, b) => a.date.localeCompare(b.date))
+                sortedLogs.forEach(log => {
+                    const [, m] = log.date.split('-').map(Number)
+                    cumulative += log.questions_done
+                    cumulativeByMonth[m] = cumulative
+                })
+
+                // Build pace data per month
+                const idealPerMonth = annualGoal / 12
+                const pacePoints: { label: string; actual: number; ideal: number | null }[] = []
+
+                for (let m = 1; m <= 12; m++) {
+                    const idealCumulative = Math.round(idealPerMonth * m)
+                    const actualCumulative = cumulativeByMonth[m] ?? (m <= today.getMonth() + 1 ? (cumulativeByMonth[m - 1] || 0) : 0)
+                    const isFuture = m > today.getMonth() + 1
+
+                    pacePoints.push({
+                        label: getMonthName(m).substring(0, 3),
+                        actual: isFuture ? 0 : actualCumulative,
+                        ideal: idealCumulative
                     })
                 }
-            })
 
-            setScatterData(scatter)
+                setPaceData(pacePoints)
+            } else {
+                setPaceData([])
+            }
 
 
             // Calculate rough daily pace for year (simplified)
@@ -438,17 +460,55 @@ export default function MetasTab() {
                     )}
                 </div>
 
-                {/* Scatter Plot Card */}
+                {/* Pace Tracker Card */}
                 <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-6 backdrop-blur-sm">
                     <div className="flex items-center gap-2 mb-6">
                         <BarChart2 className="w-5 h-5 text-indigo-400" />
-                        <h4 className="font-semibold text-white">Volume vs. Performance (Semanal)</h4>
+                        <h4 className="font-semibold text-white">Ritmo Acumulado vs. Meta</h4>
                     </div>
-                    {scatterData.length > 0 ? (
-                        <StudyPerformanceScatter data={scatterData} />
+                    {paceData.length > 0 ? (
+                        <div className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={paceData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a" opacity={0.5} vertical={false} />
+                                    <XAxis dataKey="label" stroke="#a1a1aa" fontSize={11} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#a1a1aa" fontSize={11} tickLine={false} axisLine={false} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
+                                        labelStyle={{ color: '#a1a1aa', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 600 }}
+                                        formatter={(value: any, name?: string) => [
+                                            Number(value).toLocaleString('pt-BR'),
+                                            name === 'ideal' ? 'Meta Ideal' : 'Realizado'
+                                        ]}
+                                    />
+                                    <Legend
+                                        formatter={(value) => value === 'ideal' ? 'Meta Ideal' : 'Realizado'}
+                                        wrapperStyle={{ fontSize: '12px', color: '#a1a1aa' }}
+                                    />
+                                    <Line
+                                        type="monotone"
+                                        dataKey="ideal"
+                                        stroke="#6366f1"
+                                        strokeDasharray="8 4"
+                                        strokeWidth={2}
+                                        dot={false}
+                                        name="ideal"
+                                    />
+                                    <Line
+                                        type="monotone"
+                                        dataKey="actual"
+                                        stroke="#10b981"
+                                        strokeWidth={2.5}
+                                        dot={{ fill: '#10b981', r: 3 }}
+                                        activeDot={{ r: 5, fill: '#10b981' }}
+                                        name="actual"
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
                     ) : (
                         <div className="h-[300px] flex items-center justify-center text-zinc-500 text-sm">
-                            Dados insuficientes para correlação.
+                            Defina metas mensais para ver o ritmo acumulado.
                         </div>
                     )}
                 </div>

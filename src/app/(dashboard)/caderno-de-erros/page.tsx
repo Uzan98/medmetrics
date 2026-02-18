@@ -12,10 +12,11 @@ import {
     Eye,
     Check,
     X,
-    BookOpen,
+    Layers,
     BrainCircuit,
     ChevronDown,
     ChevronUp,
+    ChevronRight,
     Image as ImageIcon,
     Loader2,
     Play,
@@ -25,25 +26,30 @@ import {
     Trophy,
     Sparkles,
     Clock,
-    SlidersHorizontal
+    SlidersHorizontal,
+    Upload,
+    LayoutList
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import Image from 'next/image'
 import { StudyMode } from './StudyMode'
 import { ErrorAnalytics } from './ErrorAnalytics'
+import { ImportAIModal } from './ImportAIModal'
+import { DeckList } from './components/DeckList'
 import { format, formatDistanceToNow, isPast, isToday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 type ErrorEntry = Database['public']['Tables']['error_notebook']['Row'] & {
     disciplines: { name: string } | null
-    topics: { name: string } | null
+    topics: { id: number; name: string; subdiscipline_id: number | null } | null
     image_urls: string[] | null
     error_type: 'knowledge_gap' | 'interpretation' | 'distraction' | 'reasoning' | null
     action_item: string | null
 }
 
 type Discipline = Database['public']['Tables']['disciplines']['Row']
+type Subdiscipline = Database['public']['Tables']['subdisciplines']['Row']
 type Topic = Database['public']['Tables']['topics']['Row']
 
 interface UserStudyStats {
@@ -60,11 +66,13 @@ export default function ErrorNotebookPage() {
     const [entries, setEntries] = useState<ErrorEntry[]>([])
     const [loading, setLoading] = useState(true)
     const [disciplines, setDisciplines] = useState<Discipline[]>([])
+    const [allSubdisciplines, setAllSubdisciplines] = useState<Subdiscipline[]>([])
     const [topics, setTopics] = useState<Topic[]>([])
 
     // Filters
     const [searchTerm, setSearchTerm] = useState('')
     const [disciplineFilter, setDisciplineFilter] = useState<number | 'all'>('all')
+    const [subdisciplineFilter, setSubdisciplineFilter] = useState<number | 'all'>('all')
     const [errorTypeFilter, setErrorTypeFilter] = useState<'all' | 'knowledge_gap' | 'interpretation' | 'distraction' | 'reasoning'>('all')
     const [showOnlyPending, setShowOnlyPending] = useState(false)
     const [showFilters, setShowFilters] = useState(false)
@@ -91,6 +99,9 @@ export default function ErrorNotebookPage() {
     const [showStudyMode, setShowStudyMode] = useState(false)
     const [showStudySetup, setShowStudySetup] = useState(false)
     const [studyDiscipline, setStudyDiscipline] = useState<number | 'all'>('all')
+    const [studySubdiscipline, setStudySubdiscipline] = useState<number | 'all'>('all')
+    const [studyTopic, setStudyTopic] = useState<number | 'all'>('all')
+    const [viewMode, setViewMode] = useState<'list' | 'deck'>('deck')
     const [userStats, setUserStats] = useState<UserStudyStats | null>(null)
 
     // Pagination
@@ -101,6 +112,7 @@ export default function ErrorNotebookPage() {
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
     const [deleting, setDeleting] = useState(false)
     const [showAnalytics, setShowAnalytics] = useState(false)
+    const [showImportAI, setShowImportAI] = useState(false)
 
     useEffect(() => {
         loadData()
@@ -115,7 +127,7 @@ export default function ErrorNotebookPage() {
             // Load Entries
             const { data: errorEntries, error } = await supabase
                 .from('error_notebook')
-                .select('*, disciplines(name), topics(name)')
+                .select('*, disciplines(name), topics(id, name, subdiscipline_id)')
                 .eq('user_id', user.id)
                 .order('created_at', { ascending: false })
 
@@ -129,6 +141,13 @@ export default function ErrorNotebookPage() {
                 .order('name')
             if (discData) setDisciplines(discData)
 
+            // Load Subdisciplines
+            const { data: subData } = await supabase
+                .from('subdisciplines')
+                .select('*')
+                .order('name')
+            if (subData) setAllSubdisciplines(subData)
+
             // Load User Study Stats
             const { data: statsData } = await supabase
                 .from('user_study_stats')
@@ -139,7 +158,7 @@ export default function ErrorNotebookPage() {
 
         } catch (error) {
             console.error('Error loading data:', error)
-            toast.error('Erro ao carregar caderno de erros')
+            toast.error('Erro ao carregar flashcards')
         } finally {
             setLoading(false)
         }
@@ -352,18 +371,76 @@ export default function ErrorNotebookPage() {
     })
     const pendingCount = pendingEntries.length
 
+    async function handleDeleteDeck(discId: number | null, subId: number | null, topicId: number | null) {
+        if (!confirm('Tem certeza que deseja excluir todos os flashcards deste baralho? Esta ação não pode ser desfeita.')) return
+
+        setLoading(true)
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+
+            let error = null
+
+            if (topicId) {
+                // Delete specific topic
+                const res = await supabase
+                    .from('error_notebook')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('topic_id', topicId)
+                error = res.error
+            } else if (subId) {
+                // Delete subdiscipline (all topics within it)
+                // First get all topics for this subdiscipline
+                const { data: subTopics } = await supabase
+                    .from('topics')
+                    .select('id')
+                    .eq('subdiscipline_id', subId)
+
+                if (subTopics && subTopics.length > 0) {
+                    const topicIds = subTopics.map(t => t.id)
+                    const res = await supabase
+                        .from('error_notebook')
+                        .delete()
+                        .eq('user_id', user.id)
+                        .in('topic_id', topicIds)
+                    error = res.error
+                }
+            } else if (discId) {
+                // Delete entire discipline
+                const res = await supabase
+                    .from('error_notebook')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('discipline_id', discId)
+                error = res.error
+            }
+
+            if (error) throw error
+
+            toast.success('Baralho excluído com sucesso!')
+            await loadData()
+        } catch (error) {
+            console.error('Error deleting deck:', error)
+            toast.error('Erro ao excluir baralho')
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const filteredEntries = entries.filter(entry => {
         const matchesSearch = entry.question_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
             entry.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             entry.disciplines?.name.toLowerCase().includes(searchTerm.toLowerCase())
 
         const matchesDiscipline = disciplineFilter === 'all' || entry.discipline_id === disciplineFilter
+        const matchesSubdiscipline = subdisciplineFilter === 'all' || entry.topics?.subdiscipline_id === subdisciplineFilter
 
         const matchesErrorType = errorTypeFilter === 'all' || entry.error_type === errorTypeFilter
 
         const matchesPending = !showOnlyPending || pendingEntries.some(p => p.id === entry.id)
 
-        return matchesSearch && matchesDiscipline && matchesErrorType && matchesPending
+        return matchesSearch && matchesDiscipline && matchesSubdiscipline && matchesErrorType && matchesPending
     })
 
     // Fix #9: Pagination
@@ -382,6 +459,8 @@ export default function ErrorNotebookPage() {
                 <StudyMode
                     entries={showOnlyPending ? pendingEntries : entries}
                     disciplineId={studyDiscipline}
+                    subdisciplineId={studySubdiscipline}
+                    topicId={studyTopic}
                     onClose={() => {
                         setShowStudyMode(false)
                         setShowOnlyPending(false)
@@ -408,11 +487,11 @@ export default function ErrorNotebookPage() {
                             <div>
                                 <div className="flex items-center gap-3 mb-1">
                                     <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-                                        <BookOpen className="w-5 h-5 text-white" />
+                                        <Layers className="w-5 h-5 text-white" />
                                     </div>
                                     <div>
-                                        <h1 className="text-2xl font-black text-white tracking-tight">Caderno de Erros</h1>
-                                        <p className="text-indigo-300/60 text-sm font-medium">Transforme erros em aprendizado</p>
+                                        <h1 className="text-2xl font-black text-white tracking-tight">Flashcards</h1>
+                                        <p className="text-indigo-300/60 text-sm font-medium">Estude com repetição espaçada</p>
                                     </div>
                                 </div>
                             </div>
@@ -432,6 +511,8 @@ export default function ErrorNotebookPage() {
                                     <button
                                         onClick={() => {
                                             setStudyDiscipline('all')
+                                            setStudySubdiscipline('all')
+                                            setStudyTopic('all')
                                             setShowOnlyPending(true)
                                             setShowStudyMode(true)
                                         }}
@@ -449,6 +530,15 @@ export default function ErrorNotebookPage() {
                                 >
                                     <Trophy className="w-4 h-4" />
                                     Análise
+                                </button>
+
+                                <button
+                                    onClick={() => setShowImportAI(true)}
+                                    disabled={disciplines.length === 0}
+                                    className="px-4 py-2.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-200 rounded-xl font-bold text-sm transition-all border border-amber-500/25 hover:border-amber-500/40 flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40"
+                                >
+                                    <Upload className="w-4 h-4" />
+                                    Importar da IA
                                 </button>
 
                                 <button
@@ -500,7 +590,7 @@ export default function ErrorNotebookPage() {
                             <div className="bg-white/[0.06] backdrop-blur-sm rounded-xl p-3.5 border border-white/[0.08] hover:bg-white/[0.09] transition-colors group">
                                 <div className="flex items-center gap-2 mb-2">
                                     <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                                        <BookOpen className="w-4 h-4 text-indigo-400" />
+                                        <Layers className="w-4 h-4 text-indigo-400" />
                                     </div>
                                     <span className="text-[11px] uppercase tracking-widest text-zinc-500 font-semibold">Total Cards</span>
                                 </div>
@@ -526,6 +616,8 @@ export default function ErrorNotebookPage() {
                                 <button
                                     onClick={() => {
                                         setStudyDiscipline('all')
+                                        setStudySubdiscipline('all')
+                                        setStudyTopic('all')
                                         setShowStudySetup(false)
                                         setShowStudyMode(true)
                                     }}
@@ -543,6 +635,8 @@ export default function ErrorNotebookPage() {
                                             key={disc.id}
                                             onClick={() => {
                                                 setStudyDiscipline(disc.id)
+                                                setStudySubdiscipline('all')
+                                                setStudyTopic('all')
                                                 setShowStudySetup(false)
                                                 setShowStudyMode(true)
                                             }}
@@ -568,6 +662,22 @@ export default function ErrorNotebookPage() {
                 {/* ── Search & Filters ── */}
                 <div className="bg-zinc-900/80 backdrop-blur-xl rounded-2xl border border-zinc-800/80 sticky top-4 z-20 shadow-xl shadow-black/10">
                     <div className="flex gap-2.5 p-3.5">
+                        <div className="flex bg-zinc-800/60 rounded-xl p-1 border border-zinc-700/40 hidden md:flex flex-shrink-0">
+                            <button
+                                onClick={() => setViewMode('deck')}
+                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'deck' ? 'bg-indigo-500/20 text-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                title="Visualizar por Baralhos"
+                            >
+                                <Layers className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-indigo-500/20 text-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                title="Visualizar em Lista"
+                            >
+                                <LayoutList className="w-4 h-4" />
+                            </button>
+                        </div>
                         <div className="flex-1 relative group">
                             <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-400 transition-colors" />
                             <input
@@ -595,7 +705,10 @@ export default function ErrorNotebookPage() {
                         <div className="w-full md:w-48">
                             <select
                                 value={disciplineFilter}
-                                onChange={(e) => setDisciplineFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                                onChange={(e) => {
+                                    setDisciplineFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))
+                                    setSubdisciplineFilter('all')
+                                }}
                                 className="w-full bg-zinc-800/60 border border-zinc-700/40 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer"
                             >
                                 <option value="all">Todas Disciplinas</option>
@@ -604,6 +717,25 @@ export default function ErrorNotebookPage() {
                                 ))}
                             </select>
                         </div>
+
+                        {/* Subdiscipline Filter */}
+                        {disciplineFilter !== 'all' && (
+                            <div className="w-full md:w-48 animate-in fade-in slide-in-from-left-2 duration-200">
+                                <select
+                                    value={subdisciplineFilter}
+                                    onChange={(e) => setSubdisciplineFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                                    className="w-full bg-zinc-800/60 border border-zinc-700/40 rounded-xl px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none cursor-pointer"
+                                >
+                                    <option value="all">Todas Subdisciplinas</option>
+                                    {allSubdisciplines
+                                        .filter(s => s.discipline_id === disciplineFilter)
+                                        .map(s => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                        ))}
+                                </select>
+                            </div>
+                        )}
+
                         <div className="w-full md:w-48">
                             <select
                                 value={errorTypeFilter}
@@ -655,7 +787,7 @@ export default function ErrorNotebookPage() {
                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5" />
                         <div className="relative">
                             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-5 border border-indigo-500/10">
-                                <BookOpen className="w-9 h-9 text-indigo-400/70" />
+                                <Layers className="w-9 h-9 text-indigo-400/70" />
                             </div>
                             <h3 className="text-lg font-bold text-white mb-2">
                                 {searchTerm || disciplineFilter !== 'all' || errorTypeFilter !== 'all'
@@ -680,6 +812,19 @@ export default function ErrorNotebookPage() {
                             )}
                         </div>
                     </div>
+                ) : viewMode === 'deck' ? (
+                    <DeckList
+                        entries={filteredEntries}
+                        disciplines={disciplines}
+                        subdisciplines={allSubdisciplines}
+                        onStudy={(d, s, t) => {
+                            setStudyDiscipline(d)
+                            setStudySubdiscipline(s)
+                            setStudyTopic(t)
+                            setShowStudyMode(true)
+                        }}
+                        onDelete={handleDeleteDeck}
+                    />
                 ) : (
                     <div className="space-y-2.5">
                         {/* Result counter */}
@@ -728,6 +873,16 @@ export default function ErrorNotebookPage() {
                 isOpen={showAnalytics}
                 onClose={() => setShowAnalytics(false)}
                 userId={userStats?.user_id || ''}
+            />
+
+            <ImportAIModal
+                isOpen={showImportAI}
+                onClose={() => setShowImportAI(false)}
+                disciplines={disciplines}
+                onImportComplete={() => {
+                    setShowImportAI(false)
+                    loadData()
+                }}
             />
 
             {/* Fix #8: Custom Delete Confirmation Modal */}
@@ -847,32 +1002,38 @@ export default function ErrorNotebookPage() {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Tipo de Erro (Metacognição)</label>
-                                        <select
-                                            value={formData.error_type || ''}
-                                            onChange={(e) => setFormData({ ...formData, error_type: e.target.value as any })}
-                                            className="w-full bg-zinc-900 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500 transition-colors"
-                                        >
-                                            <option value="">Selecione o motivo...</option>
-                                            <option value="knowledge_gap">Lacuna de Conteúdo (Não sabia)</option>
-                                            <option value="interpretation">Falha de Interpretação (Não entendi)</option>
-                                            <option value="distraction">Falta de Atenção (Distração/Li errado)</option>
-                                            <option value="reasoning">Erro de Raciocínio (Conexão errada)</option>
-                                        </select>
+                                <details className="group/details">
+                                    <summary className="flex items-center gap-2 cursor-pointer text-xs font-semibold uppercase tracking-wider text-zinc-500 hover:text-zinc-300 transition-colors py-1 select-none">
+                                        <ChevronRight className="w-3.5 h-3.5 transition-transform group-open/details:rotate-90" />
+                                        Campos avançados (opcional)
+                                    </summary>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Tipo de Erro (Metacognição)</label>
+                                            <select
+                                                value={formData.error_type || ''}
+                                                onChange={(e) => setFormData({ ...formData, error_type: e.target.value as any })}
+                                                className="w-full bg-zinc-900 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500 transition-colors"
+                                            >
+                                                <option value="">Selecione o motivo...</option>
+                                                <option value="knowledge_gap">Lacuna de Conteúdo (Não sabia)</option>
+                                                <option value="interpretation">Falha de Interpretação (Não entendi)</option>
+                                                <option value="distraction">Falta de Atenção (Distração/Li errado)</option>
+                                                <option value="reasoning">Erro de Raciocínio (Conexão errada)</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Ação Corretiva</label>
+                                            <input
+                                                type="text"
+                                                value={formData.action_item}
+                                                onChange={(e) => setFormData({ ...formData, action_item: e.target.value })}
+                                                className="w-full bg-zinc-900 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                                placeholder="O que você fará diferente?"
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Ação Corretiva</label>
-                                        <input
-                                            type="text"
-                                            value={formData.action_item}
-                                            onChange={(e) => setFormData({ ...formData, action_item: e.target.value })}
-                                            className="w-full bg-zinc-900 border border-zinc-700/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                                            placeholder="O que você fará diferente?"
-                                        />
-                                    </div>
-                                </div>
+                                </details>
 
                                 <div className="space-y-2">
                                     <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Imagens</label>
@@ -1073,7 +1234,7 @@ function ErrorRow({ entry, onEdit, onDelete }: { entry: ErrorEntry, onEdit: () =
                 <div className="flex items-start gap-3.5 p-4 pl-5">
                     {/* Discipline icon */}
                     <div className={`flex-shrink-0 w-10 h-10 rounded-xl ${styles.iconBg} flex items-center justify-center mt-0.5`}>
-                        <BookOpen className={`w-5 h-5 ${styles.icon}`} />
+                        <Layers className={`w-5 h-5 ${styles.icon}`} />
                     </div>
 
                     {/* Content */}

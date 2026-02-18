@@ -26,7 +26,7 @@ import confetti from 'canvas-confetti'
 
 type ErrorEntry = Database['public']['Tables']['error_notebook']['Row'] & {
     disciplines: { name: string } | null
-    topics: { name: string } | null
+    topics: { id: number; name: string; subdiscipline_id: number | null } | null
     image_urls: string[] | null
     error_type: 'knowledge_gap' | 'interpretation' | 'distraction' | 'reasoning' | null
     action_item: string | null
@@ -35,6 +35,8 @@ type ErrorEntry = Database['public']['Tables']['error_notebook']['Row'] & {
 interface StudyModeProps {
     entries: ErrorEntry[]
     disciplineId?: number | 'all'
+    subdisciplineId?: number | 'all'
+    topicId?: number | 'all'
     onClose: () => void
     onSessionComplete: (stats: SessionStats) => void
 }
@@ -64,7 +66,7 @@ import { calculateNextReview, ReviewResult } from '@/lib/srs'
 // Spaced repetition intervals - REMOVED (No longer used)
 // const REVIEW_INTERVALS = { ... }
 
-export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }: StudyModeProps) {
+export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onClose, onSessionComplete }: StudyModeProps) {
     const supabase = createClient()
     const [currentIndex, setCurrentIndex] = useState(0)
     const [isFlipped, setIsFlipped] = useState(false)
@@ -86,11 +88,19 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
 
     const startTime = useRef(Date.now())
 
-    const filteredEntries = disciplineId && disciplineId !== 'all'
-        ? entries.filter(e => e.discipline_id === disciplineId)
-        : entries
+    // Build initial study queue from filtered entries
+    const initialQueue = entries.filter(e => {
+        const matchDiscipline = !disciplineId || disciplineId === 'all' || e.discipline_id === disciplineId
+        const matchSubdiscipline = !subdisciplineId || subdisciplineId === 'all' || e.topics?.subdiscipline_id === subdisciplineId
+        const matchTopic = !topicId || topicId === 'all' || e.topic_id === topicId
+        return matchDiscipline && matchSubdiscipline && matchTopic
+    })
 
-    const currentCard = filteredEntries[currentIndex]
+    const [studyQueue, setStudyQueue] = useState<ErrorEntry[]>(initialQueue)
+    const [totalToStudy] = useState(initialQueue.length) // original count for progress bar
+    const [passedCount, setPassedCount] = useState(0)
+
+    const currentCard = studyQueue[currentIndex]
 
     // Initialize session
     useEffect(() => {
@@ -117,12 +127,12 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
     }, [])
 
     const goToNext = useCallback(() => {
-        if (currentIndex < filteredEntries.length - 1) {
+        if (currentIndex < studyQueue.length - 1) {
             setCurrentIndex(prev => prev + 1)
             setIsFlipped(false)
             setShowRating(false)
         }
-    }, [currentIndex, filteredEntries.length])
+    }, [currentIndex, studyQueue.length])
 
     const goToPrevious = useCallback(() => {
         if (currentIndex > 0) {
@@ -170,26 +180,12 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
             xpEarned: prev.xpEarned + xp
         }))
 
-        // Calculate SRS parameters
-        // Map UI difficulty to SM-2 Quality (0-5)
-        // wrong -> 0 (Fail)
-        // hard -> 3 (Pass, with difficulty)
-        // easy -> 5 (Pass, perfect)
-        const quality = difficulty === 'wrong' ? 0 : difficulty === 'hard' ? 3 : 5
-
-        const srsResult = calculateNextReview(
-            quality,
-            card.interval || 0,
-            card.ease_factor || 2.5
-            // defaults if null (new cards might be null if not covered by default constraint, but we added default in migration)
-        )
-
-        // Save to database
+        // Save review attempt to database
         try {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            // Save flashcard review
+            // Always log the review attempt
             await supabase.from('flashcard_reviews').insert({
                 user_id: user.id,
                 flashcard_id: card.id,
@@ -198,35 +194,54 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
                 xp_earned: xp
             })
 
-            // Update flashcard with next review date and SRS params
-            await supabase
-                .from('error_notebook')
-                .update({
-                    last_reviewed_at: new Date().toISOString(),
-                    next_review_date: format(srsResult.nextReviewDate, 'yyyy-MM-dd'),
-                    difficulty_level: difficulty === 'wrong' ? 0 : difficulty === 'hard' ? 1 : 2,
-                    review_count: (card.review_count || 0) + 1,
-                    interval: srsResult.interval,
-                    ease_factor: srsResult.easeFactor
-                })
-                .eq('id', card.id)
+            // Only update SRS scheduling when user PASSES (Easy or Hard)
+            if (difficulty !== 'wrong') {
+                const quality = difficulty === 'hard' ? 3 : 5
+                const srsResult = calculateNextReview(
+                    quality,
+                    card.interval || 0,
+                    card.ease_factor || 2.5
+                )
 
-            // Note: We are using error_notebook for scheduling now.
-
+                await supabase
+                    .from('error_notebook')
+                    .update({
+                        last_reviewed_at: new Date().toISOString(),
+                        next_review_date: format(srsResult.nextReviewDate, 'yyyy-MM-dd'),
+                        difficulty_level: difficulty === 'hard' ? 1 : 2,
+                        review_count: (card.review_count || 0) + 1,
+                        interval: srsResult.interval,
+                        ease_factor: srsResult.easeFactor
+                    })
+                    .eq('id', card.id)
+            }
         } catch (error) {
             console.error('Error saving review:', error)
             toast.error('Erro ao salvar progresso')
         }
 
-        // ... navigation ...
-
-        // Move to next or complete
-        if (currentIndex === filteredEntries.length - 1) {
-            completeSession()
-        } else {
+        // Navigation: Anki-style re-queue for wrong cards
+        if (difficulty === 'wrong') {
+            // Re-append this card to the end of the queue
+            setStudyQueue(prev => [...prev, card])
+            // Move to next card (the queue just grew by 1)
             setTimeout(() => {
-                goToNext()
+                setCurrentIndex(prev => prev + 1)
+                setIsFlipped(false)
+                setShowRating(false)
             }, 300)
+        } else {
+            // Card passed — count it
+            setPassedCount(prev => prev + 1)
+
+            // Check if this was the last card in the queue
+            if (currentIndex === studyQueue.length - 1) {
+                completeSession()
+            } else {
+                setTimeout(() => {
+                    goToNext()
+                }, 300)
+            }
         }
     }
 
@@ -326,7 +341,7 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
         return `${mins}:${secs.toString().padStart(2, '0')}`
     }
 
-    if (filteredEntries.length === 0) {
+    if (studyQueue.length === 0) {
         return (
             <div className="fixed inset-0 bg-zinc-950 z-50 flex items-center justify-center">
                 <div className="text-center">
@@ -457,11 +472,14 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
                     <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
                         <div
                             className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
-                            style={{ width: `${((currentIndex + (showRating ? 1 : 0)) / filteredEntries.length) * 100}%` }}
+                            style={{ width: `${(passedCount / totalToStudy) * 100}%` }}
                         />
                     </div>
                     <p className="text-center text-xs text-zinc-500 mt-1">
-                        {currentIndex + 1} / {filteredEntries.length}
+                        {passedCount} / {totalToStudy} concluídos
+                        {studyQueue.length > totalToStudy && (
+                            <span className="text-amber-500 ml-1">({studyQueue.length - currentIndex} restantes)</span>
+                        )}
                     </p>
                 </div>
 
@@ -491,7 +509,7 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 flex items-center justify-center p-6 relative">
+            <div className="flex-1 flex items-center justify-center p-4 md:p-6 relative overflow-y-auto min-h-0">
                 {/* Navigation Arrows (Desktop) */}
                 <button
                     onClick={goToPrevious}
@@ -514,8 +532,12 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
                         actionItem={currentCard.action_item}
                         isFlipped={isFlipped}
                         onFlip={() => {
-                            setIsFlipped(true)
-                            setShowRating(true)
+                            if (!isFlipped) {
+                                setIsFlipped(true)
+                                setShowRating(true)
+                            } else {
+                                setIsFlipped(false)
+                            }
                         }}
                         accentColor={getAccentColor(currentCard.disciplines?.name)}
                     />
@@ -525,7 +547,7 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
                     onClick={() => {
                         if (!showRating) goToNext()
                     }}
-                    disabled={currentIndex === filteredEntries.length - 1 || showRating}
+                    disabled={currentIndex === studyQueue.length - 1 || showRating}
                     className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hidden md:block"
                 >
                     <ChevronRight className="w-8 h-8" />
@@ -534,7 +556,7 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
 
             {/* Rating Buttons */}
             {showRating && (
-                <div className="p-6 border-t border-white/5 animate-in slide-in-from-bottom duration-300">
+                <div className="p-4 md:p-6 border-t border-white/5 animate-in slide-in-from-bottom duration-300 flex-shrink-0">
                     <p className="text-center text-zinc-400 text-sm mb-4">
                         Como você se saiu? (Teclas: 1, 2, 3)
                     </p>
@@ -545,7 +567,7 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
                         >
                             <XCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
                             <span>Errei</span>
-                            <span className="text-xs opacity-60">+{XP_REWARDS.wrong} XP</span>
+                            <span className="text-xs opacity-60">volta depois</span>
                         </button>
 
                         <button
@@ -570,7 +592,7 @@ export function StudyMode({ entries, disciplineId, onClose, onSessionComplete }:
             )}
 
             {/* Keyboard Hints */}
-            <div className="text-center pb-4 text-xs text-zinc-600">
+            <div className="text-center pb-2 pt-1 text-xs text-zinc-600 flex-shrink-0">
                 Espaço: revelar • ←→: navegar • 1,2,3: avaliar
             </div>
         </div>

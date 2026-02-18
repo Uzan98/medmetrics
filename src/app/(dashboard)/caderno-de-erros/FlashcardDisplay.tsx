@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { BookOpen, RotateCcw, Check, BrainCircuit, Image as ImageIcon } from 'lucide-react'
+import { Layers, RotateCcw, Check, BrainCircuit, Image as ImageIcon } from 'lucide-react'
 import Image from 'next/image'
 
 interface FlashcardDisplayProps {
@@ -81,7 +81,7 @@ export function FlashcardDisplay({
                 <div
                     onClick={onFlip}
                     className={`
-                        relative w-full min-h-[400px] cursor-pointer
+                        relative w-full min-h-[340px] max-h-[60vh] cursor-pointer
                         transition-all duration-700 transform-style-3d
                         ${isFlipped ? 'rotate-y-180' : ''}
                     `}
@@ -106,7 +106,7 @@ export function FlashcardDisplay({
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
                                 <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${colors.gradient} flex items-center justify-center shadow-lg ${colors.glow}`}>
-                                    <BookOpen className="w-6 h-6 text-white" />
+                                    <Layers className="w-6 h-6 text-white" />
                                 </div>
                                 <div>
                                     {discipline && (
