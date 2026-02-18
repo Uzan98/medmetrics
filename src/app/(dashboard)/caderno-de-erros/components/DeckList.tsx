@@ -155,26 +155,26 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
 
     // Header Component
     const ListHeader = () => (
-        <div className="flex items-center text-xs font-semibold text-zinc-500 uppercase tracking-wider px-4 py-3 border-b border-zinc-800/50 bg-zinc-900/50">
-            <div className="flex-1 pl-2">Baralho</div>
-            <div className="flex items-center gap-6 mr-16">
-                <div className="w-12 text-center text-blue-400">Novos</div>
-                <div className="w-12 text-center text-red-400">Aprender</div>
-                <div className="w-12 text-center text-emerald-400">Revisar</div>
+        <div className="flex items-center text-xs font-semibold text-zinc-500 uppercase tracking-wider px-3 py-3 border-b border-zinc-800/50 bg-zinc-900/50">
+            <div className="flex-1 pl-1 sm:pl-2">Baralho</div>
+            <div className="flex items-center gap-2 sm:gap-10 mr-14 sm:mr-24">
+                <div className="w-8 sm:w-12 text-center text-blue-400" title="Novos">N<span className="hidden sm:inline">ovos</span></div>
+                <div className="w-8 sm:w-12 text-center text-red-400" title="Aprender">A<span className="hidden sm:inline">pren</span></div>
+                <div className="w-8 sm:w-12 text-center text-emerald-400" title="Revisar">R<span className="hidden sm:inline">ev</span></div>
             </div>
         </div>
     )
 
     // Stats Display Component
     const StatsDisplay = ({ stats }: { stats: DeckStats }) => (
-        <div className="flex items-center gap-6 text-sm font-medium mr-2">
-            <div className={`w-12 text-center ${stats.new > 0 ? 'text-blue-400 font-bold' : 'text-zinc-700'}`}>
+        <div className="flex items-center gap-2 sm:gap-10 text-sm font-medium mr-2">
+            <div className={`w-8 sm:w-12 text-center ${stats.new > 0 ? 'text-blue-400 font-bold' : 'text-zinc-700'}`}>
                 {stats.new}
             </div>
-            <div className={`w-12 text-center ${stats.learn > 0 ? 'text-red-400 font-bold' : 'text-zinc-700'}`}>
+            <div className={`w-8 sm:w-12 text-center ${stats.learn > 0 ? 'text-red-400 font-bold' : 'text-zinc-700'}`}>
                 {stats.learn}
             </div>
-            <div className={`w-12 text-center ${stats.review > 0 ? 'text-emerald-400 font-bold' : 'text-zinc-700'}`}>
+            <div className={`w-8 sm:w-12 text-center ${stats.review > 0 ? 'text-emerald-400 font-bold' : 'text-zinc-700'}`}>
                 {stats.review}
             </div>
         </div>
@@ -191,42 +191,42 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
                         <div key={discNode.discipline.id} className="group/disc transition-colors hover:bg-zinc-800/20">
                             {/* Discipline Row */}
                             <div
-                                className="flex items-center justify-between p-3 cursor-pointer"
+                                className="flex items-center justify-between p-2 sm:p-3 cursor-pointer"
                                 onClick={() => toggleDiscipline(discNode.discipline.id)}
                             >
-                                <div className="flex items-center gap-3 flex-1">
+                                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 pr-2">
                                     <button
-                                        className={`p-1 rounded hover:bg-zinc-700/50 text-zinc-500 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                                        className={`p-1 rounded hover:bg-zinc-700/50 text-zinc-500 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''} flex-shrink-0`}
                                     >
                                         <ChevronRight className="w-4 h-4" />
                                     </button>
-                                    <Folder className="w-5 h-5 text-indigo-400" />
-                                    <span className="font-semibold text-zinc-200">{discNode.discipline.name}</span>
+                                    <Folder className="w-5 h-5 text-indigo-400 flex-shrink-0" />
+                                    <span className="font-semibold text-zinc-200 truncate">{discNode.discipline.name}</span>
                                 </div>
 
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1 sm:gap-4 flex-shrink-0">
                                     <StatsDisplay stats={discNode.stats} />
 
-                                    <div className="flex items-center gap-2 opacity-0 group-hover/disc:opacity-100 transition-opacity w-[72px] justify-end">
+                                    <div className="flex items-center gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover/disc:opacity-100 transition-opacity w-[60px] sm:w-[72px] justify-end">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation()
                                                 onStudy(discNode.discipline.id, 'all', 'all')
                                             }}
-                                            className="p-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-lg transition-colors"
+                                            className="p-1.5 sm:p-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-lg transition-colors"
                                             title="Estudar Disciplina"
                                         >
-                                            <Play className="w-4 h-4" />
+                                            <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                         </button>
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation()
                                                 onDelete(discNode.discipline.id, null, null)
                                             }}
-                                            className="p-2 hover:bg-red-500/10 text-zinc-600 hover:text-red-400 rounded-lg transition-colors"
+                                            className="p-1.5 sm:p-2 hover:bg-red-500/10 text-zinc-600 hover:text-red-400 rounded-lg transition-colors"
                                             title="Excluir Baralho"
                                         >
-                                            <Trash2 className="w-4 h-4" />
+                                            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                         </button>
                                     </div>
                                 </div>
@@ -241,23 +241,23 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
                                         return (
                                             <div key={subNode.subdiscipline.id} className="group/sub">
                                                 <div
-                                                    className="flex items-center justify-between p-2 pl-4 hover:bg-zinc-800/40 transition-colors cursor-pointer"
+                                                    className="flex items-center justify-between p-2 pl-2 sm:pl-4 hover:bg-zinc-800/40 transition-colors cursor-pointer"
                                                     onClick={() => toggleSubdiscipline(subNode.subdiscipline.id)}
                                                 >
-                                                    <div className="flex items-center gap-3 flex-1">
+                                                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 pr-2">
                                                         <button
-                                                            className={`p-1 rounded hover:bg-zinc-700/50 text-zinc-500 transition-transform duration-200 ${isSubExpanded ? 'rotate-90' : ''}`}
+                                                            className={`p-1 rounded hover:bg-zinc-700/50 text-zinc-500 transition-transform duration-200 ${isSubExpanded ? 'rotate-90' : ''} flex-shrink-0`}
                                                         >
                                                             <ChevronRight className="w-3.5 h-3.5" />
                                                         </button>
-                                                        <Layers className="w-4 h-4 text-purple-400" />
-                                                        <span className="text-sm font-medium text-zinc-300">{subNode.subdiscipline.name}</span>
+                                                        <Layers className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                                                        <span className="text-sm font-medium text-zinc-300 truncate">{subNode.subdiscipline.name}</span>
                                                     </div>
 
-                                                    <div className="flex items-center gap-4">
+                                                    <div className="flex items-center gap-1 sm:gap-4 flex-shrink-0">
                                                         <StatsDisplay stats={subNode.stats} />
 
-                                                        <div className="flex items-center gap-2 opacity-0 group-hover/sub:opacity-100 transition-opacity w-[72px] justify-end">
+                                                        <div className="flex items-center gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover/sub:opacity-100 transition-opacity w-[60px] sm:w-[72px] justify-end">
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation()
@@ -284,19 +284,19 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
 
                                                 {/* Topics */}
                                                 {isSubExpanded && (
-                                                    <div className="ml-8 border-l border-zinc-800/50">
+                                                    <div className="ml-4 sm:ml-8 border-l border-zinc-800/50">
                                                         {Object.values(subNode.topics).map(topicNode => (
-                                                            <div key={topicNode.topic.id} className="flex items-center justify-between p-2 pl-4 hover:bg-zinc-800/40 transition-colors group/topic">
-                                                                <div className="flex items-center gap-3 flex-1">
-                                                                    <div className="w-4" /> {/* Indent spacer */}
-                                                                    <BookOpen className="w-3.5 h-3.5 text-zinc-500" />
-                                                                    <span className="text-sm text-zinc-400">{topicNode.topic.name}</span>
+                                                            <div key={topicNode.topic.id} className="flex items-center justify-between p-2 pl-2 sm:pl-4 hover:bg-zinc-800/40 transition-colors group/topic">
+                                                                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 pr-2">
+                                                                    <div className="w-3 sm:w-4 flex-shrink-0" /> {/* Indent spacer */}
+                                                                    <BookOpen className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0" />
+                                                                    <span className="text-sm text-zinc-400 truncate">{topicNode.topic.name}</span>
                                                                 </div>
 
-                                                                <div className="flex items-center gap-4">
+                                                                <div className="flex items-center gap-1 sm:gap-4 flex-shrink-0">
                                                                     <StatsDisplay stats={topicNode.stats} />
 
-                                                                    <div className="flex items-center gap-2 opacity-0 group-hover/topic:opacity-100 transition-opacity w-[72px] justify-end">
+                                                                    <div className="flex items-center gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover/topic:opacity-100 transition-opacity w-[60px] sm:w-[72px] justify-end">
                                                                         <button
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation()

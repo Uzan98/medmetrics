@@ -36,9 +36,17 @@ export function calculateNextReview(
     } else {
         // Correct response
         if (previousInterval === 0) {
-            interval = 1;
+            // New card: differentiate based on quality
+            // Hard (3) -> 1 day
+            // Good (4) -> 1 day
+            // Easy (5) -> 4 days (Standard Anki)
+            interval = quality >= 5 ? 4 : 1;
         } else if (previousInterval === 1) {
-            interval = 6;
+            // If it was 1 day, next steps:
+            // Hard (3) -> 2 days (conservative)
+            // Good (4) -> 3 days
+            // Easy (5) -> 6 days (Standard SM-2 bump)
+            interval = quality >= 5 ? 6 : (quality >= 4 ? 3 : 2);
         } else {
             interval = Math.round(previousInterval * previousEaseFactor);
         }

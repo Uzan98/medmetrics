@@ -335,6 +335,13 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
         onSessionComplete(finalStats)
     }
 
+    function formatInterval(days: number): string {
+        if (days === 0) return '< 1d'
+        if (days >= 365) return `${(days / 365).toFixed(1)}a`
+        if (days >= 30) return `${(days / 30).toFixed(1)}m`
+        return `${days}d`
+    }
+
     function formatTime(seconds: number): string {
         const mins = Math.floor(seconds / 60)
         const secs = seconds % 60
@@ -567,7 +574,7 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
                         >
                             <XCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
                             <span>Errei</span>
-                            <span className="text-xs opacity-60">volta depois</span>
+                            <span className="text-xs opacity-60 text-[10px] font-normal">&lt; 1m</span>
                         </button>
 
                         <button
@@ -576,7 +583,9 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
                         >
                             <AlertTriangle className="w-6 h-6 group-hover:scale-110 transition-transform" />
                             <span>Difícil</span>
-                            <span className="text-xs opacity-60">+{XP_REWARDS.hard} XP</span>
+                            <span className="text-xs opacity-60 text-[10px] font-normal">
+                                {formatInterval(calculateNextReview(3, currentCard?.interval || 0, currentCard?.ease_factor || 2.5).interval)}
+                            </span>
                         </button>
 
                         <button
@@ -585,7 +594,9 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
                         >
                             <CheckCircle2 className="w-6 h-6 group-hover:scale-110 transition-transform" />
                             <span>Fácil</span>
-                            <span className="text-xs opacity-60">+{XP_REWARDS.easy} XP</span>
+                            <span className="text-xs opacity-60 text-[10px] font-normal">
+                                {formatInterval(calculateNextReview(5, currentCard?.interval || 0, currentCard?.ease_factor || 2.5).interval)}
+                            </span>
                         </button>
                     </div>
                 </div>
