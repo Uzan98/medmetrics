@@ -76,6 +76,8 @@ export function ImportAIModal({ isOpen, onClose, disciplines, onImportComplete }
         setSelectedCards(selectedCards.map(() => !allSelected))
     }
 
+    const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
+
     async function handleImport() {
         const cardsToImport = parsedCards.filter((_, i) => selectedCards[i])
         if (cardsToImport.length === 0) {
@@ -91,47 +93,126 @@ export function ImportAIModal({ isOpen, onClose, disciplines, onImportComplete }
                 return
             }
 
-            const payload = cardsToImport.map(card => {
-                // Resolve IDs
+            // Prepare local caches to avoid duplicate creations in this batch
+            let localDisciplines = [...disciplines]
+            let localSubdisciplines = [...allSubdisciplines]
+            let localTopics = [...allTopics]
+
+            const payload = []
+
+            for (const card of cardsToImport) {
                 let discId = disciplineId ? Number(disciplineId) : null
                 let subId: number | null = null
                 let topicId: number | null = null
 
-                // 1. Try to find Topic -> Subdiscipline -> Discipline
-                if (card.topicName) {
-                    const foundTopic = allTopics.find(t => t.name.toLowerCase() === card.topicName?.toLowerCase())
-                    if (foundTopic) {
-                        topicId = foundTopic.id
-                        subId = foundTopic.subdiscipline_id
+                // 1. Resolve Discipline
+                if (!discId && card.disciplineName) {
+                    const normName = normalize(card.disciplineName)
+                    let foundDisc = localDisciplines.find(d => normalize(d.name) === normName)
 
-                        // If we found a subdiscipline, find its discipline
-                        if (subId) {
-                            const foundSub = allSubdisciplines.find(s => s.id === subId)
-                            if (foundSub) {
-                                discId = foundSub.discipline_id
-                            }
+                    if (!foundDisc) {
+                        // Create Discipline
+                        const { data: newDisc, error: discError } = await supabase
+                            .from('disciplines')
+                            .insert({ name: card.disciplineName, user_id: user.id })
+                            .select()
+                            .single()
+
+                        if (discError) throw discError
+                        if (newDisc) {
+                            localDisciplines.push(newDisc)
+                            foundDisc = newDisc
                         }
                     }
+
+                    if (foundDisc) discId = foundDisc.id
                 }
 
-                // 2. If no topic match (or no topic provided), try Subdiscipline
-                if (!subId && card.subdisciplineName) {
-                    const foundSub = allSubdisciplines.find(s => s.name.toLowerCase() === card.subdisciplineName?.toLowerCase())
-                    if (foundSub) {
-                        subId = foundSub.id
-                        discId = foundSub.discipline_id
+                // If we absolutely have no discipline, we can't create sub/topic correctly linked
+                // Fallback to "Geral" or just skip hierarchy creation?
+                // Let's assume if discId is missing, we can't proceed with sub/topic
+
+                if (discId) {
+                    // 2. Resolve Subdiscipline
+                    if (card.subdisciplineName) {
+                        const normSub = normalize(card.subdisciplineName)
+                        let foundSub = localSubdisciplines.find(s =>
+                            s.discipline_id === discId && normalize(s.name) === normSub
+                        )
+
+                        if (!foundSub) {
+                            // Try finding by name only if we are unsure about discipline linkage? 
+                            // No, strict hierarchy creation is safer.
+
+                            // Create Subdiscipline
+                            const { data: newSub, error: subError } = await supabase
+                                .from('subdisciplines')
+                                .insert({ name: card.subdisciplineName, discipline_id: discId })
+                                .select()
+                                .single()
+
+                            if (subError) throw subError
+                            if (newSub) {
+                                localSubdisciplines.push(newSub)
+                                foundSub = newSub
+                            }
+                        }
+
+                        if (foundSub) {
+                            subId = foundSub.id
+                        }
+                    }
+
+                    // 3. Resolve Topic
+                    if (subId && card.topicName) {
+                        const normTopic = normalize(card.topicName)
+                        let foundTopic = localTopics.find(t =>
+                            t.subdiscipline_id === subId && normalize(t.name) === normTopic
+                        )
+
+                        if (!foundTopic) {
+                            // Create Topic
+                            const { data: newTopic, error: topicError } = await supabase
+                                .from('topics')
+                                .insert({ name: card.topicName, subdiscipline_id: subId })
+                                .select()
+                                .single()
+
+                            if (topicError) throw topicError
+                            if (newTopic) {
+                                localTopics.push(newTopic)
+                                foundTopic = newTopic
+                            }
+                        }
+
+                        if (foundTopic) topicId = foundTopic.id
+                    } else if (discId && !subId && card.topicName) {
+                        // Case: Discipline + Topic (Direct, no subdiscipline)
+                        // Our DB requires subdiscipline_id for topics?? 
+                        // Let's check schema. Usually topics belong to subdisciplines.
+                        // If schema allows topic with null subdiscipline, we can create.
+                        // Looking at types: subdiscipline_id is usually a foreign key.
+                        // But if user didn't give subdiscipline, we can't create topic easily unless we have a "General" subdiscipline?
+                        // Or finding if topic exists in ANY subdiscipline of this discipline?
+
+                        // Fuzzy search in discipline's subdisciplines
+                        const normTopic = normalize(card.topicName)
+                        // Find any topic in this discipline with this name
+                        const existingTopic = localTopics.find(t => {
+                            const sub = localSubdisciplines.find(s => s.id === t.subdiscipline_id)
+                            return sub?.discipline_id === discId && normalize(t.name) === normTopic
+                        })
+
+                        if (existingTopic) {
+                            topicId = existingTopic.id
+                            subId = existingTopic.subdiscipline_id
+                        }
+                        // Else: we can't create topic without subdiscipline. 
+                        // It will be an orphan topic card (Geral topic handles this visualization).
                     }
                 }
 
-                // 3. If no subdiscipline match, try Discipline
-                if (!discId && card.disciplineName) {
-                    const foundDisc = disciplines.find(d => d.name.toLowerCase() === card.disciplineName?.toLowerCase())
-                    if (foundDisc) {
-                        discId = foundDisc.id
-                    }
-                }
-
-                return {
+                payload.push({
                     user_id: user.id,
                     discipline_id: discId,
                     topic_id: topicId,
@@ -141,8 +222,8 @@ export function ImportAIModal({ isOpen, onClose, disciplines, onImportComplete }
                     image_urls: [],
                     error_type: null,
                     action_item: null,
-                }
-            })
+                })
+            }
 
             const { error } = await supabase
                 .from('error_notebook')
@@ -150,13 +231,13 @@ export function ImportAIModal({ isOpen, onClose, disciplines, onImportComplete }
 
             if (error) throw error
 
-            toast.success(`${cardsToImport.length} flashcards importados com sucesso!`)
+            toast.success(`${payload.length} flashcards importados com sucesso!`)
             resetAndClose()
             onImportComplete()
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error importing:', error)
-            toast.error('Erro ao importar flashcards')
+            toast.error('Erro ao importar: ' + (error.message || 'Erro desconhecido'))
         } finally {
             setImporting(false)
         }

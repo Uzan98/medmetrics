@@ -58,6 +58,10 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
                     topic: { id: number; name: string },
                     stats: DeckStats
                 }>
+            }>,
+            topics: Record<number, {
+                topic: { id: number; name: string },
+                stats: DeckStats
             }>
         }> = {}
 
@@ -65,7 +69,16 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
 
         entries.forEach(entry => {
             const discId = entry.discipline_id
-            if (!discId) return
+
+            if (!discId) {
+                console.log('Warn: Entry missing discipline_id:', entry.id)
+                return
+            }
+
+            if (!disciplines.find(d => d.id === discId)) {
+                console.log('Warn: Discipline not found for ID:', discId)
+                return
+            }
 
             // Determine Card State
             let state: 'new' | 'learn' | 'review' = 'new'
@@ -88,26 +101,17 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
             // Update Stats Helper
             const updateStats = (stats: DeckStats) => {
                 stats.total++
-                if (state === 'new') {
-                    stats.new++
-                } else if (entry.review_count > 0) {
-                    // Only count Learn/Review if DUE
-                    const dueDate = entry.next_review_date ? parseISO(entry.next_review_date) : null
-                    const isDue = dueDate ? (isPast(dueDate) || isToday(dueDate)) : true
-
-                    if (isDue) {
-                        if (state === 'learn') stats.learn++
-                        else if (state === 'review') stats.review++
-                    }
-                }
+                stats[state]++
             }
 
-            // Get Discipline
+            // Get Discipline (and initialize if not uncategorized and not yet in tree)
             if (!tree[discId]) {
                 const disc = disciplines.find(d => d.id === discId)
                 if (disc) {
-                    tree[discId] = { discipline: disc, stats: emptyStats(), subdisciplines: {} }
+                    tree[discId] = { discipline: disc, stats: emptyStats(), subdisciplines: {}, topics: {} }
                 } else {
+                    // This case should ideally not be reached if the check above is correct,
+                    // or if discId is uncategorizedId (which is handled).
                     return
                 }
             }
@@ -115,11 +119,20 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
 
             // Get Subdiscipline
             const subId = entry.topics?.subdiscipline_id
+
             if (subId) {
                 if (!tree[discId].subdisciplines[subId]) {
                     const sub = subdisciplines.find(s => s.id === subId)
                     if (sub) {
                         tree[discId].subdisciplines[subId] = { subdiscipline: sub, stats: emptyStats(), topics: {} }
+                    } else {
+                        console.error(`Subdiscipline ID ${subId} not found. Creating placeholder.`)
+                        // Create placeholder subdiscipline
+                        tree[discId].subdisciplines[subId] = {
+                            subdiscipline: { id: subId, name: `Subdiscipline #${subId}`, discipline_id: discId },
+                            stats: emptyStats(),
+                            topics: {}
+                        }
                     }
                 }
 
@@ -135,6 +148,28 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
                         updateStats(tree[discId].subdisciplines[subId].topics[topic.id].stats)
                     }
                 }
+            } else if (entry.topics) {
+                // Direct Topic (No Subdiscipline)
+                const topic = entry.topics
+
+                // Debug if topic name is missing or weird
+                if (!topic.name) console.warn('Topic has no name:', topic)
+
+                if (!tree[discId].topics[topic.id]) {
+                    tree[discId].topics[topic.id] = { topic, stats: emptyStats() }
+                }
+                updateStats(tree[discId].topics[topic.id].stats)
+            } else {
+                // No Topic, No Subdiscipline (Just Discipline or Uncategorized)
+                // Add to a "General" topic so they are visible
+                const generalTopicId = -999 // distinct ID
+                if (!tree[discId].topics[generalTopicId]) {
+                    tree[discId].topics[generalTopicId] = {
+                        topic: { id: generalTopicId, name: 'Geral (Sem Assunto)' },
+                        stats: emptyStats()
+                    }
+                }
+                updateStats(tree[discId].topics[generalTopicId].stats)
             }
         })
 
@@ -142,15 +177,17 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
     }, [entries, disciplines, subdisciplines])
 
     const toggleDiscipline = (id: number) => {
-        setExpandedDisciplines(prev =>
-            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-        )
+        setExpandedDisciplines(prev => {
+            if (prev.includes(id)) return prev.filter(i => i !== id)
+            return [...prev, id]
+        })
     }
 
     const toggleSubdiscipline = (id: number) => {
-        setExpandedSubdisciplines(prev =>
-            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-        )
+        setExpandedSubdisciplines(prev => {
+            if (prev.includes(id)) return prev.filter(i => i !== id)
+            return [...prev, id]
+        })
     }
 
     // Header Component
@@ -191,20 +228,20 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
                         <div key={discNode.discipline.id} className="group/disc transition-colors hover:bg-zinc-800/20">
                             {/* Discipline Row */}
                             <div
-                                className="flex items-center justify-between p-2 sm:p-3 cursor-pointer"
+                                className="flex flex-col sm:flex-row sm:items-center justify-between p-2 sm:p-3 cursor-pointer"
                                 onClick={() => toggleDiscipline(discNode.discipline.id)}
                             >
-                                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 pr-2">
+                                <div className="flex items-start sm:items-center gap-2 sm:gap-3 w-full sm:flex-1 pr-0 sm:pr-2 mb-2 sm:mb-0">
                                     <button
-                                        className={`p-1 rounded hover:bg-zinc-700/50 text-zinc-500 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''} flex-shrink-0`}
+                                        className={`p-1 rounded hover:bg-zinc-700/50 text-zinc-500 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''} flex-shrink-0 mt-0.5 sm:mt-0`}
                                     >
                                         <ChevronRight className="w-4 h-4" />
                                     </button>
-                                    <Folder className="w-5 h-5 text-indigo-400 flex-shrink-0" />
-                                    <span className="font-semibold text-zinc-200 truncate">{discNode.discipline.name}</span>
+                                    <Folder className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+                                    <span className="font-semibold text-zinc-200 whitespace-normal break-words leading-tight">{discNode.discipline.name}</span>
                                 </div>
 
-                                <div className="flex items-center gap-1 sm:gap-4 flex-shrink-0">
+                                <div className="flex items-center justify-between sm:justify-end gap-1 sm:gap-4 w-full sm:w-auto pl-8 sm:pl-0">
                                     <StatsDisplay stats={discNode.stats} />
 
                                     <div className="flex items-center gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover/disc:opacity-100 transition-opacity w-[60px] sm:w-[72px] justify-end">
@@ -232,29 +269,67 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
                                 </div>
                             </div>
 
-                            {/* Subdisciplines */}
+                            {/* Subdisciplines & Direct Topics */}
                             {isExpanded && (
                                 <div className="bg-zinc-900/30 border-l-2 border-zinc-800 ml-5">
+                                    {/* Direct Topics */}
+                                    {Object.values(discNode.topics).map(topicNode => (
+                                        <div key={topicNode.topic.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 pl-2 sm:pl-4 hover:bg-zinc-800/40 transition-colors group/topic">
+                                            <div className="flex items-start sm:items-center gap-2 sm:gap-3 w-full sm:flex-1 pr-0 sm:pr-2 mb-2 sm:mb-0">
+                                                <BookOpen className="w-4 h-4 text-zinc-500 flex-shrink-0 mt-0.5 sm:mt-0" />
+                                                <span className="text-sm font-medium text-zinc-300 whitespace-normal break-words leading-tight">{topicNode.topic.name}</span>
+                                            </div>
+
+                                            <div className="flex items-center justify-between sm:justify-end gap-1 sm:gap-4 w-full sm:w-auto pl-8 sm:pl-0">
+                                                <StatsDisplay stats={topicNode.stats} />
+
+                                                <div className="flex items-center gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover/topic:opacity-100 transition-opacity w-[60px] sm:w-[72px] justify-end">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            onStudy(discNode.discipline.id, 'all', topicNode.topic.id)
+                                                        }}
+                                                        className="p-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-lg transition-colors"
+                                                        title="Estudar Assunto"
+                                                    >
+                                                        <Play className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            onDelete(null, null, topicNode.topic.id)
+                                                        }}
+                                                        className="p-1.5 hover:bg-red-500/10 text-zinc-600 hover:text-red-400 rounded-lg transition-colors"
+                                                        title="Excluir Assunto"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* Subdisciplines */}
                                     {Object.values(discNode.subdisciplines).map(subNode => {
                                         const isSubExpanded = expandedSubdisciplines.includes(subNode.subdiscipline.id)
 
                                         return (
                                             <div key={subNode.subdiscipline.id} className="group/sub">
                                                 <div
-                                                    className="flex items-center justify-between p-2 pl-2 sm:pl-4 hover:bg-zinc-800/40 transition-colors cursor-pointer"
+                                                    className="flex flex-col sm:flex-row sm:items-center justify-between p-2 pl-2 sm:pl-4 hover:bg-zinc-800/40 transition-colors cursor-pointer"
                                                     onClick={() => toggleSubdiscipline(subNode.subdiscipline.id)}
                                                 >
-                                                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 pr-2">
+                                                    <div className="flex items-start sm:items-center gap-2 sm:gap-3 w-full sm:flex-1 pr-0 sm:pr-2 mb-2 sm:mb-0">
                                                         <button
-                                                            className={`p-1 rounded hover:bg-zinc-700/50 text-zinc-500 transition-transform duration-200 ${isSubExpanded ? 'rotate-90' : ''} flex-shrink-0`}
+                                                            className={`p-1 rounded hover:bg-zinc-700/50 text-zinc-500 transition-transform duration-200 ${isSubExpanded ? 'rotate-90' : ''} flex-shrink-0 mt-0.5 sm:mt-0`}
                                                         >
                                                             <ChevronRight className="w-3.5 h-3.5" />
                                                         </button>
-                                                        <Layers className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                                                        <span className="text-sm font-medium text-zinc-300 truncate">{subNode.subdiscipline.name}</span>
+                                                        <Layers className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+                                                        <span className="text-sm font-medium text-zinc-300 whitespace-normal break-words leading-tight">{subNode.subdiscipline.name}</span>
                                                     </div>
 
-                                                    <div className="flex items-center gap-1 sm:gap-4 flex-shrink-0">
+                                                    <div className="flex items-center justify-between sm:justify-end gap-1 sm:gap-4 w-full sm:w-auto pl-8 sm:pl-0">
                                                         <StatsDisplay stats={subNode.stats} />
 
                                                         <div className="flex items-center gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover/sub:opacity-100 transition-opacity w-[60px] sm:w-[72px] justify-end">
@@ -286,14 +361,14 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
                                                 {isSubExpanded && (
                                                     <div className="ml-4 sm:ml-8 border-l border-zinc-800/50">
                                                         {Object.values(subNode.topics).map(topicNode => (
-                                                            <div key={topicNode.topic.id} className="flex items-center justify-between p-2 pl-2 sm:pl-4 hover:bg-zinc-800/40 transition-colors group/topic">
-                                                                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 pr-2">
+                                                            <div key={topicNode.topic.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 pl-2 sm:pl-4 hover:bg-zinc-800/40 transition-colors group/topic">
+                                                                <div className="flex items-start sm:items-center gap-2 sm:gap-3 w-full sm:flex-1 pr-0 sm:pr-2 mb-2 sm:mb-0">
                                                                     <div className="w-3 sm:w-4 flex-shrink-0" /> {/* Indent spacer */}
-                                                                    <BookOpen className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0" />
-                                                                    <span className="text-sm text-zinc-400 truncate">{topicNode.topic.name}</span>
+                                                                    <BookOpen className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0 mt-0.5 sm:mt-0" />
+                                                                    <span className="text-sm text-zinc-400 whitespace-normal break-words leading-tight">{topicNode.topic.name}</span>
                                                                 </div>
 
-                                                                <div className="flex items-center gap-1 sm:gap-4 flex-shrink-0">
+                                                                <div className="flex items-center justify-between sm:justify-end gap-1 sm:gap-4 w-full sm:w-auto pl-8 sm:pl-0">
                                                                     <StatsDisplay stats={topicNode.stats} />
 
                                                                     <div className="flex items-center gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover/topic:opacity-100 transition-opacity w-[60px] sm:w-[72px] justify-end">

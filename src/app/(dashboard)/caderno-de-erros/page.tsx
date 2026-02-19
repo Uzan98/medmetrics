@@ -364,7 +364,8 @@ export default function ErrorNotebookPage() {
     }
 
     // Calculate pending reviews (cards due for review today or earlier)
-    const today = new Date().toISOString().split('T')[0]
+    // Fix: Use local time instead of UTC to avoid "tomorrow is today" bug late at night
+    const today = format(new Date(), 'yyyy-MM-dd')
     const pendingEntries = entries.filter(entry => {
         const nextReview = (entry as any).next_review_date
         return !nextReview || nextReview <= today
@@ -431,7 +432,7 @@ export default function ErrorNotebookPage() {
     const filteredEntries = entries.filter(entry => {
         const matchesSearch = entry.question_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
             entry.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            entry.disciplines?.name.toLowerCase().includes(searchTerm.toLowerCase())
+            (entry.disciplines?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
 
         const matchesDiscipline = disciplineFilter === 'all' || entry.discipline_id === disciplineFilter
         const matchesSubdiscipline = subdisciplineFilter === 'all' || entry.topics?.subdiscipline_id === subdisciplineFilter
@@ -498,16 +499,8 @@ export default function ErrorNotebookPage() {
 
                             {/* Action Buttons */}
                             <div className="flex flex-wrap gap-2.5">
-                                <button
-                                    onClick={() => setShowStudySetup(true)}
-                                    disabled={entries.length === 0}
-                                    className="group px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
-                                >
-                                    <Play className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                                    Estudar
-                                </button>
-
-                                {pendingCount > 0 && (
+                                {/* Primary Action: Review or All Done */}
+                                {pendingCount > 0 ? (
                                     <button
                                         onClick={() => {
                                             setStudyDiscipline('all')
@@ -516,12 +509,33 @@ export default function ErrorNotebookPage() {
                                             setShowOnlyPending(true)
                                             setShowStudyMode(true)
                                         }}
-                                        className="px-5 py-2.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 rounded-xl font-bold text-sm transition-all border border-rose-500/30 hover:border-rose-400/50 flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                                        className="group px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                                        title="Revisar cards agendados para hoje"
                                     >
-                                        <Clock className="w-4 h-4" />
-                                        Revisar {pendingCount}
+                                        <Play className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                                        Revisar ({pendingCount})
+                                    </button>
+                                ) : (
+                                    <button
+                                        disabled
+                                        className="px-5 py-2.5 bg-zinc-800/50 text-zinc-500 rounded-xl font-bold text-sm border border-zinc-700/50 flex items-center gap-2 cursor-not-allowed"
+                                        title="Nenhum card para revisar hoje"
+                                    >
+                                        <Check className="w-4 h-4 text-emerald-500" />
+                                        Tudo em dia!
                                     </button>
                                 )}
+
+                                {/* Secondary Action: Free Study / Practice */}
+                                <button
+                                    onClick={() => setShowStudySetup(true)}
+                                    disabled={entries.length === 0}
+                                    className="px-5 py-2.5 bg-zinc-800/40 hover:bg-zinc-800/60 text-zinc-300 hover:text-white rounded-xl font-bold text-sm transition-all border border-zinc-700/40 hover:border-zinc-600/50 flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+                                    title="Modo de estudo livre (todos os cards)"
+                                >
+                                    <Layers className="w-4 h-4" />
+                                    Estudar Livre
+                                </button>
 
                                 <button
                                     onClick={() => setShowAnalytics(true)}
@@ -540,6 +554,14 @@ export default function ErrorNotebookPage() {
                                     <Upload className="w-4 h-4" />
                                     Importar da IA
                                 </button>
+
+                                <Link
+                                    href="/caderno-de-erros/gerenciar"
+                                    className="px-4 py-2.5 bg-zinc-800/40 hover:bg-zinc-800/60 text-zinc-300 hover:text-white rounded-xl font-bold text-sm transition-all border border-zinc-700/40 hover:border-zinc-600/50 flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                                >
+                                    <LayoutList className="w-4 h-4" />
+                                    Gerenciar
+                                </Link>
 
                                 <button
                                     onClick={() => {

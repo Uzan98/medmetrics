@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Layers, RotateCcw, Check, BrainCircuit, Image as ImageIcon } from 'lucide-react'
+import { Layers, RotateCcw, Check, BrainCircuit, Image as ImageIcon, Edit2 } from 'lucide-react'
 import Image from 'next/image'
 
 interface FlashcardDisplayProps {
@@ -15,6 +15,7 @@ interface FlashcardDisplayProps {
     actionItem?: string | null
     isFlipped: boolean
     onFlip: () => void
+    onEdit?: () => void
     accentColor?: string
 }
 
@@ -29,6 +30,7 @@ export function FlashcardDisplay({
     actionItem,
     isFlipped,
     onFlip,
+    onEdit,
     accentColor = 'indigo'
 }: FlashcardDisplayProps) {
     const [selectedImage, setSelectedImage] = useState<string | null>(null)
@@ -119,8 +121,17 @@ export function FlashcardDisplay({
                                     )}
                                 </div>
                             </div>
-                            <div className="text-zinc-500 text-sm font-medium uppercase tracking-wider">
-                                Pergunta
+                            <div className="text-zinc-500 text-sm font-medium uppercase tracking-wider flex items-center gap-2">
+                                {onEdit && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                                        className="p-2 hover:bg-white/10 rounded-xl transition-colors text-zinc-400 hover:text-white"
+                                        title="Editar Card"
+                                    >
+                                        <Edit2 className="w-5 h-5" />
+                                    </button>
+                                )}
+                                <span>Pergunta</span>
                             </div>
                         </div>
 
@@ -182,12 +193,23 @@ export function FlashcardDisplay({
                                 </div>
                                 <span className="font-bold text-emerald-400 text-lg">Resposta Correta</span>
                             </div>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onFlip(); }}
-                                className="p-2 hover:bg-white/10 rounded-xl transition-colors"
-                            >
-                                <RotateCcw className="w-5 h-5 text-zinc-400" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                {onEdit && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                                        className="p-2 hover:bg-white/10 rounded-xl transition-colors text-zinc-400 hover:text-white"
+                                        title="Editar Card"
+                                    >
+                                        <Edit2 className="w-5 h-5" />
+                                    </button>
+                                )}
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onFlip(); }}
+                                    className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                                >
+                                    <RotateCcw className="w-5 h-5 text-zinc-400" />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Answer */}

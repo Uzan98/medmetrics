@@ -652,6 +652,30 @@ export type Database = {
                 }
                 Relationships: []
             }
+            user_settings: {
+                Row: {
+                    user_id: string
+                    fsrs_retention: number
+                    fsrs_params: Json | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    user_id: string
+                    fsrs_retention?: number
+                    fsrs_params?: Json | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    user_id?: string
+                    fsrs_retention?: number
+                    fsrs_params?: Json | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: []
+            }
 
         }
         Views: {
@@ -689,4 +713,5 @@ export type StudySession = Tables<'study_sessions'>
 export type FlashcardReview = Tables<'flashcard_reviews'>
 export type UserStudyStats = Tables<'user_study_stats'>
 export type Appointment = Tables<'appointments'>
+export type UserSettings = Tables<'user_settings'>
 
