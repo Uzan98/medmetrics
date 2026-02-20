@@ -34,9 +34,9 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import Image from 'next/image'
 import { StudyMode } from './StudyMode'
-import { ErrorAnalytics } from './ErrorAnalytics'
 import { ImportAIModal } from './ImportAIModal'
 import { DeckList } from './components/DeckList'
+import { UpcomingReviews } from './components/UpcomingReviews'
 import { format, formatDistanceToNow, isPast, isToday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -111,7 +111,6 @@ export default function ErrorNotebookPage() {
     // Delete Confirmation Modal
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
     const [deleting, setDeleting] = useState(false)
-    const [showAnalytics, setShowAnalytics] = useState(false)
     const [showImportAI, setShowImportAI] = useState(false)
 
     useEffect(() => {
@@ -537,14 +536,14 @@ export default function ErrorNotebookPage() {
                                     Estudar Livre
                                 </button>
 
-                                <button
-                                    onClick={() => setShowAnalytics(true)}
+                                <Link
+                                    href="/caderno-de-erros/estatisticas"
                                     className="px-4 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 rounded-xl font-bold text-sm transition-all border border-purple-500/30 hover:border-purple-400/50 flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
                                     title="Estatísticas"
                                 >
                                     <Trophy className="w-4 h-4" />
                                     Análise
-                                </button>
+                                </Link>
 
                                 <button
                                     onClick={() => setShowImportAI(true)}
@@ -621,6 +620,8 @@ export default function ErrorNotebookPage() {
                         </div>
                     </div>
                 </div>
+
+                <UpcomingReviews entries={entries} />
 
                 {/* Study Setup Modal */}
                 {showStudySetup && (
@@ -890,12 +891,6 @@ export default function ErrorNotebookPage() {
                 )}
 
             </div>
-
-            <ErrorAnalytics
-                isOpen={showAnalytics}
-                onClose={() => setShowAnalytics(false)}
-                userId={userStats?.user_id || ''}
-            />
 
             <ImportAIModal
                 isOpen={showImportAI}

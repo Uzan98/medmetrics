@@ -581,7 +581,7 @@ export type Database = {
                     session_id: string | null
                     user_id: string
                     reviewed_at: string
-                    difficulty: 'easy' | 'hard' | 'wrong'
+                    difficulty: 'easy' | 'good' | 'hard' | 'wrong'
                     xp_earned: number
                 }
                 Insert: {
@@ -590,7 +590,7 @@ export type Database = {
                     session_id?: string | null
                     user_id: string
                     reviewed_at?: string
-                    difficulty: 'easy' | 'hard' | 'wrong'
+                    difficulty: 'easy' | 'good' | 'hard' | 'wrong'
                     xp_earned?: number
                 }
                 Update: {
@@ -599,7 +599,7 @@ export type Database = {
                     session_id?: string | null
                     user_id?: string
                     reviewed_at?: string
-                    difficulty?: 'easy' | 'hard' | 'wrong'
+                    difficulty?: 'easy' | 'good' | 'hard' | 'wrong'
                     xp_earned?: number
                 }
                 Relationships: [
@@ -621,7 +621,6 @@ export type Database = {
             }
             user_study_stats: {
                 Row: {
-                    id: string
                     user_id: string
                     current_streak: number
                     longest_streak: number
@@ -631,7 +630,6 @@ export type Database = {
                     updated_at: string
                 }
                 Insert: {
-                    id?: string
                     user_id: string
                     current_streak?: number
                     longest_streak?: number
@@ -641,7 +639,6 @@ export type Database = {
                     updated_at?: string
                 }
                 Update: {
-                    id?: string
                     user_id?: string
                     current_streak?: number
                     longest_streak?: number

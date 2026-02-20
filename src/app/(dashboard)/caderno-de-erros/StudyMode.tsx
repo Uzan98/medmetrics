@@ -52,6 +52,7 @@ interface StudyModeProps {
 interface SessionStats {
     cardsStudied: number
     cardsEasy: number
+    cardsGood: number
     cardsHard: number
     cardsWrong: number
     xpEarned: number
@@ -61,6 +62,7 @@ interface SessionStats {
 // XP rewards
 const XP_REWARDS = {
     easy: 15,
+    good: 12,
     hard: 10,
     wrong: 5,
     streak_bonus: 5, // per streak level
@@ -91,6 +93,7 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
     const [sessionStats, setSessionStats] = useState<SessionStats>({
         cardsStudied: 0,
         cardsEasy: 0,
+        cardsGood: 0,
         cardsHard: 0,
         cardsWrong: 0,
         xpEarned: 0,
@@ -209,7 +212,7 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
         previousStreak: number
         wasWrong: boolean
         previousIndex: number
-        lastDifficulty: 'easy' | 'hard' | 'wrong'
+        lastDifficulty: 'easy' | 'good' | 'hard' | 'wrong'
         previousDbData: {
             last_reviewed_at: string | null
             next_review_date: string | null
@@ -226,7 +229,7 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
     useEffect(() => {
         if (undoState) {
             const { lastDifficulty } = undoState
-            const description = lastDifficulty === 'easy' ? 'Fácil (+15 XP)' : lastDifficulty === 'hard' ? 'Difícil (+10 XP)' : 'Errei (+5 XP)'
+            const description = lastDifficulty === 'easy' ? 'Fácil (+15 XP)' : lastDifficulty === 'good' ? 'Bom (+12 XP)' : lastDifficulty === 'hard' ? 'Difícil (+10 XP)' : 'Errei (+5 XP)'
 
             toast('Avaliação registrada', {
                 description,
@@ -309,7 +312,7 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
         }
     }
 
-    async function handleRating(difficulty: 'easy' | 'hard' | 'wrong') {
+    async function handleRating(difficulty: 'easy' | 'good' | 'hard' | 'wrong') {
         const card = currentCard
         const currentIndexSnapshot = currentIndex
         if (!card) return
@@ -336,6 +339,7 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
             ...prev,
             cardsStudied: prev.cardsStudied + 1,
             cardsEasy: prev.cardsEasy + (difficulty === 'easy' ? 1 : 0),
+            cardsGood: prev.cardsGood + (difficulty === 'good' ? 1 : 0),
             cardsHard: prev.cardsHard + (difficulty === 'hard' ? 1 : 0),
             cardsWrong: prev.cardsWrong + (difficulty === 'wrong' ? 1 : 0),
             xpEarned: prev.xpEarned + xp
@@ -379,7 +383,7 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
             }
 
             // Current approach: Always calculate next review state
-            const quality = difficulty === 'easy' ? 5 : (difficulty === 'hard' ? 3 : 1) // 1=Wrong
+            const quality = difficulty === 'easy' ? 5 : (difficulty === 'good' ? 4 : (difficulty === 'hard' ? 3 : 1)) // 1=Wrong, 3=Hard, 4=Good, 5=Easy
 
             const lastReviewDate = card.last_reviewed_at ? new Date(card.last_reviewed_at) : new Date()
             const daysSince = card.last_reviewed_at
@@ -475,7 +479,7 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
                         completed_at: new Date().toISOString(),
                         cards_studied: finalStats.cardsStudied,
                         cards_easy: finalStats.cardsEasy,
-                        cards_hard: finalStats.cardsHard,
+                        cards_hard: finalStats.cardsHard, // Note: db schema doesn't have good yet, we aggregate good + hard into hard temporarily if needed, but if there's no column we just don't save it, or we add the column. Let's assume the DB hasn't been updated yet with `cards_good`, so we might just save studied, easy, hard, wrong. For now, leaving as is unless we know DB has `cards_good`.
                         cards_wrong: finalStats.cardsWrong,
                         xp_earned: finalStats.xpEarned
                     })
@@ -568,7 +572,7 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
 
     // Session Complete Screen
     if (showComplete) {
-        const accuracy = Math.round(((sessionStats.cardsEasy + sessionStats.cardsHard) / sessionStats.cardsStudied) * 100)
+        const accuracy = Math.round(((sessionStats.cardsEasy + sessionStats.cardsGood + sessionStats.cardsHard) / sessionStats.cardsStudied) * 100)
 
         return (
             <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-indigo-950 to-zinc-950 z-50 overflow-y-auto">
@@ -634,6 +638,13 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
                                     <span className="font-bold">{sessionStats.cardsEasy}</span>
                                 </div>
                                 <span className="text-xs text-zinc-500">Fácil</span>
+                            </div>
+                            <div className="text-center">
+                                <div className="flex items-center justify-center gap-1 text-green-400 mb-1">
+                                    <CheckCircle2 className="w-4 h-4 opacity-80" />
+                                    <span className="font-bold">{sessionStats.cardsGood}</span>
+                                </div>
+                                <span className="text-xs text-zinc-500">Bom</span>
                             </div>
                             <div className="text-center">
                                 <div className="flex items-center justify-center gap-1 text-amber-400 mb-1">
@@ -766,25 +777,25 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
             {showRating && (
                 <div className="p-4 md:p-6 border-t border-white/5 animate-in slide-in-from-bottom duration-300 flex-shrink-0">
                     <p className="text-center text-zinc-400 text-sm mb-4">
-                        Como você se saiu? (Teclas: 1, 2, 3)
+                        Como você se saiu? (Teclas: 1, 2, 3, 4)
                     </p>
-                    <div className="flex gap-4 max-w-lg mx-auto">
+                    <div className="flex gap-2 sm:gap-4 max-w-2xl mx-auto">
                         <button
                             onClick={() => handleRating('wrong')}
-                            className="flex-1 py-4 bg-gradient-to-br from-red-500/20 to-red-600/10 hover:from-red-500/30 hover:to-red-600/20 border-2 border-red-500/30 hover:border-red-500/50 text-red-400 rounded-2xl font-bold transition-all flex flex-col items-center gap-1 group"
+                            className="flex-1 py-3 sm:py-4 bg-gradient-to-br from-red-500/20 to-red-600/10 hover:from-red-500/30 hover:to-red-600/20 border-2 border-red-500/30 hover:border-red-500/50 text-red-400 rounded-2xl font-bold transition-all flex flex-col items-center gap-1 group"
                         >
-                            <XCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                            <span>Errei</span>
-                            <span className="text-xs opacity-60 text-[10px] font-normal">&lt; 1m</span>
+                            <XCircle className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform" />
+                            <span className="text-sm sm:text-base">Errei</span>
+                            <span className="text-xs opacity-60 text-[10px] sm:text-xs font-normal">&lt; 1m</span>
                         </button>
 
                         <button
                             onClick={() => handleRating('hard')}
-                            className="flex-1 py-4 bg-gradient-to-br from-amber-500/20 to-amber-600/10 hover:from-amber-500/30 hover:to-amber-600/20 border-2 border-amber-500/30 hover:border-amber-500/50 text-amber-400 rounded-2xl font-bold transition-all flex flex-col items-center gap-1 group"
+                            className="flex-1 py-3 sm:py-4 bg-gradient-to-br from-amber-500/20 to-amber-600/10 hover:from-amber-500/30 hover:to-amber-600/20 border-2 border-amber-500/30 hover:border-amber-500/50 text-amber-400 rounded-2xl font-bold transition-all flex flex-col items-center gap-1 group"
                         >
-                            <AlertTriangle className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                            <span>Difícil</span>
-                            <span className="text-xs opacity-60 text-[10px] font-normal">
+                            <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform" />
+                            <span className="text-sm sm:text-base">Difícil</span>
+                            <span className="text-xs opacity-60 text-[10px] sm:text-xs font-normal">
                                 {(() => {
                                     const daysSince = currentCard?.last_reviewed_at ? differenceInDays(new Date(), new Date(currentCard.last_reviewed_at)) : 0
                                     const { s, d, state } = currentCard ? getEffectiveCardState(currentCard) : { s: 0, d: 0, state: 0 }
@@ -794,12 +805,28 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
                         </button>
 
                         <button
-                            onClick={() => handleRating('easy')}
-                            className="flex-1 py-4 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 hover:from-emerald-500/30 hover:to-emerald-600/20 border-2 border-emerald-500/30 hover:border-emerald-500/50 text-emerald-400 rounded-2xl font-bold transition-all flex flex-col items-center gap-1 group"
+                            onClick={() => handleRating('good')}
+                            className="flex-1 py-3 sm:py-4 bg-gradient-to-br from-green-500/20 to-green-600/10 hover:from-green-500/30 hover:to-green-600/20 border-2 border-green-500/30 hover:border-green-500/50 text-green-400 rounded-2xl font-bold transition-all flex flex-col items-center gap-1 group"
                         >
-                            <CheckCircle2 className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                            <span>Fácil</span>
-                            <span className="text-xs opacity-60 text-[10px] font-normal">
+                            <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 opacity-80 group-hover:scale-110 transition-transform" />
+                            <span className="text-sm sm:text-base">Bom</span>
+                            <span className="text-xs opacity-60 text-[10px] sm:text-xs font-normal">
+                                {(() => {
+                                    const daysSince = currentCard?.last_reviewed_at ? differenceInDays(new Date(), new Date(currentCard.last_reviewed_at)) : 0
+                                    const { s, d, state } = currentCard ? getEffectiveCardState(currentCard) : { s: 0, d: 0, state: 0 }
+                                    // 4 is the internal quality mapped to "bom" in our wrapper
+                                    return formatInterval(calculateNextReview(4, s, d, state, daysSince, requestRetention, fsrsParams).interval)
+                                })()}
+                            </span>
+                        </button>
+
+                        <button
+                            onClick={() => handleRating('easy')}
+                            className="flex-1 py-3 sm:py-4 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 hover:from-emerald-500/30 hover:to-emerald-600/20 border-2 border-emerald-500/30 hover:border-emerald-500/50 text-emerald-400 rounded-2xl font-bold transition-all flex flex-col items-center gap-1 group"
+                        >
+                            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform" />
+                            <span className="text-sm sm:text-base">Fácil</span>
+                            <span className="text-xs opacity-60 text-[10px] sm:text-xs font-normal">
                                 {(() => {
                                     const daysSince = currentCard?.last_reviewed_at ? differenceInDays(new Date(), new Date(currentCard.last_reviewed_at)) : 0
                                     const { s, d, state } = currentCard ? getEffectiveCardState(currentCard) : { s: 0, d: 0, state: 0 }

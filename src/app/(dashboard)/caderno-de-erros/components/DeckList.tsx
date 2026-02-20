@@ -81,7 +81,7 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
             }
 
             // Determine Card State
-            let state: 'new' | 'learn' | 'review' = 'new'
+            let state: 'new' | 'learn' | 'review' | 'notDue' = 'new'
 
             if (entry.review_count > 0) {
                 const dueDate = entry.next_review_date ? parseISO(entry.next_review_date) : null
@@ -94,14 +94,16 @@ export function DeckList({ entries, disciplines, subdisciplines, onStudy, onDele
                         state = 'review'
                     }
                 } else {
-                    state = 'review' // counted in total, but filtered out of display stats if not due
+                    state = 'notDue' // counted in total, but filtered out of display stats if not due
                 }
             }
 
             // Update Stats Helper
             const updateStats = (stats: DeckStats) => {
                 stats.total++
-                stats[state]++
+                if (state !== 'notDue') {
+                    stats[state as keyof DeckStats]++
+                }
             }
 
             // Get Discipline (and initialize if not uncategorized and not yet in tree)

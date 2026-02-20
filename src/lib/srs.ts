@@ -136,9 +136,10 @@ export function calculateNextReview(
     // 5(Easy) -> 4(Easy)
     // Good (implicit) -> 3
     let rating = 3;
-    if (quality === 0 || quality === 1) rating = 1;
-    else if (quality === 3) rating = 2;
-    else if (quality === 5) rating = 4;
+    if (quality === 0 || quality === 1) rating = 1;      // Again
+    else if (quality === 2 || quality === 3) rating = 2; // Hard
+    else if (quality === 4) rating = 3;                  // Good
+    else if (quality >= 5) rating = 4;                   // Easy
 
     let s = lastStability;
     let d = lastDifficulty;
