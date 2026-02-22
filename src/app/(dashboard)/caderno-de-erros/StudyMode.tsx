@@ -44,7 +44,7 @@ interface StudyModeProps {
     entries: ErrorEntry[]
     disciplineId?: number | 'all'
     subdisciplineId?: number | 'all'
-    topicId?: number | 'all'
+    topicId?: number | 'all' | number[]
     onClose: () => void
     onSessionComplete: (stats: SessionStats) => void
 }
@@ -106,7 +106,8 @@ export function StudyMode({ entries, disciplineId, subdisciplineId, topicId, onC
     const initialQueue = entries.filter(e => {
         const matchDiscipline = !disciplineId || disciplineId === 'all' || e.discipline_id === disciplineId
         const matchSubdiscipline = !subdisciplineId || subdisciplineId === 'all' || e.topics?.subdiscipline_id === subdisciplineId
-        const matchTopic = !topicId || topicId === 'all' || e.topic_id === topicId
+        const matchTopic = !topicId || topicId === 'all' ||
+            (Array.isArray(topicId) ? topicId.includes(e.topic_id!) : e.topic_id === topicId)
         return matchDiscipline && matchSubdiscipline && matchTopic
     })
 

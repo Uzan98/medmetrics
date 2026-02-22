@@ -52,21 +52,40 @@ export default function FlashcardAnalyticsPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            // Fetch error entries for current distribution
-            const { data: errorsData } = await supabase
-                .from('error_notebook')
-                .select(`
-                    id,
-                    error_type,
-                    disciplines(name),
-                    stability,
-                    difficulty,
-                    next_review_date,
-                    state
-                `)
-                .eq('user_id', user.id)
+            // Fetch error entries for current distribution using pagination
+            let allErrors: any[] = []
+            let page = 0
+            const pageSize = 1000
 
-            const errors = errorsData as any[]
+            while (true) {
+                const { data: errorsData, error } = await supabase
+                    .from('error_notebook')
+                    .select(`
+                        id,
+                        error_type,
+                        disciplines(name),
+                        stability,
+                        difficulty,
+                        next_review_date,
+                        state
+                    `)
+                    .eq('user_id', user.id)
+                    .range(page * pageSize, (page + 1) * pageSize - 1)
+
+                if (error) {
+                    console.error(error)
+                    break
+                }
+                if (errorsData && errorsData.length > 0) {
+                    allErrors.push(...errorsData)
+                    if (errorsData.length < pageSize) break
+                    page++
+                } else {
+                    break
+                }
+            }
+
+            const errors = allErrors as any[]
 
             // Fetch user study stats
             const { data: userStats } = await supabase

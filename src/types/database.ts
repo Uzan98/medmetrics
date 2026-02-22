@@ -57,6 +57,7 @@ export type Database = {
                     user_id: string
                     discipline_id: number | null
                     topic_id: number | null
+                    subdiscipline_id: number | null
                     question_text: string
                     answer_text: string
                     notes: string | null
@@ -81,6 +82,7 @@ export type Database = {
                     notes?: string | null
                     question_text: string
                     review_count?: number
+                    subdiscipline_id?: number | null
                     topic_id?: number | null
                     user_id: string
                     // New/Missing fields
@@ -101,6 +103,7 @@ export type Database = {
                     notes?: string | null
                     question_text?: string
                     review_count?: number
+                    subdiscipline_id?: number | null
                     topic_id?: number | null
                     user_id?: string
                     // New/Missing fields
@@ -125,6 +128,13 @@ export type Database = {
                         columns: ["topic_id"]
                         isOneToOne: false
                         referencedRelation: "topics"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "error_notebook_subdiscipline_id_fkey"
+                        columns: ["subdiscipline_id"]
+                        isOneToOne: false
+                        referencedRelation: "subdisciplines"
                         referencedColumns: ["id"]
                     },
                 ]

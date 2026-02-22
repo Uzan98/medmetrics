@@ -69,25 +69,39 @@ export default function ManageCardsPage() {
     async function loadCards() {
         setLoading(true)
         try {
-            const { data, error } = await supabase
-                .from('error_notebook')
-                .select(`
-                    id,
-                    question_text,
-                    discipline_id,
-                    topic_id,
-                    next_review_date,
-                    state,
-                    disciplines (name),
-                    topics (
-                        name,
-                        subdisciplines (name)
-                    )
-                `)
-                .order('created_at', { ascending: false })
+            let allCards: any[] = []
+            let page = 0
+            const pageSize = 1000
 
-            if (error) throw error
-            setCards(data as any) // Type assertion due to join complexity
+            while (true) {
+                const { data, error } = await supabase
+                    .from('error_notebook')
+                    .select(`
+                        id,
+                        question_text,
+                        discipline_id,
+                        topic_id,
+                        next_review_date,
+                        state,
+                        disciplines (name),
+                        topics (
+                            name,
+                            subdisciplines (name)
+                        )
+                    `)
+                    .order('created_at', { ascending: false })
+                    .range(page * pageSize, (page + 1) * pageSize - 1)
+
+                if (error) throw error
+                if (data && data.length > 0) {
+                    allCards.push(...data)
+                    if (data.length < pageSize) break
+                    page++
+                } else {
+                    break
+                }
+            }
+            setCards(allCards as any) // Type assertion due to join complexity
         } catch (error) {
             console.error('Error loading cards:', error)
             toast.error('Erro ao carregar cards')
@@ -303,7 +317,10 @@ export default function ManageCardsPage() {
                                                 )}
                                             </td>
                                             <td className="p-4 max-w-md">
-                                                <p className="truncate font-medium text-zinc-200">{card.question_text}</p>
+                                                <div
+                                                    className="truncate font-medium text-zinc-200"
+                                                    dangerouslySetInnerHTML={{ __html: card.question_text }}
+                                                />
                                             </td>
                                             <td className="p-4 text-zinc-400">
                                                 {fullContext}

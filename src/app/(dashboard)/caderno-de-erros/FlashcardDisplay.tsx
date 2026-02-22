@@ -137,9 +137,10 @@ export function FlashcardDisplay({
 
                         {/* Question */}
                         <div className="flex-1 flex items-center justify-center">
-                            <h2 className="text-2xl md:text-3xl font-bold text-white text-center leading-relaxed">
-                                {question}
-                            </h2>
+                            <div
+                                className="text-2xl md:text-3xl font-bold text-white text-center leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: question }}
+                            />
                         </div>
 
                         {/* Images Preview */}
@@ -214,9 +215,10 @@ export function FlashcardDisplay({
 
                         {/* Answer */}
                         <div className="flex-1">
-                            <p className="text-xl text-white leading-relaxed whitespace-pre-line">
-                                {answer}
-                            </p>
+                            <div
+                                className="text-xl text-white leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: answer }}
+                            />
 
                             {/* Notes */}
                             {notes && (

@@ -28,6 +28,7 @@ import {
     Clock,
     SlidersHorizontal,
     Upload,
+    Download,
     LayoutList
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -35,6 +36,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { StudyMode } from './StudyMode'
 import { ImportAIModal } from './ImportAIModal'
+import { ImportAnkiModal } from './ImportAnkiModal'
 import { DeckList } from './components/DeckList'
 import { UpcomingReviews } from './components/UpcomingReviews'
 import { format, formatDistanceToNow, isPast, isToday } from 'date-fns'
@@ -100,7 +102,7 @@ export default function ErrorNotebookPage() {
     const [showStudySetup, setShowStudySetup] = useState(false)
     const [studyDiscipline, setStudyDiscipline] = useState<number | 'all'>('all')
     const [studySubdiscipline, setStudySubdiscipline] = useState<number | 'all'>('all')
-    const [studyTopic, setStudyTopic] = useState<number | 'all'>('all')
+    const [studyTopic, setStudyTopic] = useState<number | 'all' | number[]>('all')
     const [viewMode, setViewMode] = useState<'list' | 'deck'>('deck')
     const [userStats, setUserStats] = useState<UserStudyStats | null>(null)
 
@@ -112,6 +114,7 @@ export default function ErrorNotebookPage() {
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
     const [deleting, setDeleting] = useState(false)
     const [showImportAI, setShowImportAI] = useState(false)
+    const [showImportAnki, setShowImportAnki] = useState(false)
 
     useEffect(() => {
         loadData()
@@ -123,15 +126,29 @@ export default function ErrorNotebookPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            // Load Entries
-            const { data: errorEntries, error } = await supabase
-                .from('error_notebook')
-                .select('*, disciplines(name), topics(id, name, subdiscipline_id)')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false })
+            // Load Entries handling PostgREST default limit of 1000 rows
+            let allEntries: any[] = []
+            let page = 0
+            const pageSize = 1000
 
-            if (error) throw error
-            if (errorEntries) setEntries(errorEntries as any)
+            while (true) {
+                const { data: errorEntries, error } = await supabase
+                    .from('error_notebook')
+                    .select('*, disciplines(name), topics(id, name, subdiscipline_id)')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false })
+                    .range(page * pageSize, (page + 1) * pageSize - 1)
+
+                if (error) throw error
+                if (errorEntries && errorEntries.length > 0) {
+                    allEntries.push(...errorEntries)
+                    if (errorEntries.length < pageSize) break
+                    page++
+                } else {
+                    break
+                }
+            }
+            setEntries(allEntries)
 
             // Load Disciplines
             const { data: discData } = await supabase
@@ -371,7 +388,7 @@ export default function ErrorNotebookPage() {
     })
     const pendingCount = pendingEntries.length
 
-    async function handleDeleteDeck(discId: number | null, subId: number | null, topicId: number | null) {
+    async function handleDeleteDeck(discId: number | null, subId: number | null, topicId: number | null | number[]) {
         if (!confirm('Tem certeza que deseja excluir todos os flashcards deste baralho? Esta ação não pode ser desfeita.')) return
 
         setLoading(true)
@@ -382,12 +399,11 @@ export default function ErrorNotebookPage() {
             let error = null
 
             if (topicId) {
-                // Delete specific topic
-                const res = await supabase
-                    .from('error_notebook')
-                    .delete()
-                    .eq('user_id', user.id)
-                    .eq('topic_id', topicId)
+                // Delete specific topic(s)
+                let query = supabase.from('error_notebook').delete().eq('user_id', user.id)
+                if (Array.isArray(topicId)) query = query.in('topic_id', topicId)
+                else query = query.eq('topic_id', topicId)
+                const res = await query
                 error = res.error
             } else if (subId) {
                 // Delete subdiscipline (all topics within it)
@@ -552,6 +568,15 @@ export default function ErrorNotebookPage() {
                                 >
                                     <Upload className="w-4 h-4" />
                                     Importar da IA
+                                </button>
+
+                                <button
+                                    onClick={() => setShowImportAnki(true)}
+                                    disabled={disciplines.length === 0}
+                                    className="px-4 py-2.5 bg-blue-500/15 hover:bg-blue-500/25 text-blue-200 rounded-xl font-bold text-sm transition-all border border-blue-500/25 hover:border-blue-500/40 flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Importar do Anki
                                 </button>
 
                                 <Link
@@ -898,6 +923,16 @@ export default function ErrorNotebookPage() {
                 disciplines={disciplines}
                 onImportComplete={() => {
                     setShowImportAI(false)
+                    loadData()
+                }}
+            />
+
+            <ImportAnkiModal
+                isOpen={showImportAnki}
+                onClose={() => setShowImportAnki(false)}
+                disciplines={disciplines}
+                onImportComplete={() => {
+                    setShowImportAnki(false)
                     loadData()
                 }}
             />
@@ -1272,9 +1307,10 @@ function ErrorRow({ entry, onEdit, onDelete }: { entry: ErrorEntry, onEdit: () =
                         </div>
 
                         {/* Question */}
-                        <p className="text-[15px] text-zinc-200 leading-relaxed line-clamp-2 font-medium group-hover:text-white transition-colors">
-                            {entry.question_text}
-                        </p>
+                        <div
+                            className="text-[15px] text-zinc-200 leading-relaxed line-clamp-2 font-medium group-hover:text-white transition-colors"
+                            dangerouslySetInnerHTML={{ __html: entry.question_text }}
+                        />
 
                         {/* Meta bar */}
                         <div className="flex items-center gap-2.5 mt-2.5 flex-wrap">
@@ -1361,9 +1397,10 @@ function ErrorRow({ entry, onEdit, onDelete }: { entry: ErrorEntry, onEdit: () =
                                 </div>
                                 Resposta Correta
                             </h4>
-                            <p className="text-zinc-200 text-sm leading-relaxed whitespace-pre-line">
-                                {entry.answer_text}
-                            </p>
+                            <div
+                                className="text-zinc-200 text-sm leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: entry.answer_text }}
+                            />
                         </div>
 
                         {/* Notes */}
